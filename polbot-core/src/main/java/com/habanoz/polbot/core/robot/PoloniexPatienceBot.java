@@ -32,7 +32,7 @@ public class PoloniexPatienceBot {
     private PoloniexPublicApi publicApi;
 
     private List<EmnCurrencyConfig> emnCurrencyConfigs;
-    private double minBuyBtcBudget = 0.0001;
+    private double minAmount = 0.0001;
 
     private String BASE_CURR = "BTC";
     private final String CURR_PAIR_SEPARATOR = "_";
@@ -48,13 +48,13 @@ public class PoloniexPatienceBot {
 
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
 
-        Map<String, Float> balanceMap = tradingApi.returnBalances();
+        Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
         Map<String, List<PoloniexTradeHistory>> historyMap = tradingApi.returnTradeHistory();
 
-        float btcBalance = balanceMap.get(BASE_CURR);
+        BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
         for (EmnCurrencyConfig currencyConfig : emnCurrencyConfigs) {
             String currName = currencyConfig.getCurrencyName();
@@ -63,7 +63,7 @@ public class PoloniexPatienceBot {
             if (currencyConfig.getUsableBalancePercent() <= 0)
                 continue;
 
-            float currBalance = balanceMap.get(currName);
+            BigDecimal currBalance = balanceMap.get(currName);
 
             List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
 
@@ -74,10 +74,10 @@ public class PoloniexPatienceBot {
             BigDecimal highestSellPrice = ticker.getHighestBid();
 
             // only pre-defined percentage of available balance can be used for buying a currency
-            BigDecimal buyBudget = new BigDecimal(btcBalance * currencyConfig.getUsableBalancePercent() * 0.01);
+            BigDecimal buyBudget = new BigDecimal(btcBalance.doubleValue() * currencyConfig.getUsableBalancePercent() * 0.01);
 
-            if (buyBudget.doubleValue() < minBuyBtcBudget && btcBalance >= minBuyBtcBudget) {
-                buyBudget = new BigDecimal(minBuyBtcBudget);
+            if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
+                buyBudget = new BigDecimal(minAmount);
             }
 
             // buying price should be a little lower to make profit
@@ -88,23 +88,23 @@ public class PoloniexPatienceBot {
             BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
 
             // buy logic
-            if (openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minBuyBtcBudget) {
+            if (openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minAmount) {
                 String result = tradingApi.buy(currPair, buyPrice, buyAmount);
 
+                logger.info("Buy order for {} at rate {} of amount {}", currPair, buyPrice.floatValue(), buyAmount.floatValue());
                 logger.info(result);
 
-                btcBalance -= buyBudget.floatValue();
+                btcBalance = btcBalance.subtract(buyBudget);
 
-                logger.info("Buy order for {} at rate {} of amount {}", currPair, buyPrice.floatValue(), buyAmount.floatValue());
             }
 
             // sell logic
-            if (currBalance > 0 && openOrderListForCurr.stream().noneMatch(p -> p.getType().equalsIgnoreCase("sell"))) {
+            if (currBalance.doubleValue() > minAmount && openOrderListForCurr.stream().noneMatch(p -> p.getType().equalsIgnoreCase("sell"))) {
                 List<PoloniexTradeHistory> currHistoryList = historyMap.get(currPair);
 
                 // get last buying price to calculate selling price
                 BigDecimal lastBuyPrice = currHistoryList.get(0).getRate();
-                BigDecimal sellAmount = new BigDecimal(currBalance);
+                BigDecimal sellAmount = currBalance;
                 for (PoloniexTradeHistory history : currHistoryList) {
                     if (history.getType().equalsIgnoreCase("buy")) {
                         lastBuyPrice = history.getRate();
@@ -117,9 +117,9 @@ public class PoloniexPatienceBot {
 
                 String result = tradingApi.sell(currPair, sellPrice, sellAmount);
 
+                logger.info("Sell order for {} at rate {} of amount {}", currPair, sellPrice.floatValue(), sellAmount.floatValue());
                 logger.info(result);
 
-                logger.info("Sell order for {} at rate {} of amount {}", currPair, sellPrice.floatValue(), sellAmount.floatValue());
             }
 
         }

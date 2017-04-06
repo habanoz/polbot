@@ -26,11 +26,11 @@ public interface PoloniexTradingApi {
 
     Map<String, List<PoloniexOpenOrder>> returnOpenOrders();
 
-    Map<String, Float> returnBalances();
+    Map<String, BigDecimal> returnBalances();
 
     Map<String, PoloniexCompleteBalance> returnCompleteBalances();
 
-    Float returnBalance(String cur);
+    BigDecimal returnBalance(String cur);
 
     Map<String, List<PoloniexTradeHistory>> returnTradeHistory();
 }

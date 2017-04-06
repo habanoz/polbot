@@ -82,8 +82,8 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     }
 
     @Override
-    public Map<String, Float> returnBalances() {
-        return runCommand("returnBalances", new TypeReference<HashMap<String, Float>>() {
+    public Map<String, BigDecimal> returnBalances() {
+        return runCommand("returnBalances", new TypeReference<HashMap<String, BigDecimal>>() {
         });
     }
 
@@ -94,7 +94,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     }
 
     @Override
-    public Float returnBalance(String cur) {
+    public BigDecimal returnBalance(String cur) {
         return returnBalances().get(cur);
     }
 
