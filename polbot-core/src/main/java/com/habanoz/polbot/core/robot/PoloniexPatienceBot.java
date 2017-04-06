@@ -32,6 +32,7 @@ public class PoloniexPatienceBot {
     private PoloniexPublicApi publicApi;
 
     private List<EmnCurrencyConfig> emnCurrencyConfigs;
+    private double minBuyBtcBudget = 0.0001;
 
     private String BASE_CURR = "BTC";
     private final String CURR_PAIR_SEPARATOR = "_";
@@ -41,7 +42,7 @@ public class PoloniexPatienceBot {
         emnCurrencyConfigs = new EmnCurrencyConfigParser().parse(new File("currency.config"));
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedDelay = 60000)
     public void runLogic() {
         logger.info("Started");
 
@@ -56,12 +57,13 @@ public class PoloniexPatienceBot {
         float btcBalance = balanceMap.get(BASE_CURR);
 
         for (EmnCurrencyConfig currencyConfig : emnCurrencyConfigs) {
-            String currPair = BASE_CURR + CURR_PAIR_SEPARATOR + currencyConfig.getCurrencyName();
+            String currName = currencyConfig.getCurrencyName();
+            String currPair = BASE_CURR + CURR_PAIR_SEPARATOR + currName;
 
             if (currencyConfig.getUsableBalancePercent() <= 0)
                 continue;
 
-            float currBalance = balanceMap.get(currPair);
+            float currBalance = balanceMap.get(currName);
 
             List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
 
@@ -74,6 +76,10 @@ public class PoloniexPatienceBot {
             // only pre-defined percentage of available balance can be used for buying a currency
             BigDecimal buyBudget = new BigDecimal(btcBalance * currencyConfig.getUsableBalancePercent() * 0.01);
 
+            if (buyBudget.doubleValue() < minBuyBtcBudget && btcBalance >= minBuyBtcBudget) {
+                buyBudget = new BigDecimal(minBuyBtcBudget);
+            }
+
             // buying price should be a little lower to make profit
             BigDecimal buyPrice = new BigDecimal(lowestBuyPrice.doubleValue() * (100 - currencyConfig.getBuyOnPercent()) * 0.01);
 
@@ -81,23 +87,26 @@ public class PoloniexPatienceBot {
             // calculate amount that can be bouht with buyBudget and buyPrice
             BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
 
-            if (openOrderListForCurr.isEmpty() && btcBalance > 0) {
-                tradingApi.buy(currPair, buyPrice, buyAmount);
+            // buy logic
+            if (openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minBuyBtcBudget) {
+                String result = tradingApi.buy(currPair, buyPrice, buyAmount);
+
+                logger.info(result);
 
                 btcBalance -= buyBudget.floatValue();
 
                 logger.info("Buy order for {} at rate {} of amount {}", currPair, buyPrice.floatValue(), buyAmount.floatValue());
             }
 
+            // sell logic
             if (currBalance > 0 && openOrderListForCurr.stream().noneMatch(p -> p.getType().equalsIgnoreCase("sell"))) {
                 List<PoloniexTradeHistory> currHistoryList = historyMap.get(currPair);
 
                 // get last buying price to calculate selling price
                 BigDecimal lastBuyPrice = currHistoryList.get(0).getRate();
-                BigDecimal sellAmount = currHistoryList.get(0).getAmount();
+                BigDecimal sellAmount = new BigDecimal(currBalance);
                 for (PoloniexTradeHistory history : currHistoryList) {
                     if (history.getType().equalsIgnoreCase("buy")) {
-                        sellAmount = history.getAmount();
                         lastBuyPrice = history.getRate();
                     }
                 }
@@ -106,7 +115,9 @@ public class PoloniexPatienceBot {
                 BigDecimal sellPrice = new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent() + currencyConfig.getBuyOnPercent()) * 0.01);
 
 
-                tradingApi.sell(currPair, sellPrice, sellAmount);
+                String result = tradingApi.sell(currPair, sellPrice, sellAmount);
+
+                logger.info(result);
 
                 logger.info("Sell order for {} at rate {} of amount {}", currPair, sellPrice.floatValue(), sellAmount.floatValue());
             }

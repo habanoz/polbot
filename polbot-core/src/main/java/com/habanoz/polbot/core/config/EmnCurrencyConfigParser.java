@@ -38,8 +38,8 @@ public class EmnCurrencyConfigParser {
                 EmnCurrencyConfig emnCurrencyConfig = new EmnCurrencyConfig();
                 emnCurrencyConfig.setCurrencyName(params[PARAM_CURR_NAME_INDEX].trim());
                 emnCurrencyConfig.setUsableBalancePercent(Float.parseFloat(params[PARAM_BAL_PERCENT_INDEX].trim()));
-                emnCurrencyConfig.setUsableBalancePercent(Float.parseFloat(params[PARAM_BUY_PERCENT_INDEX].trim()));
-                emnCurrencyConfig.setUsableBalancePercent(Float.parseFloat(params[PARAM_SELL_PERCENT_INDEX].trim()));
+                emnCurrencyConfig.setBuyOnPercent(Float.parseFloat(params[PARAM_BUY_PERCENT_INDEX].trim()));
+                emnCurrencyConfig.setSellOnPercent(Float.parseFloat(params[PARAM_SELL_PERCENT_INDEX].trim()));
 
                 currencyConfigMap.add(emnCurrencyConfig);
             }
