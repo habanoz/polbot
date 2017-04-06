@@ -22,11 +22,13 @@ public class Main implements CommandLineRunner {
     private PoloniexPublicApi publicApi;
 
     public static void main(String[] args) {
-        SpringApplication.run(Main.class, args);
+
+                SpringApplication.run(Main.class, args);
     }
 
     @Override
     public void run(String... args) {
+        // Test comment to see github that commiting/pulling is working fine
 
         //Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
         // for (String curPair:tickerMap.keySet())
