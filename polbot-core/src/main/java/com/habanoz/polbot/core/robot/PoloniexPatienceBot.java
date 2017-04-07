@@ -4,9 +4,12 @@ import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.config.EmnCurrencyConfig;
 import com.habanoz.polbot.core.config.EmnCurrencyConfigParser;
+import com.habanoz.polbot.core.entity.OrderEntity;
+import com.habanoz.polbot.core.model.PoloniexTradeResult;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexTicker;
-import com.habanoz.polbot.core.model.PoloniexTradeHistory;
+import com.habanoz.polbot.core.model.PoloniexTrade;
+import com.habanoz.polbot.core.repository.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +27,15 @@ import java.util.Map;
  */
 @Component
 public class PoloniexPatienceBot {
-    private static final Logger logger = LoggerFactory.getLogger(PoloniexTradeHistory.class);
+    private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
     @Autowired
     private PoloniexTradingApi tradingApi;
 
     @Autowired
     private PoloniexPublicApi publicApi;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     private List<EmnCurrencyConfig> emnCurrencyConfigs;
     private double minAmount = 0.0001;
@@ -52,7 +58,7 @@ public class PoloniexPatienceBot {
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
-        Map<String, List<PoloniexTradeHistory>> historyMap = tradingApi.returnTradeHistory();
+        Map<String, List<PoloniexTrade>> historyMap = tradingApi.returnTradeHistory();
 
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
@@ -89,39 +95,32 @@ public class PoloniexPatienceBot {
 
             // buy logic
             if (openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minAmount) {
-                String result = tradingApi.buy(currPair, buyPrice, buyAmount);
+                PoloniexTradeResult result = tradingApi.buy(currPair, buyPrice, buyAmount);
 
-                logger.info("Buy order for {} at rate {} of amount {}", currPair, buyPrice.floatValue(), buyAmount.floatValue());
-                logger.info(result);
-
-                btcBalance = btcBalance.subtract(buyBudget);
-
+                if (result != null) {
+                    btcBalance = btcBalance.subtract(buyBudget);
+                }
             }
 
             // sell logic
             if (currBalance.doubleValue() > minAmount && openOrderListForCurr.stream().noneMatch(p -> p.getType().equalsIgnoreCase("sell"))) {
-                List<PoloniexTradeHistory> currHistoryList = historyMap.get(currPair);
+                List<PoloniexTrade> currHistoryList = historyMap.get(currPair);
 
                 // get last buying price to calculate selling price
                 BigDecimal lastBuyPrice = currHistoryList.get(0).getRate();
                 BigDecimal sellAmount = currBalance;
-                for (PoloniexTradeHistory history : currHistoryList) {
+                for (PoloniexTrade history : currHistoryList) {
                     if (history.getType().equalsIgnoreCase("buy")) {
                         lastBuyPrice = history.getRate();
                     }
                 }
 
                 //selling price should be a little higher to make profit
-                BigDecimal sellPrice = new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent() + currencyConfig.getBuyOnPercent()) * 0.01);
+                BigDecimal sellPrice = new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01);
 
 
-                String result = tradingApi.sell(currPair, sellPrice, sellAmount);
-
-                logger.info("Sell order for {} at rate {} of amount {}", currPair, sellPrice.floatValue(), sellAmount.floatValue());
-                logger.info(result);
-
+                PoloniexTradeResult result = tradingApi.sell(currPair, sellPrice, sellAmount);
             }
-
         }
 
         logger.info("Completed");

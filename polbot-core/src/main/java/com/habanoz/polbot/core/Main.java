@@ -1,46 +1,43 @@
 package com.habanoz.polbot.core;
 
-import com.habanoz.polbot.core.api.PoloniexPublicApi;
-import com.habanoz.polbot.core.api.PoloniexTradingApi;
-import com.habanoz.polbot.core.model.PoloniexTradeHistory;
+import com.habanoz.polbot.core.entity.OrderEntity;
+import com.habanoz.polbot.core.model.PoloniexOpenOrder;
+import com.habanoz.polbot.core.repository.OrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.Date;
 
 @SpringBootApplication
 @EnableScheduling
 public class Main implements CommandLineRunner {
-    @Autowired
-    private PoloniexTradingApi tradingApi;
-
-    @Autowired
-    private PoloniexPublicApi publicApi;
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         SpringApplication.run(Main.class, args);
     }
 
+    @Autowired
+    OrderRepository orderRepository;
+
     @Override
     public void run(String... args) {
+        logger.info("Bot starting...");
 
-        //Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
-        // for (String curPair:tickerMap.keySet())
-        //    System.out.println(curPair);
+        OrderEntity orderEntity=new OrderEntity();
+        PoloniexOpenOrder poloniexOpenOrder=new PoloniexOpenOrder();
+        poloniexOpenOrder.setAmount(new BigDecimal(5));
+        poloniexOpenOrder.setOrderNumber("123123");
+        poloniexOpenOrder.setRate(new BigDecimal(.5));
+        orderEntity.setOrder(poloniexOpenOrder);
+        orderEntity.setDateCreated(new Date());
 
-        //Map<String, PoloniexCompleteBalance> balanceMap = tradingApi.returnCompleteBalances();
-        //System.out.println(balanceMap.toString());
-
-        Map<String, List<PoloniexTradeHistory>> balanceMap = tradingApi.returnTradeHistory();
-        System.out.println(balanceMap.toString());
-
-        //Map<String, Float> balancesMap = tradingApi.returnBalances();
-        //System.out.println(balancesMap.toString());
-        //System.out.println(tradingApi.returnBalances().toString());;
-        //System.out.println(tradingApi.returnBalance("ETH").toString());
+        orderRepository.save(orderEntity);
     }
 }

@@ -8,9 +8,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.habanoz.polbot.core.model.PoloniexTradeResult;
 import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
-import com.habanoz.polbot.core.model.PoloniexTradeHistory;
+import com.habanoz.polbot.core.model.PoloniexTrade;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
@@ -21,8 +22,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -33,6 +32,7 @@ import java.util.*;
 @Component
 public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTradingApiImpl.class);
+    private static final Logger operationlogger = LoggerFactory.getLogger("PoloniexOperation");
     private TradingAPIClient tradingAPIClient;
     private ObjectMapper objectMapper;
 
@@ -59,13 +59,54 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     }
 
     @Override
-    public String buy(String currencyPair, BigDecimal buyPrice, BigDecimal amount) {
-        return tradingAPIClient.buy(currencyPair, buyPrice, amount, false, false, false);
+    public PoloniexTradeResult buy(String currencyPair, BigDecimal price, BigDecimal amount) {
+        try {
+            operationlogger.info("Buying for {} at rate {} of amount {}", currencyPair, price.floatValue(), amount.floatValue());
+
+            String str = tradingAPIClient.buy(currencyPair, price, amount, false, false, false);
+
+            if (str.contains("error")) {
+                operationlogger.error("Buy resulted:" + str);
+                return null;
+            }
+
+            PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
+
+            operationlogger.info("Buy resulted: {}", result.toString());
+
+            return result;
+
+        } catch (IOException e) {
+            logger.error("Error while buying {}", currencyPair, e);
+        }
+
+        return null;
     }
 
     @Override
-    public String sell(String currencyPair, BigDecimal sellPrice, BigDecimal amount) {
-        return tradingAPIClient.sell(currencyPair, sellPrice, amount, false, false, false);
+    public PoloniexTradeResult sell(String currencyPair, BigDecimal price, BigDecimal amount) {
+
+        try {
+            operationlogger.info("Selling for {} at rate {} of amount {}", currencyPair, price.floatValue(), amount.floatValue());
+
+            String str = tradingAPIClient.sell(currencyPair, price, amount, false, false, false);
+
+            if (str.contains("error")) {
+                operationlogger.error("Sell resulted:" + str);
+                return null;
+            }
+
+            PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
+
+            operationlogger.info("Sell resulted: {}", result.toString());
+
+            return result;
+
+        } catch (IOException e) {
+            logger.error("Error while selling {}", currencyPair, e);
+        }
+
+        return null;
     }
 
     @Override
@@ -99,17 +140,17 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     }
 
     @Override
-    public Map<String, List<PoloniexTradeHistory>> returnTradeHistory() {
+    public Map<String, List<PoloniexTrade>> returnTradeHistory() {
 
 
         List<NameValuePair> additionalPostParams = new ArrayList<>();
         additionalPostParams.add(new BasicNameValuePair("currencyPair", "all"));
         additionalPostParams.add(new BasicNameValuePair("start", PoloniexExchangeService.LONG_LONG_AGO.toString()));
-        //return runCommand("returnTradeHistory", additionalPostParams, new TypeReference<HashMap<String, List<PoloniexTradeHistory>>>() {
+        //return runCommand("returnTradeHistory", additionalPostParams, new TypeReference<HashMap<String, List<PoloniexTrade>>>() {
         // });
 
         try {
-            return objectMapper.readValue(tradingAPIClient.returnTradingAPICommandResults("returnTradeHistory", additionalPostParams), new TypeReference<HashMap<String, List<PoloniexTradeHistory>>>() {
+            return objectMapper.readValue(tradingAPIClient.returnTradingAPICommandResults("returnTradeHistory", additionalPostParams), new TypeReference<HashMap<String, List<PoloniexTrade>>>() {
             });
         } catch (IOException e) {
             logger.error("Error while running command {}", "returnTradeHistory", e);

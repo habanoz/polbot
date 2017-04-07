@@ -2,9 +2,7 @@ package com.habanoz.polbot.core.model;
 
 import java.math.BigDecimal;
 
-
-public class PoloniexOpenOrder
-{
+public class PoloniexOpenOrder {
     private String orderNumber;
     private String type;
     private BigDecimal rate;

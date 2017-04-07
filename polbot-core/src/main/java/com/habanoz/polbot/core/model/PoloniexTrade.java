@@ -1,12 +1,9 @@
 package com.habanoz.polbot.core.model;
 
-import com.google.gson.Gson;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public class PoloniexTradeHistory
-{
+public class PoloniexTrade {
     private Long globalTradeID;
     private String tradeID;
     private LocalDateTime date;
@@ -100,7 +97,7 @@ public class PoloniexTradeHistory
 
     @Override
     public String toString() {
-        return "PoloniexTradeHistory{" +
+        return "PoloniexTrade{" +
                 "globalTradeID=" + globalTradeID +
                 ", tradeID='" + tradeID + '\'' +
                 ", date=" + date +
