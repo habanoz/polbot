@@ -2,21 +2,19 @@ package com.habanoz.polbot.core.robot;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
-import com.habanoz.polbot.core.config.EmnCurrencyConfig;
-import com.habanoz.polbot.core.config.EmnCurrencyConfigParser;
-import com.habanoz.polbot.core.entity.OrderEntity;
-import com.habanoz.polbot.core.model.PoloniexTradeResult;
+import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexTicker;
 import com.habanoz.polbot.core.model.PoloniexTrade;
-import com.habanoz.polbot.core.repository.OrderRepository;
+import com.habanoz.polbot.core.model.PoloniexTradeResult;
+import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
+import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -35,17 +33,22 @@ public class PoloniexPatienceBot {
     private PoloniexPublicApi publicApi;
 
     @Autowired
-    private OrderRepository orderRepository;
+    private CurrencyConfigRepository currencyConfigRepository;
 
-    private List<EmnCurrencyConfig> emnCurrencyConfigs;
-    private double minAmount = 0.0001;
+    private Iterable<CurrencyConfig> emnCurrencyConfigs;
 
-    private String BASE_CURR = "BTC";
-    private final String CURR_PAIR_SEPARATOR = "_";
+    private static final double minAmount = 0.0001;
+    private static final String BASE_CURR = "BTC";
+    private static final String CURR_PAIR_SEPARATOR = "_";
 
 
     public PoloniexPatienceBot() {
-        emnCurrencyConfigs = new EmnCurrencyConfigParser().parse(new File("currency.config"));
+
+    }
+
+    @PostConstruct
+    public void init() {
+        emnCurrencyConfigs = currencyConfigRepository.findAll();
     }
 
     @Scheduled(fixedDelay = 60000)
@@ -62,9 +65,10 @@ public class PoloniexPatienceBot {
 
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
-        for (EmnCurrencyConfig currencyConfig : emnCurrencyConfigs) {
-            String currName = currencyConfig.getCurrencyName();
-            String currPair = BASE_CURR + CURR_PAIR_SEPARATOR + currName;
+        for (CurrencyConfig currencyConfig : emnCurrencyConfigs) {
+            String currPair = currencyConfig.getCurrencyPair();
+            String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
+
 
             if (currencyConfig.getUsableBalancePercent() <= 0)
                 continue;
@@ -94,7 +98,7 @@ public class PoloniexPatienceBot {
             BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
 
             // buy logic
-            if (openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minAmount) {
+            if (currencyConfig.getBuyable() && openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minAmount) {
                 PoloniexTradeResult result = tradingApi.buy(currPair, buyPrice, buyAmount);
 
                 if (result != null) {
@@ -103,12 +107,13 @@ public class PoloniexPatienceBot {
             }
 
             // sell logic
-            if (currBalance.doubleValue() > minAmount && openOrderListForCurr.stream().noneMatch(p -> p.getType().equalsIgnoreCase("sell"))) {
+            if (currencyConfig.getSellable() && currBalance.doubleValue() > minAmount) {
                 List<PoloniexTrade> currHistoryList = historyMap.get(currPair);
 
                 // get last buying price to calculate selling price
                 BigDecimal lastBuyPrice = currHistoryList.get(0).getRate();
-                BigDecimal sellAmount = currBalance;
+                final BigDecimal sellAmount = currBalance;
+
                 for (PoloniexTrade history : currHistoryList) {
                     if (history.getType().equalsIgnoreCase("buy")) {
                         lastBuyPrice = history.getRate();
@@ -117,7 +122,6 @@ public class PoloniexPatienceBot {
 
                 //selling price should be a little higher to make profit
                 BigDecimal sellPrice = new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01);
-
 
                 PoloniexTradeResult result = tradingApi.sell(currPair, sellPrice, sellAmount);
             }
