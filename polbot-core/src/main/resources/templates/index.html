@@ -40,7 +40,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">Start Bootstrap</a>
+            <a class="navbar-brand" href="/">PolBot</a>
         </div>
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
@@ -113,8 +113,12 @@
                                     <span style="font-weight: bold"
                                           th:text="#{currencyconfig.usableBalancePercent} +' : '"/>
                                     <span th:text="${currencyConfig.usableBalancePercent}"/><br/>
+                                    <span style="font-weight: bold" th:text="#{currencyconfig.buyAtPrice} +' : '"/>
+                                    <span th:text="${currencyConfig.buyAtPrice}"/><br/>
                                     <span style="font-weight: bold" th:text="#{currencyconfig.buyOnPercent} +' : '"/>
                                     <span th:text="${currencyConfig.buyOnPercent}"/><br/>
+                                    <span style="font-weight: bold" th:text="#{currencyconfig.sellAtPrice} +' : '"/>
+                                    <span th:text="${currencyConfig.sellAtPrice}"/><br/>
                                     <span style="font-weight: bold" th:text="#{currencyconfig.sellOnPercent} +' : '"/>
                                     <span th:text="${currencyConfig.sellOnPercent}"/><br/>
                                     <label th:for="checkboxBuyable" th:text="#{currencyconfig.buyable}"/>

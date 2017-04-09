@@ -65,7 +65,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">Start Bootstrap</a>
+            <a class="navbar-brand" href="/">PolBot</a>
         </div>
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
@@ -117,7 +117,7 @@
                         <form action="#" th:action="@{/currencyconfig}" th:object="${currencyConfig}" method="post">
                             <div class="row">
 
-                                <div class="col-sm-6 col-lg-3">
+                                <div class="col-sm-6 col-lg-4">
                                     <div class="form-group">
                                         <label th:for="inputCurrPair" th:text="#{currencyconfig.currencyPair} "/>
                                         <div class="col-md-8">
@@ -129,7 +129,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-sm-6 col-lg-3">
+                                <div class="col-sm-6 col-lg-4">
                                     <div class="form-group">
                                         <label th:for="inputUsableBalancePercent"
                                                th:text="#{currencyconfig.usableBalancePercent} "/>
@@ -143,7 +143,19 @@
                                     </div>
                                 </div>
 
-                                <div class="col-sm-6 col-lg-3">
+                                <div class="col-sm-6 col-lg-4">
+                                    <div class="form-group">
+                                        <label th:for="inputBuyAtPrice" th:text="#{currencyconfig.buyAtPrice} "/>
+                                        <div class="col-md-8">
+                                            <div class="input-group">
+                                                <input id="inputBuyAtPrice" type="text" th:field="*{buyAtPrice}"
+                                                       th:errorclass="fieldError"/><br/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6 col-lg-4">
                                     <div class="form-group">
                                         <label th:for="inputBuyOnPercent" th:text="#{currencyconfig.buyOnPercent} "/>
                                         <div class="col-md-8">
@@ -155,7 +167,19 @@
                                     </div>
                                 </div>
 
-                                <div class="col-sm-6 col-lg-3">
+                                <div class="col-sm-6 col-lg-4">
+                                    <div class="form-group">
+                                        <label th:for="inputSellAtPrice" th:text="#{currencyconfig.sellAtPrice} "/>
+                                        <div class="col-md-8">
+                                            <div class="input-group">
+                                                <input id="inputSellAtPrice" type="text" th:field="*{sellAtPrice}"
+                                                       th:errorclass="fieldError"/><br/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6 col-lg-4">
                                     <div class="form-group">
                                         <label th:for="inputSellOnPercent" th:text="#{currencyconfig.sellOnPercent} "/>
                                         <div class="col-md-8">
@@ -167,9 +191,8 @@
                                     </div>
                                 </div>
 
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-6 col-lg-3">
+    
+                                <div class="col-sm-6 col-lg-4">
                                     <div class="form-group">
                                         <label th:for="checkboxBuyable" th:text="#{currencyconfig.buyable} "/>
                                         <div class="col-md-8">
@@ -181,7 +204,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-sm-6 col-lg-3">
+                                <div class="col-sm-6 col-lg-4">
                                     <div class="form-group">
                                         <label th:for="checkboxSellable" th:text="#{currencyconfig.sellable} "/>
                                         <div class="col-md-8">

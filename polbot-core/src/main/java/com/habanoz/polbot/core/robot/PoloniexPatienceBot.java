@@ -66,12 +66,9 @@ public class PoloniexPatienceBot {
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
         for (CurrencyConfig currencyConfig : emnCurrencyConfigs) {
+
             String currPair = currencyConfig.getCurrencyPair();
             String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
-
-
-            if (currencyConfig.getUsableBalancePercent() <= 0)
-                continue;
 
             BigDecimal currBalance = balanceMap.get(currName);
 
@@ -94,15 +91,18 @@ public class PoloniexPatienceBot {
                 buyBudget = new BigDecimal(minAmount);
             }
 
-            // buying price should be a little lower to make profit
-            BigDecimal buyPrice = new BigDecimal(lowestBuyPrice.doubleValue() * (100 - currencyConfig.getBuyOnPercent()) * 0.01);
-
-
-            // calculate amount that can be bouht with buyBudget and buyPrice
-            BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
-
+            //
+            //
             // buy logic
-            if (currencyConfig.getBuyable() && openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minAmount) {
+            if (currencyConfig.getUsableBalancePercent() > 0 && currencyConfig.getBuyable() && openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minAmount) {
+
+                // buying price should be a little lower to make profit
+                // if set, buy at price will be used, other wise buy on percent will be used
+                BigDecimal buyPrice = currencyConfig.getBuyAtPrice() == 0 ? new BigDecimal(lowestBuyPrice.doubleValue() * (100 - currencyConfig.getBuyOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getBuyAtPrice());
+
+                // calculate amount that can be bought with buyBudget and buyPrice
+                BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
+
                 PoloniexTradeResult result = tradingApi.buy(currPair, buyPrice, buyAmount);
 
                 if (result != null) {
@@ -110,6 +110,8 @@ public class PoloniexPatienceBot {
                 }
             }
 
+            //
+            //
             // sell logic
             if (currencyConfig.getSellable() && currBalance.doubleValue() > minAmount) {
                 List<PoloniexTrade> currHistoryList = historyMap.get(currPair);
@@ -125,7 +127,8 @@ public class PoloniexPatienceBot {
                 }
 
                 //selling price should be a little higher to make profit
-                BigDecimal sellPrice = new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01);
+                // if set, sell at price will be used, otherwise sell on percent will be used
+                BigDecimal sellPrice = currencyConfig.getSellAtPrice() == 0 ? new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getSellAtPrice());
 
                 PoloniexTradeResult result = tradingApi.sell(currPair, sellPrice, sellAmount);
             }
