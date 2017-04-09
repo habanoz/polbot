@@ -16,11 +16,6 @@ public class BotUser {
     private Boolean isActive;
     private String userEmail;
     private String userName;
-    private Integer emailPort;
-    private String emailHost;
-    private String emailUserName;
-    private String emailPassword;
-    private Boolean enableSsl;
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -72,43 +67,5 @@ public class BotUser {
         this.userName = userName;
     }
 
-    public Integer getEmailPort() {
-        return emailPort;
-    }
 
-    public void setEmailPort(Integer emailPort) {
-        this.emailPort = emailPort;
-    }
-
-    public String getEmailHost() {
-        return emailHost;
-    }
-
-    public void setEmailHost(String emailHost) {
-        this.emailHost = emailHost;
-    }
-
-    public String getEmailUserName() {
-        return emailUserName;
-    }
-
-    public void setEmailUserName(String emailUserName) {
-        this.emailUserName = emailUserName;
-    }
-
-    public String getEmailPassword() {
-        return emailPassword;
-    }
-
-    public void setEmailPassword(String emailPassword) {
-        this.emailPassword = emailPassword;
-    }
-
-    public Boolean getEnableSsl() {
-        return enableSsl;
-    }
-
-    public void setEnableSsl(Boolean enableSsl) {
-        this.enableSsl = enableSsl;
-    }
 }
