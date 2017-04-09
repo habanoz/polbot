@@ -14,6 +14,7 @@ public class CurrencyConfig {
     private float sellOnPercent;
     private boolean buyable;
     private boolean sellable;
+    private int userId;
 
     @Id
     public String getCurrencyPair() {
@@ -62,5 +63,13 @@ public class CurrencyConfig {
 
     public void setSellable(boolean sellable) {
         this.sellable = sellable;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 }
