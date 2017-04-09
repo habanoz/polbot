@@ -7,6 +7,7 @@ import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexTicker;
 import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.model.PoloniexTradeResult;
+import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,9 @@ public class PoloniexPatienceBot {
 
     @Autowired
     private CurrencyConfigRepository currencyConfigRepository;
+
+    @Autowired
+    private BotUserRepository botUserRepository;
 
     private Iterable<CurrencyConfig> emnCurrencyConfigs;
 

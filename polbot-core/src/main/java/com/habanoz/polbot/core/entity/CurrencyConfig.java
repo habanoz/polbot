@@ -10,9 +10,7 @@ import javax.persistence.Id;
 public class CurrencyConfig {
     private String currencyPair;
     private float usableBalancePercent;
-    private float buyAtPrice = 0;
     private float buyOnPercent;
-    private float sellAtPrice = 0;
     private float sellOnPercent;
     private boolean buyable;
     private boolean sellable;
@@ -64,21 +62,5 @@ public class CurrencyConfig {
 
     public void setSellable(boolean sellable) {
         this.sellable = sellable;
-    }
-
-    public float getBuyAtPrice() {
-        return buyAtPrice;
-    }
-
-    public void setBuyAtPrice(float buyAtPrice) {
-        this.buyAtPrice = buyAtPrice;
-    }
-
-    public float getSellAtPrice() {
-        return sellAtPrice;
-    }
-
-    public void setSellAtPrice(float sellAtPrice) {
-        this.sellAtPrice = sellAtPrice;
     }
 }
