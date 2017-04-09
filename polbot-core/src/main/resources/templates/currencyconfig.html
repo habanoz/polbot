@@ -103,7 +103,7 @@
         <div class="col-md-9">
 
             <div class="thumbnail">
-                <div id="chartdiv" style="width:800px; height:600px;"></div>
+                <div id="chartdiv" th:unless=" ${#strings.isEmpty(currency)}" style="width:800px; height:600px;"></div>
                 <div class="caption-full">
                     <div class="well">
 
@@ -194,6 +194,13 @@
                                 </div>
                             </div>
                             <div class="row">
+
+                                <div class="submit">
+                                    <button type="submit" onclick="return confirm('Want to delete?')" class="btn btn-primary btn-primary-group"
+                                            style="float: left"
+                                            name="delete" th:text="Sil">Add Seed Starter
+                                    </button>
+                                </div>
 
                                 <div class="submit">
                                     <button type="submit" class="btn btn-primary btn-primary-group"

@@ -79,6 +79,10 @@ public class PoloniexPatienceBot {
 
             PoloniexTicker ticker = tickerMap.get(currPair);
 
+            // this may indicate invalid currency name
+            if (ticker == null)
+                continue;
+
             //current lowest market price
             BigDecimal lowestBuyPrice = ticker.getLowestAsk();
             BigDecimal highestSellPrice = ticker.getHighestBid();

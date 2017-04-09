@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.habanoz.polbot.core.mail.MailService;
 import com.habanoz.polbot.core.model.PoloniexTradeResult;
 import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
@@ -16,6 +17,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Component;
@@ -33,8 +35,12 @@ import java.util.*;
 public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTradingApiImpl.class);
     private static final Logger operationlogger = LoggerFactory.getLogger("PoloniexOperation");
+
     private TradingAPIClient tradingAPIClient;
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private MailService mailService;
 
     public PoloniexTradingApiImpl(@Value("${api}") String apiKey, @Value("${secret}") String secretKey) {
         tradingAPIClient = new PoloniexTradingAPIClient(apiKey, secretKey);
@@ -67,12 +73,16 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             if (str.contains("error")) {
                 operationlogger.error("Buy resulted:" + str);
+                mailService.sendMail("Buy Order Failed","Attempt to buy "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" failed. Reason: \n"+str);
+
                 return null;
             }
 
             PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
 
             operationlogger.info("Buy resulted: {}", result.toString());
+
+            mailService.sendMail("Buy Order Given", "Attempt to buy "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" completed. Result: \n"+result.toString());
 
             return result;
 
@@ -93,12 +103,14 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             if (str.contains("error")) {
                 operationlogger.error("Sell resulted:" + str);
+                mailService.sendMail("Sell Order Failed","Attempt to sell "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" failed. Reason: \n"+str);
                 return null;
             }
 
             PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
 
             operationlogger.info("Sell resulted: {}", result.toString());
+            mailService.sendMail("Sell Order Given", "Attempt to sell "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" completed. Result: \n"+result.toString());
 
             return result;
 
