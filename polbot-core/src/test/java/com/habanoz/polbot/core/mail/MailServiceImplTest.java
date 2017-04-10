@@ -17,7 +17,7 @@ public class MailServiceImplTest {
     MailService mailService;
     @Test
     public void sendMail() throws Exception {
-        mailService.sendMail("merab","naber");
+        mailService.sendMail("eminyuce@gmail.com","merab","naber");
     }
 
 }

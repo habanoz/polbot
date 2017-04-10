@@ -20,18 +20,14 @@ public class MailServiceImpl implements MailService {
 
     @Autowired
     private JavaMailSender javaMailSender;
-
-    private String to;
     private String from;
 
-
-    public MailServiceImpl(@Value("${spring.mail.from}") String from, @Value("${spring.mail.to}") String to) {
-        this.from = from;
-        this.to = to;
+    public MailServiceImpl( @Value("${spring.mail.from}") String from) {
+          this.from = from;
     }
 
     @Override
-    public void sendMail(String header, String body) {
+    public void sendMail( String to, String header, String body) {
         MimeMessage mail = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(mail, true);

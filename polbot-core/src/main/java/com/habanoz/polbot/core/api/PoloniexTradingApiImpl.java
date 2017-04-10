@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.mail.MailService;
 import com.habanoz.polbot.core.model.PoloniexTradeResult;
 import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
@@ -42,8 +43,15 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     @Autowired
     private MailService mailService;
 
-    public PoloniexTradingApiImpl(@Value("${api}") String apiKey, @Value("${secret}") String secretKey) {
-        tradingAPIClient = new PoloniexTradingAPIClient(apiKey, secretKey);
+    private BotUser botUser;
+
+
+    public PoloniexTradingApiImpl() {
+
+    }
+    public void setBotUser(BotUser botUser) {
+        this.botUser = botUser;
+        tradingAPIClient = new PoloniexTradingAPIClient(botUser.getPublicKey(), botUser.getPrivateKey());
 
         JavaTimeModule module = new JavaTimeModule();
         LocalDateTimeDeserializer localDateTimeDeserializer = new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
@@ -52,6 +60,9 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
                 .modules(module)
                 .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .build();
+    }
+    public BotUser getBotUser() {
+        return botUser;
     }
 
     @Override
@@ -73,7 +84,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             if (str.contains("error")) {
                 operationlogger.error("Buy resulted:" + str);
-                mailService.sendMail("Buy Order Failed","Attempt to buy "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" failed. Reason: \n"+str);
+                mailService.sendMail(botUser.getUserEmail(),"Buy Order Failed","Attempt to buy "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" failed. Reason: \n"+str);
 
                 return null;
             }
@@ -82,7 +93,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             operationlogger.info("Buy resulted: {}", result.toString());
 
-            mailService.sendMail("Buy Order Given", "Attempt to buy "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" completed. Result: \n"+result.toString());
+            mailService.sendMail(botUser.getUserEmail(),"Buy Order Given", "Attempt to buy "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" completed. Result: \n"+result.toString());
 
             return result;
 
@@ -103,14 +114,14 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             if (str.contains("error")) {
                 operationlogger.error("Sell resulted:" + str);
-                mailService.sendMail("Sell Order Failed","Attempt to sell "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" failed. Reason: \n"+str);
+                mailService.sendMail(botUser.getUserEmail(),"Sell Order Failed","Attempt to sell "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" failed. Reason: \n"+str);
                 return null;
             }
 
             PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
 
             operationlogger.info("Sell resulted: {}", result.toString());
-            mailService.sendMail("Sell Order Given", "Attempt to sell "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" completed. Result: \n"+result.toString());
+            mailService.sendMail(botUser.getUserEmail(),"Sell Order Given", "Attempt to sell "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" completed. Result: \n"+result.toString());
 
             return result;
 
@@ -169,4 +180,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
             return Collections.emptyMap();
         }
     }
+
+
+
 }

@@ -1,6 +1,7 @@
 package com.habanoz.polbot.core.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.model.PoloniexTradeResult;
 import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
@@ -32,4 +33,5 @@ public interface PoloniexTradingApi {
     BigDecimal returnBalance(String cur);
 
     Map<String, List<PoloniexTrade>> returnTradeHistory();
+    void setBotUser(BotUser botuser);
 }

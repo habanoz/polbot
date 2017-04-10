@@ -2,6 +2,7 @@ package com.habanoz.polbot.core.robot;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
+import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexTicker;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by habanoz on 05.04.2017.
@@ -52,12 +54,28 @@ public class PoloniexPatienceBot {
 
     @PostConstruct
     public void init() {
-        emnCurrencyConfigs = currencyConfigRepository.findAll();
+
     }
 
     @Scheduled(fixedDelay = 60000)
     public void runLogic() {
+
+        List<BotUser> activeBotUsers = botUserRepository.findAll().stream().filter(r->r.getActive()).collect(Collectors.toList());
+        for (BotUser user: activeBotUsers) {
+            //User specific currencies
+            emnCurrencyConfigs = currencyConfigRepository.findAll().stream().
+                    filter(r->r.getUserId() == user.getUserId()).collect(Collectors.toList());
+            tradingApi.setBotUser(user);
+
+            startTradingForEachUser(user);
+        }
+
+
+    }
+
+    private void startTradingForEachUser(BotUser user) {
         logger.info("Started");
+
 
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
 
@@ -139,6 +157,5 @@ public class PoloniexPatienceBot {
         }
 
         logger.info("Completed");
-
     }
 }
