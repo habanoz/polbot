@@ -63,7 +63,7 @@ public class PoloniexPatienceBot {
     public void runLogic() {
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
 
-        List<BotUser> activeBotUsers = botUserRepository.findByIsActive(true);
+        List<BotUser> activeBotUsers = botUserRepository.findByActive(true);
         for (BotUser user : activeBotUsers) {
             startTradingForEachUser(user, tickerMap);
         }

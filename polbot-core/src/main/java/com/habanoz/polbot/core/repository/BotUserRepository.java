@@ -20,7 +20,7 @@ public interface BotUserRepository
     List<BotUser> findAll();
 
     @Cacheable
-    List<BotUser> findByIsActive(boolean isActive);
+    List<BotUser> findByActive(boolean isActive);
 
     @CacheEvict(allEntries = true)
     @Override
