@@ -22,10 +22,10 @@ public interface CurrencyConfigRepository extends JpaRepository<CurrencyConfig, 
     List<CurrencyConfig> findByUserId(Integer userId);
 
     @Override
-    @CacheEvict
+    @CacheEvict(allEntries = true)
     CurrencyConfig save(CurrencyConfig var1);
 
     @Override
-    @CacheEvict
+    @CacheEvict(allEntries = true)
     void delete(CurrencyConfig var1);
 }

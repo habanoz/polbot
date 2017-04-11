@@ -17,7 +17,6 @@ import java.util.Map;
 @Controller
 public class IndexController {
 
-
     @Autowired
     private CurrencyConfigRepository currencyConfigRepository;
 
@@ -28,6 +27,7 @@ public class IndexController {
 
         model.put("currencyConfig", new CurrencyConfig());
         model.put("currencyConfigs", this.currencyConfigRepository.findAll());
+
         return "index";
     }
 
