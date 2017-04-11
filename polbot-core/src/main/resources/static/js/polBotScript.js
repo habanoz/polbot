@@ -17,9 +17,15 @@ function bindUserCurrencyEvent() {
 function handleUserCurrencyEvent(e) {
     var caller = e.target;
     var userId = $(caller).attr('data-user-currency');
-    var postData = JSON.stringify({ "userId": parseInt(userId) });
-    ajaxMethodCall(postData, "/ajax/GetUserCurrencies", function (data) {
+    var postData="";
+    var ajaxUrl = "/GetAjaxUsers?userId="+parseInt(userId);
+    ajaxMethodCall(postData,ajaxUrl, function (data) {
         $("#userCurrencies").html(data);
+
+        data.forEach(function (item) {
+                                console.log(item);
+
+                                });
     });
 }
 
@@ -29,12 +35,16 @@ function handleUserCurrencyEvent(e) {
 function ajaxMethodCall(postData, ajaxUrl, successFunction) {
 
     $.ajax({
-        type: "POST",
+        type: "GET",
         url: ajaxUrl,
-        data: postData,
+     //   data: postData,
         dataType: 'json',
         contentType: 'application/json; charset=utf-8',
         success: successFunction,
+         beforeSend: function(xhr) {
+                    xhr.setRequestHeader("Accept", "application/json");
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                },
         error: function (jqXHR, exception) {
             console.error("parameters :" + postData);
             console.error("ajaxUrl :" + ajaxUrl);

@@ -24,24 +24,14 @@ public class AjaxController {
     @Autowired
     private CurrencyConfigRepository currencyConfigRepository;
 
-    @RequestMapping(value = "/GetAjaxUsers", method = RequestMethod.POST)
+
+    @RequestMapping(value = "/GetAjaxUsers", method = RequestMethod.GET)
     @ResponseBody
-    public String GetUserCurrencies(@RequestParam("userId") int userId) {
+    public List<CurrencyConfig> GetUserCurrencies(@RequestParam("userId") int userId) {
 
-       // int userId=1;
+        // int userId=1;
         List<CurrencyConfig> userCurrencies = currencyConfigRepository.findByUserId(userId);
-       // Returned the render html page from over here.
-        return "test";
+        // Returned the render html page from over here.
+        return userCurrencies;
     }
-
-
-//    @RequestMapping(value = "/GetAjaxUsers", method = RequestMethod.GET)
-//    @ResponseBody
-//    public List<CurrencyConfig> GetUserCurrencies(@RequestParam("userId") int userId) {
-//
-//        // int userId=1;
-//        List<CurrencyConfig> userCurrencies = currencyConfigRepository.findByUserId(userId);
-//        // Returned the render html page from over here.
-//        return userCurrencies;
-//    }
 }
