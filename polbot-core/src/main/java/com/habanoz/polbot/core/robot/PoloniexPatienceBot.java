@@ -57,17 +57,14 @@ public class PoloniexPatienceBot {
 
     @PostConstruct
     public void init() {
-
     }
 
     @Scheduled(fixedDelay = 60000)
     public void runLogic() {
+        Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
 
-        List<BotUser> activeBotUsers = botUserRepository.findAll().stream().filter(BotUser::getActive).collect(Collectors.toList());
+        List<BotUser> activeBotUsers = botUserRepository.findByIsActive(true);
         for (BotUser user : activeBotUsers) {
-
-            Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
-
             startTradingForEachUser(user, tickerMap);
         }
 
@@ -78,11 +75,10 @@ public class PoloniexPatienceBot {
         logger.info("Started for user {}", user);
 
         //User specific currency config list
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findAll().stream().
-                filter(r -> r.getUserId() == user.getUserId()).collect(Collectors.toList());
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId());
 
         if (currencyConfigs.isEmpty()) {
-            logger.debug("No currency config for user {}, returning ...", user);
+            logger.info("No currency config for user {}, returning ...", user);
             return;
         }
 
@@ -168,6 +164,6 @@ public class PoloniexPatienceBot {
             }
         }
 
-        logger.info("Completed");
+        logger.info("Completed for user {}", user);
     }
 }
