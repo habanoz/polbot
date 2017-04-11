@@ -67,5 +67,10 @@ public class BotUser {
         this.userName = userName;
     }
 
-
+    @Override
+    public String toString() {
+        return "BotUser{" +
+                "userName='" + userName + '\'' +
+                '}';
+    }
 }

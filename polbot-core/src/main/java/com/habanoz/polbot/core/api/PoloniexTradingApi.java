@@ -33,5 +33,4 @@ public interface PoloniexTradingApi {
     BigDecimal returnBalance(String cur);
 
     Map<String, List<PoloniexTrade>> returnTradeHistory();
-    void setBotUser(BotUser botuser);
 }

@@ -32,7 +32,6 @@ import java.util.*;
 /**
  * Created by habanoz on 02.04.2017.
  */
-@Component
 public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTradingApiImpl.class);
     private static final Logger operationlogger = LoggerFactory.getLogger("PoloniexOperation");
@@ -45,11 +44,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
     private BotUser botUser;
 
-
-    public PoloniexTradingApiImpl() {
-
-    }
-    public void setBotUser(BotUser botUser) {
+    public PoloniexTradingApiImpl(BotUser botUser) {
         this.botUser = botUser;
         tradingAPIClient = new PoloniexTradingAPIClient(botUser.getPublicKey(), botUser.getPrivateKey());
 

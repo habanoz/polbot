@@ -2,6 +2,7 @@ package com.habanoz.polbot.core.robot;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
+import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
@@ -13,6 +14,7 @@ import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -24,13 +26,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * Trading bot with Buy when cheap sell when high logic
+ * <p>
  * Created by habanoz on 05.04.2017.
  */
 @Component
 public class PoloniexPatienceBot {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
-    @Autowired
-    private PoloniexTradingApi tradingApi;
 
     @Autowired
     private PoloniexPublicApi publicApi;
@@ -41,7 +43,8 @@ public class PoloniexPatienceBot {
     @Autowired
     private BotUserRepository botUserRepository;
 
-    private Iterable<CurrencyConfig> emnCurrencyConfigs;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     private static final double minAmount = 0.0001;
     private static final String BASE_CURR = "BTC";
@@ -60,24 +63,33 @@ public class PoloniexPatienceBot {
     @Scheduled(fixedDelay = 60000)
     public void runLogic() {
 
-        List<BotUser> activeBotUsers = botUserRepository.findAll().stream().filter(r->r.getActive()).collect(Collectors.toList());
-        for (BotUser user: activeBotUsers) {
-            //User specific currencies
-            emnCurrencyConfigs = currencyConfigRepository.findAll().stream().
-                    filter(r->r.getUserId() == user.getUserId()).collect(Collectors.toList());
-            tradingApi.setBotUser(user);
+        List<BotUser> activeBotUsers = botUserRepository.findAll().stream().filter(BotUser::getActive).collect(Collectors.toList());
+        for (BotUser user : activeBotUsers) {
 
-            startTradingForEachUser(user);
+            Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
+
+            startTradingForEachUser(user, tickerMap);
         }
 
 
     }
 
-    private void startTradingForEachUser(BotUser user) {
-        logger.info("Started");
+    private void startTradingForEachUser(BotUser user, Map<String, PoloniexTicker> tickerMap) {
+        logger.info("Started for user {}", user);
 
+        //User specific currency config list
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findAll().stream().
+                filter(r -> r.getUserId() == user.getUserId()).collect(Collectors.toList());
 
-        Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
+        if (currencyConfigs.isEmpty()) {
+            logger.debug("No currency config for user {}, returning ...", user);
+            return;
+        }
+
+        //create tradingApi instance for current user
+        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
+        //let spring autowire marked attributes
+        applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
 
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
 
@@ -87,7 +99,7 @@ public class PoloniexPatienceBot {
 
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
-        for (CurrencyConfig currencyConfig : emnCurrencyConfigs) {
+        for (CurrencyConfig currencyConfig : currencyConfigs) {
 
             String currPair = currencyConfig.getCurrencyPair();
             String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
