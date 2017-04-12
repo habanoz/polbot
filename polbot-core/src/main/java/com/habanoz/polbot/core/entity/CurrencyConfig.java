@@ -18,6 +18,7 @@ public class CurrencyConfig {
     private boolean sellable;
     private int userId;
 
+
     @Id
     public String getCurrencyPair() {
         return currencyPair;
@@ -90,4 +91,6 @@ public class CurrencyConfig {
     public void setUserId(int userId) {
         this.userId = userId;
     }
+
+
 }

@@ -92,6 +92,21 @@
 
 </span>
 
+    <script type="text/template" id="userCurrenciesTemplate">
+
+
+            {{#currencies}}
+            <p> {{currencyPair}} </p>
+            <div> {{usableBalancePercent}}
+                {{buyAtPrice}}
+                {{buyOnPercent}}
+                {{sellAtPrice}}
+            </div>
+            {{/currencies}}
+
+
+    </script>
+
 </div>
 <!-- /.container -->
 
@@ -113,6 +128,7 @@
 
 <!-- jQuery -->
 <script src="../js/jquery.js"></script>
+<script src="../js/mustache.min.js"></script>
 <script src="../js/polBotScript.js"></script>
 <!-- Bootstrap Core JavaScript -->
 <script src="../js/bootstrap.min.js"></script>

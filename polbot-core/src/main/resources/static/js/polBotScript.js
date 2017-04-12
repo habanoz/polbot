@@ -20,12 +20,12 @@ function handleUserCurrencyEvent(e) {
     var postData="";
     var ajaxUrl = "/GetAjaxUsers?userId="+parseInt(userId);
     ajaxMethodCall(postData,ajaxUrl, function (data) {
-        $("#userCurrencies").html(data);
 
-        data.forEach(function (item) {
-                                console.log(item);
-
-                                });
+        var template = $('#userCurrenciesTemplate').html();
+        var data = {currencies: JSON.parse(data.userCurrencies) };
+        console.log(data);
+        var result = Mustache.render(template, data);
+        $("#userCurrencies").html(result);
     });
 }
 

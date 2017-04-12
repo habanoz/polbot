@@ -75,7 +75,7 @@ public class PoloniexPatienceBot {
         logger.info("Started for user {}", user);
 
         //User specific currency config list
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId());
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId()).stream().filter(r->r.getBuyable() || r.getSellable()).collect(Collectors.toList());
 
         if (currencyConfigs.isEmpty()) {
             logger.info("No currency config for user {}, returning ...", user);
