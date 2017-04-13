@@ -10,10 +10,10 @@ import javax.persistence.Id;
  */
 @Entity
 public class BotUser {
-    private Integer userId;
+    private int userId;
     private String publicKey;
     private String privateKey;
-    private Boolean isActive;
+    private boolean isActive;
     private String userEmail;
     private String userName;
 
@@ -43,11 +43,11 @@ public class BotUser {
         this.privateKey = privateKey;
     }
 
-    public Boolean getActive() {
+    public boolean getActive() {
         return isActive;
     }
 
-    public void setActive(Boolean active) {
+    public void setActive(boolean active) {
         isActive = active;
     }
 

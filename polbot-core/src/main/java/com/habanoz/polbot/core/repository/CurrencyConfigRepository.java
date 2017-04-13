@@ -21,6 +21,9 @@ public interface CurrencyConfigRepository extends JpaRepository<CurrencyConfig, 
     @Cacheable
     List<CurrencyConfig> findByUserId(Integer userId);
 
+    @Cacheable
+    List<CurrencyConfig> findByUserIdAndBuyableOrSellable(Integer userId, Boolean buyable, Boolean sellable);
+
     @Override
     @CacheEvict(allEntries = true)
     CurrencyConfig save(CurrencyConfig var1);
