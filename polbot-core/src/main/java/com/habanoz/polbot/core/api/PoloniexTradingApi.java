@@ -16,9 +16,9 @@ import java.util.Map;
  * Created by habanoz on 02.04.2017.
  */
 public interface PoloniexTradingApi {
-    PoloniexTradeResult buy(String currencyPair, BigDecimal buyPrice, BigDecimal amount);
+    PoloniexTradeResult buy(PoloniexOpenOrder order);
 
-    PoloniexTradeResult sell(String currencyPair, BigDecimal sellPrice, BigDecimal amount);
+    PoloniexTradeResult sell(PoloniexOpenOrder order);
 
     Map runCommand(String commandName, TypeReference typeReference);
 

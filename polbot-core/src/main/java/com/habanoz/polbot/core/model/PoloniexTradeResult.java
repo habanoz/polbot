@@ -9,6 +9,13 @@ public class PoloniexTradeResult {
     private String orderNumber;
     private List<PoloniexTrade> resultingTrades;
 
+    public PoloniexTradeResult(List<PoloniexTrade> resultingTrades) {
+        this.resultingTrades = resultingTrades;
+    }
+
+    public PoloniexTradeResult() {
+    }
+
     public String getOrderNumber() {
         return orderNumber;
     }

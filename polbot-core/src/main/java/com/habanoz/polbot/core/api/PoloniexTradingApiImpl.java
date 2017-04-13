@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.habanoz.polbot.core.entity.BotUser;
+import com.habanoz.polbot.core.mail.HtmlHelper;
 import com.habanoz.polbot.core.mail.MailService;
 import com.habanoz.polbot.core.model.PoloniexTradeResult;
 import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
@@ -22,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Component;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -42,6 +45,9 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     @Autowired
     private MailService mailService;
 
+    @Autowired
+    private HtmlHelper htmlHelper;
+
     private BotUser botUser;
 
     public PoloniexTradingApiImpl(BotUser botUser) {
@@ -56,6 +62,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
                 .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .build();
     }
+
     public BotUser getBotUser() {
         return botUser;
     }
@@ -71,15 +78,15 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     }
 
     @Override
-    public PoloniexTradeResult buy(String currencyPair, BigDecimal price, BigDecimal amount) {
+    public PoloniexTradeResult buy(PoloniexOpenOrder order) {
         try {
-            operationlogger.info("Buying for {} at rate {} of amount {}", currencyPair, price.floatValue(), amount.floatValue());
+            operationlogger.info("Attempting to order {}", order);
 
-            String str = tradingAPIClient.buy(currencyPair, price, amount, false, false, false);
+            String str = tradingAPIClient.buy(order.getCurrencyPair(), order.getRate(), order.getAmount(), false, false, false);
 
             if (str.contains("error")) {
-                operationlogger.error("Buy resulted:" + str);
-                mailService.sendMail(botUser.getUserEmail(),"Buy Order Failed","Attempt to buy "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" failed. Reason: \n"+str);
+                operationlogger.error("Failed order " + order.toString());
+                mailService.sendMail(botUser.getUserEmail(), "Buy Order Failed", htmlHelper.getFailText(order, str), true);
 
                 return null;
             }
@@ -87,41 +94,44 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
             PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
 
             operationlogger.info("Buy resulted: {}", result.toString());
-
-            mailService.sendMail(botUser.getUserEmail(),"Buy Order Given", "Attempt to buy "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" completed. Result: \n"+result.toString());
+            mailService.sendMail(botUser.getUserEmail(), "Buy Order Given", htmlHelper.getSuccessText(order, result), true);
 
             return result;
 
         } catch (IOException e) {
-            logger.error("Error while buying {}", currencyPair, e);
+            logger.error("Error at order {}", order, e);
+            mailService.sendMail(botUser.getUserEmail(), "Buy Order Failed", htmlHelper.getFailText(order, e.getMessage()), true);
         }
 
         return null;
     }
 
+
     @Override
-    public PoloniexTradeResult sell(String currencyPair, BigDecimal price, BigDecimal amount) {
+    public PoloniexTradeResult sell(PoloniexOpenOrder order) {
 
         try {
-            operationlogger.info("Selling for {} at rate {} of amount {}", currencyPair, price.floatValue(), amount.floatValue());
+            operationlogger.info("Attempting to order {}", order);
 
-            String str = tradingAPIClient.sell(currencyPair, price, amount, false, false, false);
+            String str = tradingAPIClient.sell(order.getCurrencyPair(), order.getRate(), order.getAmount(), false, false, false);
 
             if (str.contains("error")) {
-                operationlogger.error("Sell resulted:" + str);
-                mailService.sendMail(botUser.getUserEmail(),"Sell Order Failed","Attempt to sell "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" failed. Reason: \n"+str);
+                operationlogger.error("Failed order " + order.toString());
+                mailService.sendMail(botUser.getUserEmail(), "Sell Order Failed", htmlHelper.getFailText(order, str), true);
+
                 return null;
             }
 
             PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
 
             operationlogger.info("Sell resulted: {}", result.toString());
-            mailService.sendMail(botUser.getUserEmail(),"Sell Order Given", "Attempt to sell "+currencyPair+" at rate "+price.toString()+" of amount "+amount.toString()+" completed. Result: \n"+result.toString());
+            mailService.sendMail(botUser.getUserEmail(), "Sell Order Given", htmlHelper.getSuccessText(order, result), true);
 
             return result;
 
         } catch (IOException e) {
-            logger.error("Error while selling {}", currencyPair, e);
+            logger.error("Error at order {}", order, e);
+            mailService.sendMail(botUser.getUserEmail(), "Buy Order Failed", htmlHelper.getFailText(order, e.getMessage()), true);
         }
 
         return null;
@@ -175,7 +185,6 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
             return Collections.emptyMap();
         }
     }
-
 
 
 }

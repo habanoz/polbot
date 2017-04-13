@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<style>
+    table.orderBook tr:nth-child(odd) {
+        background-color: #ffffff;
+    }
+
+    tr {
+        display: table-row;
+        vertical-align: inherit;
+        border-color: inherit;
+    }
+
+    table.orderBook th {
+        text-align: left;
+        background-color: #d3e7d9;
+        font-weight: bold;
+        padding: 2px 4px 1px 4px;
+        border-right: 1px solid #f6fbf6;
+    }
+
+    tbody {
+        display: table-row-group;
+        vertical-align: middle;
+        border-color: inherit;
+    }
+
+    table.orderBook {
+        width: 100%;
+        border: 1px solid #d3e7d9;
+        border-collapse: separate;
+        border-spacing: 0px;
+    }
+
+    table.orderBook tr:nth-child(odd) {
+        background-color: #ffffff;
+    }
+
+    tr {
+        display: table-row;
+        vertical-align: inherit;
+        border-color: inherit;
+    }
+
+
+</style>
+<body>
+
+
+<div id="tradeHistoryTable">
+    <h2>Order Summary</h2>
+    <table class="orderBook orderBookRight"
+           style="width:100%;border: 1px solid #d3e7d9;border-collapse: separate;border-spacing: 0px;">
+        <thead style="display: table-header-group;vertical-align: middle;border-color: inherit;">
+        <tr>
+            <th>Currency</th>
+            <th>Type</th>
+            <th>Price</th>
+            <th>Amount</th>
+            <th>Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="o: ${orders}">
+            <td th:text="${o.currencyPair}">ETH_BTC</td>
+            <td th:text="${o.type}">BUY</td>
+            <td th:text="${o.rate}">0.23</td>
+            <td th:text="${o.amount}">2</td>
+            <td th:text="${o.total}">0.46</td>
+        </tr>
+        </tbody>
+    </table>
+    <h2>Failure Reson</h2>
+    <p th:text="${reason}">Amount not enough</p>
+</div>
+</body>
+</html>

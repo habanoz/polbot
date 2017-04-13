@@ -59,7 +59,7 @@ public class PoloniexPatienceBot {
     public void init() {
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 300000)
     public void runLogic() {
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
 
@@ -67,8 +67,6 @@ public class PoloniexPatienceBot {
         for (BotUser user : activeBotUsers) {
             startTradingForEachUser(user, tickerMap);
         }
-
-
     }
 
     private void startTradingForEachUser(BotUser user, Map<String, PoloniexTicker> tickerMap) {
@@ -133,7 +131,7 @@ public class PoloniexPatienceBot {
                 // calculate amount that can be bought with buyBudget and buyPrice
                 BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
 
-                PoloniexTradeResult result = tradingApi.buy(currPair, buyPrice, buyAmount);
+                PoloniexTradeResult result = tradingApi.buy(new PoloniexOpenOrder(currPair, "buy", buyPrice, buyAmount));
 
                 if (result != null) {
                     btcBalance = btcBalance.subtract(buyBudget);
@@ -160,7 +158,7 @@ public class PoloniexPatienceBot {
                 // if set, sell at price will be used, otherwise sell on percent will be used
                 BigDecimal sellPrice = currencyConfig.getSellAtPrice() == 0 ? new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getSellAtPrice());
 
-                PoloniexTradeResult result = tradingApi.sell(currPair, sellPrice, sellAmount);
+                PoloniexTradeResult result = tradingApi.sell(new PoloniexOpenOrder(currPair,"SELL", sellPrice, sellAmount));
             }
         }
 

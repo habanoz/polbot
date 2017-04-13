@@ -15,6 +15,16 @@ public class PoloniexTrade {
     private String type;
     private String category;
 
+    public PoloniexTrade(BigDecimal rate, BigDecimal amount, String type) {
+        this.rate = rate.setScale(12,BigDecimal.ROUND_DOWN);
+        this.amount = amount.setScale(12,BigDecimal.ROUND_DOWN);
+        this.type = type;
+        this.total = rate.multiply(amount).setScale(12,BigDecimal.ROUND_DOWN);
+    }
+
+    public PoloniexTrade() {
+    }
+
     public Long getGlobalTradeID() {
         return globalTradeID;
     }
