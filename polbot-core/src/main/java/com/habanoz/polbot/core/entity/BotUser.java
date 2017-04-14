@@ -16,6 +16,8 @@ public class BotUser {
     private boolean isActive;
     private String userEmail;
     private String userName;
+    private String password;
+    private String role;
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -65,6 +67,22 @@ public class BotUser {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     @Override
