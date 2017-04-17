@@ -46,4 +46,5 @@ public class AjaxController {
         String json = new ObjectMapper().writeValueAsString(payload);
         return json;
     }
+
 }

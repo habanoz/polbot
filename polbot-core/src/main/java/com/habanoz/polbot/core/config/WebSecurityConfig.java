@@ -16,19 +16,19 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-                .authorizeRequests()
-                .antMatchers("/allusers","/currencyconfig").hasRole("USER")
-                .antMatchers("/", "/home","/css/**","/js/**","/images/**","/webjars/**").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .formLogin().loginPage("/login")
-                .usernameParameter("username").passwordParameter("password")
-                .loginPage("/login")
-                .permitAll()
-                .and()
-                .logout()
-                .permitAll();
+//        http
+//                .authorizeRequests()
+//                .antMatchers("/allusers","/currencyconfig").hasRole("USER")
+//                .antMatchers("/", "/home","/css/**","/js/**","/images/**","/webjars/**").permitAll()
+//                .anyRequest().authenticated()
+//                .and()
+//                .formLogin().loginPage("/login")
+//                .usernameParameter("username").passwordParameter("password")
+//                .loginPage("/login")
+//                .permitAll()
+//                .and()
+//                .logout()
+//                .permitAll();
     }
 
 
