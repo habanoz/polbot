@@ -1,8 +1,11 @@
 package com.habanoz.polbot.core.web.controller;
 
 import com.habanoz.polbot.core.entity.CurrencyConfig;
+import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -16,6 +19,8 @@ import java.util.Map;
  */
 @Controller
 public class UsersController {
+
+    private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
 
     @Autowired
     private BotUserRepository botUserRepository;

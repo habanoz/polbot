@@ -102,11 +102,11 @@
                         </form>
                     </div>
 
-                    <div class="row" th:each="poloniexTicker : ${poloniexTickers}">
+                    <div class="row" th:each="currencyConfig : ${currencyConfigs}">
                         <div class="col-md-12">
                             <div class="panel panel-default">
                                 <div class="panel-body">
-                                    <span style="font-weight: bold" th:text="#{poloniexTicker.} +' : '"/>
+                                    <span style="font-weight: bold" th:text="#{currencyconfig.currencyPair} +' : '"/>
                                     <span th:text="${currencyConfig.currencyPair}"/><br/>
                                     <span style="font-weight: bold"
                                           th:text="#{currencyconfig.usableBalancePercent} +' : '"/>
