@@ -5,12 +5,13 @@ import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.model.PoloniexOpenOrder;
-import com.habanoz.polbot.core.model.PoloniexTicker;
-import com.habanoz.polbot.core.model.PoloniexTrade;
-import com.habanoz.polbot.core.model.PoloniexTradeResult;
+import com.habanoz.polbot.core.entity.TradeHistoryTrack;
+import com.habanoz.polbot.core.mail.HtmlHelper;
+import com.habanoz.polbot.core.mail.MailService;
+import com.habanoz.polbot.core.model.*;
 import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
+import com.habanoz.polbot.core.repository.TradeHistoryTrackRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,6 +47,15 @@ public class PoloniexPatienceBot {
 
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private HtmlHelper htmlHelper;
+
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private TradeHistoryTrackRepository tradeHistoryTrackRepository;
 
     private static final double minAmount = 0.0001;
     private static final String BASE_CURR = "BTC";
@@ -73,7 +84,7 @@ public class PoloniexPatienceBot {
         logger.info("Started for user {}", user);
 
         //User specific currency config list
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId()).stream().filter(r->r.getBuyable() || r.getSellable()).collect(Collectors.toList());
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId()).stream().filter(r -> r.getBuyable() || r.getSellable()).collect(Collectors.toList());
 
         if (currencyConfigs.isEmpty()) {
             logger.info("No currency config for user {}, returning ...", user);
@@ -89,9 +100,19 @@ public class PoloniexPatienceBot {
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
+        TradeHistoryTrack tradeHistoryTrack = tradeHistoryTrackRepository.findOne(user.getUserId());
+        Long start = System.currentTimeMillis() - 24 * 60 * 60 * 1000;
+        if (tradeHistoryTrack != null) {
+            start = tradeHistoryTrack.getLastTimeStamp();
+        }
+
+        Map<String, List<PoloniexTrade>> recentHistoryMap = tradingApi.returnTradeHistory(start);
         Map<String, List<PoloniexTrade>> historyMap = tradingApi.returnTradeHistory();
 
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
+
+        List<PoloniexOrderResult> orderResults = new ArrayList<>();
+        List<PoloniexTradeResult> tradeResults = new ArrayList<>();
 
         for (CurrencyConfig currencyConfig : currencyConfigs) {
 
@@ -131,7 +152,10 @@ public class PoloniexPatienceBot {
                 // calculate amount that can be bought with buyBudget and buyPrice
                 BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
 
-                PoloniexTradeResult result = tradingApi.buy(new PoloniexOpenOrder(currPair, "buy", buyPrice, buyAmount));
+                PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
+                PoloniexOrderResult result = tradingApi.buy(openOrder);
+
+                orderResults.add(result);
 
                 if (result != null) {
                     btcBalance = btcBalance.subtract(buyBudget);
@@ -158,8 +182,13 @@ public class PoloniexPatienceBot {
                 // if set, sell at price will be used, otherwise sell on percent will be used
                 BigDecimal sellPrice = currencyConfig.getSellAtPrice() == 0 ? new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getSellAtPrice());
 
-                PoloniexTradeResult result = tradingApi.sell(new PoloniexOpenOrder(currPair,"SELL", sellPrice, sellAmount));
+                PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "SELL", sellPrice, sellAmount);
+                PoloniexOrderResult result = tradingApi.sell(openOrder);
+
+                orderResults.add(result);
             }
+
+            mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getHtmlText(orderResults, tradeResults,recentHistoryMap), true);
         }
 
         logger.info("Completed for user {}", user);

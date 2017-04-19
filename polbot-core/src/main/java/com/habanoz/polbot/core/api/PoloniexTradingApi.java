@@ -2,10 +2,7 @@ package com.habanoz.polbot.core.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.habanoz.polbot.core.entity.BotUser;
-import com.habanoz.polbot.core.model.PoloniexTradeResult;
-import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
-import com.habanoz.polbot.core.model.PoloniexOpenOrder;
-import com.habanoz.polbot.core.model.PoloniexTrade;
+import com.habanoz.polbot.core.model.*;
 import org.apache.http.NameValuePair;
 
 import java.math.BigDecimal;
@@ -16,9 +13,9 @@ import java.util.Map;
  * Created by habanoz on 02.04.2017.
  */
 public interface PoloniexTradingApi {
-    PoloniexTradeResult buy(PoloniexOpenOrder order);
+    PoloniexOrderResult buy(PoloniexOpenOrder order);
 
-    PoloniexTradeResult sell(PoloniexOpenOrder order);
+    PoloniexOrderResult sell(PoloniexOpenOrder order);
 
     Map runCommand(String commandName, TypeReference typeReference);
 
@@ -33,4 +30,6 @@ public interface PoloniexTradingApi {
     BigDecimal returnBalance(String cur);
 
     Map<String, List<PoloniexTrade>> returnTradeHistory();
+
+    Map<String, List<PoloniexTrade>> returnTradeHistory(Long start);
 }

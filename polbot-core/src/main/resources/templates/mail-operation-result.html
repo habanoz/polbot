@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<style>
+    table.orderBook tr:nth-child(odd) {
+        background-color: #ffffff;
+    }
+
+    tr {
+        display: table-row;
+        vertical-align: inherit;
+        border-color: inherit;
+    }
+
+    table.orderBook th {
+        text-align: left;
+        background-color: #d3e7d9;
+        font-weight: bold;
+        padding: 2px 4px 1px 4px;
+        border-right: 1px solid #f6fbf6;
+    }
+
+    tbody {
+        display: table-row-group;
+        vertical-align: middle;
+        border-color: inherit;
+    }
+
+    table.orderBook {
+        width: 100%;
+        border: 1px solid #d3e7d9;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    table.orderBook tr:nth-child(odd) {
+        background-color: #ffffff;
+    }
+
+    tr {
+        display: table-row;
+        vertical-align: inherit;
+        border-color: inherit;
+    }
+
+
+</style>
+<body>
+
+<div th:unless="${successfulOrders.isEmpty()}" id="successTable">
+    <h2>Successful Orders</h2>
+    <table class="orderBook orderBookRight"
+           style="width:100%;border: 1px solid #d3e7d9;border-collapse: separate;border-spacing: 0px;background-color: #ffffff;">
+        <thead style="display: table-header-group;vertical-align: middle;border-color: inherit;">
+        <tr>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Currency</th>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Type</th>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Price</th>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Amount</th>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="o: ${successfulOrders}">
+            <td th:text="${o.order.currencyPair}">ETH_BTC</td>
+            <td th:text="${o.order.type}">BUY</td>
+            <td th:text="${o.order.rate}">0.23</td>
+            <td th:text="${o.order.amount}">2</td>
+            <td th:text="${o.order.total}">0.46</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div th:unless="${failedOrders.isEmpty()}" id="failedTable">
+    <h2>Failed Orders</h2>
+    <table class="orderBook orderBookRight"
+           style="width:100%;border: 1px solid #d3e7d9;border-collapse: separate;border-spacing: 0px;background-color: #ffffff;">
+        <thead style="display: table-header-group;vertical-align: middle;border-color: inherit;">
+        <tr>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Currency</th>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Type</th>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Price</th>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Amount</th>
+            <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Desc</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="o: ${failedOrders}">
+            <td th:text="${o.order.currencyPair}">ETH_BTC</td>
+            <td th:text="${o.order.type}">BUY</td>
+            <td th:text="${o.order.rate}">0.23</td>
+            <td th:text="${o.order.amount}">2</td>
+            <td th:text="${o.error}">Error desc</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<br/>
+<div>
+    <span th:text="'Total Balance '+${balance}+' BTC'"></span>
+</div>
+</body>
+</html>

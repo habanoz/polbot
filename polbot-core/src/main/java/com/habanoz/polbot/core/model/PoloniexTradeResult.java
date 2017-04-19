@@ -32,11 +32,12 @@ public class PoloniexTradeResult {
         this.resultingTrades = resultingTrades;
     }
 
+
     @Override
     public String toString() {
         return "PoloniexTradeResult{" +
                 "orderNumber='" + orderNumber + '\'' +
-                ", resultingTrades=" + resultingTrades.toString() +
+                ", resultingTrades=" + resultingTrades +
                 '}';
     }
 }
