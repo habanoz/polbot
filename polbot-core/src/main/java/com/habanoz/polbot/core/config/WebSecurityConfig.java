@@ -17,7 +17,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
                 .antMatchers("/allusers", "/currencyconfig").hasRole("USER")
-                .antMatchers("/", "/home", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                .antMatchers("/", "/home","/searchTicker", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin().loginPage("/login").defaultSuccessUrl("/")

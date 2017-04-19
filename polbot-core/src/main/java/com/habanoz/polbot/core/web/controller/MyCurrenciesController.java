@@ -34,7 +34,7 @@ public class MyCurrenciesController {
         model.put("searchKey", "");
         return "mycurrencies";
     }
-    @RequestMapping(value="/setSearch", method= RequestMethod.POST)
+    @RequestMapping(value="/searchCurrencyConfig", method= RequestMethod.POST)
     public String searchPost(@RequestParam("search") String search, ModelMap model) {
 
         int userId=1;  //Authenticated User

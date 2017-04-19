@@ -16,8 +16,8 @@
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
                 <li class="active"><a href="#" th:href="@{/}">Home</a></li>
-                <li><a href="#" th:href="@{/message}">Messages</a></li>
-                <li><a href="#" th:href="@{/task}">Tasks</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/mycurrencies}">My Currencies</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/openOrders}">Open Orders</a></li>
             </ul>
 
             <ul class="nav navbar-nav navbar-right">

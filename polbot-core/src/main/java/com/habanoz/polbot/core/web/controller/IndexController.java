@@ -31,25 +31,25 @@ public class IndexController {
 
         int userId=1;  //Authenticated User
         model.put("poloniexTicker", new PoloniexTicker());
-        model.put("poloniexTickerS", this.poloniexPublicApi.returnTicker());
+        model.put("poloniexTickers", this.poloniexPublicApi.returnTicker());
         model.put("searchKey", "");
         return "index";
     }
 
-    @RequestMapping(value="/setSearch", method= RequestMethod.POST)
+    @RequestMapping(value="/searchTicker", method= RequestMethod.POST)
     public String searchPost(@RequestParam("search") String search, ModelMap model) {
 
         int userId=1;  //Authenticated User
-        Map<String,PoloniexTicker> currencyConfigs =this.poloniexPublicApi.returnTicker();
+        Map<String,PoloniexTicker> tickers =this.poloniexPublicApi.returnTicker();
 
         if(search != null && !search.trim().isEmpty()){
-            currencyConfigs =currencyConfigs.entrySet().stream()
-                    .filter(map -> search.equalsIgnoreCase(map.getKey()))
+            tickers =tickers.entrySet().stream()
+                    .filter(map -> map.getKey().toLowerCase().contains(search.toLowerCase()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 
-        model.put("currencyConfig", new CurrencyConfig());
-        model.put("currencyConfigs", currencyConfigs);
+        model.put("poloniexTicker", new CurrencyConfig());
+        model.put("poloniexTickers", tickers);
         model.put("searchKey", search);
         return "index";
     }
