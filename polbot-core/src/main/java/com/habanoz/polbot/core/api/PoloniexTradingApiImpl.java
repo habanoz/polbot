@@ -70,7 +70,10 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     @Override
     public Map runCommand(String commandName, List<NameValuePair> params, TypeReference typeReference) {
         try {
-            return objectMapper.readValue(tradingAPIClient.returnTradingAPICommandResults(commandName, params), typeReference);
+            String json = tradingAPIClient.returnTradingAPICommandResults(commandName, params);
+            if (json == null) return Collections.emptyMap();
+
+            return objectMapper.readValue(json, typeReference);
         } catch (IOException e) {
             logger.error("Error while running command {}", commandName, e);
             return Collections.emptyMap();
@@ -178,7 +181,14 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
         // });
 
         try {
-            return objectMapper.readValue(tradingAPIClient.returnTradingAPICommandResults("returnTradeHistory", additionalPostParams), new TypeReference<HashMap<String, List<PoloniexTrade>>>() {
+
+            String result = tradingAPIClient.returnTradingAPICommandResults("returnTradeHistory", additionalPostParams);
+            if (result == null) {
+                logger.warn("returnTradeHistory command returned NULL");
+                return Collections.emptyMap();
+            }
+
+            return objectMapper.readValue(result, new TypeReference<HashMap<String, List<PoloniexTrade>>>() {
             });
         } catch (IOException e) {
             logger.error("Error while running command {}", "returnTradeHistory", e);
