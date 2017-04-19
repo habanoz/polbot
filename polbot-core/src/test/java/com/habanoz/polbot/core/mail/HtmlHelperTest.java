@@ -36,6 +36,6 @@ public class HtmlHelperTest {
         List<PoloniexTradeResult> tradeResults = new ArrayList<>();
         tradeResults.add(new PoloniexTradeResult(Collections.emptyList()));
 
-        mailService.sendMail("huseyinabanox@gmail.com", "Orders Given", htmlHelper.getHtmlText(orderResults, tradeResults, recentHistoryMap), true);
+        mailService.sendMail("huseyinabanox@gmail.com", "Orders Given", htmlHelper.getHtmlText(orderResults, tradeResults, null), true);
     }
 }
