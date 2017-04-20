@@ -4,6 +4,7 @@ import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
+import com.habanoz.polbot.core.service.IAuthenticationFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -29,12 +30,17 @@ public class MyCurrenciesController {
     @Autowired
     private BotUserRepository botUserRepository;
 
+    @Autowired
+    private IAuthenticationFacade authenticationFacade;
+
+
+
     private CurrencyConfig currentCurrencyConfig = new CurrencyConfig();
 
     @RequestMapping({"/mycurrencies"})
     public String welcome(Map<String, Object> model) {
 
-        int userId = 1;  //Authenticated User
+        int userId = authenticationFacade.GetUserId();  //Authenticated User
         model.put("currencyConfig", new CurrencyConfig());
         model.put("currencyConfigs", this.currencyConfigRepository.findByUserId(userId));
         model.put("searchKey", "");
@@ -44,7 +50,7 @@ public class MyCurrenciesController {
     @RequestMapping(value = "/searchCurrencyConfig", method = RequestMethod.POST)
     public String searchPost(@RequestParam("search") String search, ModelMap model) {
 
-        int userId = 1;  //Authenticated User
+        int userId = authenticationFacade.GetUserId();  //Authenticated User
         List<CurrencyConfig> currencyConfigs = this.currencyConfigRepository.findByUserId(userId);
 
         if (search != null && !search.trim().isEmpty()) {

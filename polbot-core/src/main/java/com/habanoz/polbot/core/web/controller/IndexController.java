@@ -4,6 +4,7 @@ import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.PoloniexTicker;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
+import com.habanoz.polbot.core.service.IAuthenticationFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -26,10 +27,13 @@ public class IndexController {
 
     private CurrencyConfig currentCurrencyConfig = new CurrencyConfig();
 
+    @Autowired
+    private IAuthenticationFacade authenticationFacade;
+
+
     @RequestMapping({"/", "/index"})
     public String welcome(Map<String, Object> model) {
-
-        int userId=1;  //Authenticated User
+        int userId = authenticationFacade.GetUserId();  //Authenticated User
         model.put("poloniexTicker", new PoloniexTicker());
         model.put("poloniexTickers", this.poloniexPublicApi.returnTicker());
         model.put("searchKey", "");
@@ -39,7 +43,7 @@ public class IndexController {
     @RequestMapping(value="/searchTicker", method= RequestMethod.POST)
     public String searchPost(@RequestParam("search") String search, ModelMap model) {
 
-        int userId=1;  //Authenticated User
+        int userId = authenticationFacade.GetUserId();  //Authenticated User
         Map<String,PoloniexTicker> tickers =this.poloniexPublicApi.returnTicker();
 
         if(search != null && !search.trim().isEmpty()){
