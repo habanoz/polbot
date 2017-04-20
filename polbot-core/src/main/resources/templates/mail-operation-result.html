@@ -47,6 +47,34 @@
 </style>
 <body>
 
+<div th:unless="${recentHistoryMap.isEmpty()}" id="tradeHistoryTable">
+    <h2>Recent Trades</h2>
+    <div th:each="trades:${recentHistoryMap}">
+        <p th:text="${trades.key}"></p>
+        <table class="orderBook orderBookRight"
+               style="width:100%;border: 1px solid #d3e7d9;border-collapse: separate;border-spacing: 0px;background-color: #ffffff;">
+            <thead style="display: table-header-group;vertical-align: middle;border-color: inherit;">
+            <tr>
+                <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Currency</th>
+                <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Type</th>
+                <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Price</th>
+                <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Amount</th>
+                <th style="text-align: left;background-color: #d3e7d9;font-weight: bold;">Total</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="o: ${trades.value}">
+                <td th:text="${o.type}">BUY</td>
+                <td th:text="${o.rate}">0.1</td>
+                <td th:text="${o.amount}">3</td>
+                <td th:text="${o.total}">0.3</td>
+                <td th:text="${o.fee}">0.0045</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div th:unless="${successfulOrders.isEmpty()}" id="successTable">
     <h2>Successful Orders</h2>
     <table class="orderBook orderBookRight"

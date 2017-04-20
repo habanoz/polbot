@@ -9,7 +9,15 @@ import javax.persistence.Id;
 @Entity
 public class TradeHistoryTrack {
     private Integer userId;
-    private Long lastTimeStamp;
+    private Long lastTimeStampInSec;
+
+    public TradeHistoryTrack(Integer userId, Long lastTimeStamp) {
+        this.userId = userId;
+        this.lastTimeStampInSec = lastTimeStamp;
+    }
+
+    public TradeHistoryTrack() {
+    }
 
     @Id
     public Integer getUserId() {
@@ -20,11 +28,11 @@ public class TradeHistoryTrack {
         this.userId = userId;
     }
 
-    public Long getLastTimeStamp() {
-        return lastTimeStamp;
+    public Long getLastTimeStampInSec() {
+        return lastTimeStampInSec;
     }
 
-    public void setLastTimeStamp(Long lastTimeStamp) {
-        this.lastTimeStamp = lastTimeStamp;
+    public void setLastTimeStampInSec(Long lastTimeStampInSec) {
+        this.lastTimeStampInSec = lastTimeStampInSec;
     }
 }

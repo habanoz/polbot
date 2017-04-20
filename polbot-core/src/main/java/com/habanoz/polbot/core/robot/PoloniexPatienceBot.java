@@ -101,13 +101,18 @@ public class PoloniexPatienceBot {
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
         TradeHistoryTrack tradeHistoryTrack = tradeHistoryTrackRepository.findOne(user.getUserId());
-        Long start = System.currentTimeMillis() - 24 * 60 * 60 * 1000;
-        if (tradeHistoryTrack != null) {
-            start = tradeHistoryTrack.getLastTimeStamp();
+
+
+        if (tradeHistoryTrack == null) {
+            Long startInSec = System.currentTimeMillis() / 1000 - 24 * 60 * 60;
+            tradeHistoryTrack = new TradeHistoryTrack(user.getUserId(), startInSec);
         }
 
-        Map<String, List<PoloniexTrade>> recentHistoryMap = tradingApi.returnTradeHistory(start);
+        Map<String, List<PoloniexTrade>> recentHistoryMap = tradingApi.returnTradeHistory(tradeHistoryTrack.getLastTimeStampInSec());
         Map<String, List<PoloniexTrade>> historyMap = tradingApi.returnTradeHistory();
+
+        tradeHistoryTrack.setLastTimeStampInSec(System.currentTimeMillis() / 1000);//to sec
+        tradeHistoryTrackRepository.save(tradeHistoryTrack);
 
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
@@ -188,7 +193,8 @@ public class PoloniexPatienceBot {
                 orderResults.add(result);
             }
 
-            mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getHtmlText(orderResults, tradeResults,recentHistoryMap), true);
+            if (!orderResults.isEmpty() || !tradeResults.isEmpty())
+                mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getHtmlText(orderResults, tradeResults, recentHistoryMap), true);
         }
 
         logger.info("Completed for user {}", user);

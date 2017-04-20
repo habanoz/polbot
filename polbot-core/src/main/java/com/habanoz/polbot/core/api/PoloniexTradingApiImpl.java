@@ -150,11 +150,11 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     }
 
     @Override
-    public Map<String, List<PoloniexTrade>> returnTradeHistory(Long start) {
+    public Map<String, List<PoloniexTrade>> returnTradeHistory(Long timeStampInSeconds) {
 
         List<NameValuePair> additionalPostParams = new ArrayList<>();
         additionalPostParams.add(new BasicNameValuePair("currencyPair", "all"));
-        additionalPostParams.add(new BasicNameValuePair("start", start.toString()));
+        additionalPostParams.add(new BasicNameValuePair("start", timeStampInSeconds.toString()));
         //return runCommand("returnTradeHistory", additionalPostParams, new TypeReference<HashMap<String, List<PoloniexTrade>>>() {
         // });
 
@@ -166,6 +166,10 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
                 return Collections.emptyMap();
             }
 
+            if (result.length() < 5) {//make sure long enough to contain trade data
+                return Collections.emptyMap();
+            }
+
             return objectMapper.readValue(result, new TypeReference<HashMap<String, List<PoloniexTrade>>>() {
             });
         } catch (IOException e) {
@@ -173,6 +177,4 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
             return Collections.emptyMap();
         }
     }
-
-
 }
