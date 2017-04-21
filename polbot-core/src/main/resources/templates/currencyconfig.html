@@ -92,6 +92,8 @@
                         <form action="#" th:action="@{/currencyconfig}" th:object="${currencyConfig}" method="post">
 
 
+                            <input id="currencyConfigId" type="hidden" th:field="*{currencyConfigId}"   />
+
                             <input id="userId" type="hidden"
                                    th:field="*{userId}"/>
 
@@ -104,7 +106,9 @@
                                         <div class="col-md-8">
                                             <div class="input-group">
                                                 <input id="inputCurrPair" type="text" th:field="*{currencyPair}"
-                                                       th:errorclass="fieldError"/><br/>
+                                                       th:errorclass="fieldError"/>
+
+                                                <br/>
                                             </div>
                                         </div>
                                     </div>

@@ -77,7 +77,7 @@ public class MyCurrenciesController {
 
         model.clear();
 
-        return "redirect:/currencyconfig?show=&currency=" + currencyConfig.getCurrencyPair();
+        return "redirect:/currencyconfig?show=&currencyConfigId=" + currencyConfig.getCurrencyConfigId();
     }
 
     @RequestMapping(value = "/currencyconfig", params = {"delete"})
@@ -94,13 +94,13 @@ public class MyCurrenciesController {
     }
 
     @RequestMapping(value = "/currencyconfig", params = {"show"})
-    public String showCurrencyConfig(@RequestParam("currency") String currency, Map model) {
-        currentCurrencyConfig = this.currencyConfigRepository.findOne(currency);
+    public String showCurrencyConfig(@RequestParam("currencyConfigId") int currencyConfigId, Map model) {
+        currentCurrencyConfig = this.currencyConfigRepository.findOne(currencyConfigId);
 
         if (currentCurrencyConfig == null)
             currentCurrencyConfig = new CurrencyConfig();
 
-        model.put("currency", currency);
+        model.put("currency", currentCurrencyConfig.getCurrencyPair());
         model.put("currencyConfig", currentCurrencyConfig);
         return "/currencyconfig";
     }
@@ -111,7 +111,8 @@ public class MyCurrenciesController {
         if (bindingResult.hasErrors()) {
             return "curr";
         }
-
+        CurrencyConfig  currentCurrencyConfig = new CurrencyConfig();
+        model.put("currencyConfig", currentCurrencyConfig);
         return "currencyconfig";
     }
 
