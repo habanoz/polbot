@@ -33,7 +33,7 @@ public class IndexController {
 
     @RequestMapping({"/", "/index"})
     public String welcome(Map<String, Object> model) {
-        int userId = authenticationFacade.GetUserId();  //Authenticated User
+        //int userId = authenticationFacade.GetUserId();  //Authenticated User
         model.put("poloniexTicker", new PoloniexTicker());
         model.put("poloniexTickers", this.poloniexPublicApi.returnTicker());
         model.put("searchKey", "");
@@ -43,7 +43,7 @@ public class IndexController {
     @RequestMapping(value="/searchTicker", method= RequestMethod.POST)
     public String searchPost(@RequestParam("search") String search, ModelMap model) {
 
-        int userId = authenticationFacade.GetUserId();  //Authenticated User
+        //int userId = authenticationFacade.GetUserId();  //Authenticated User
         Map<String,PoloniexTicker> tickers =this.poloniexPublicApi.returnTicker();
 
         if(search != null && !search.trim().isEmpty()){
