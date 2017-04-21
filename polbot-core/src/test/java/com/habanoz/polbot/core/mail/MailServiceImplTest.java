@@ -1,11 +1,13 @@
 package com.habanoz.polbot.core.mail;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
+import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexOrderResult;
 import com.habanoz.polbot.core.model.PoloniexTicker;
 import com.habanoz.polbot.core.model.PoloniexTradeResult;
+import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by huseyina on 4/9/2017.
@@ -35,6 +38,8 @@ public class MailServiceImplTest {
     @Autowired
     private CurrencyConfigRepository currencyConfigRepository;
 
+    @Autowired
+    private BotUserRepository botUserRepository;
 
     @Test
     public void sendMail() throws Exception {
@@ -51,21 +56,33 @@ public class MailServiceImplTest {
 
     @Test
     public void saveAllCurrencies() throws Exception {
-        int userId = 1;
 
         Map<String, PoloniexTicker> tickers = publicApi.returnTicker();
-        for (Map.Entry<String, PoloniexTicker> entry : tickers.entrySet()) {
-            System.out.println(entry.getKey());
-            CurrencyConfig currencyConfig = new CurrencyConfig();
-            currencyConfig.setBuyable(false);
-            currencyConfig.setBuyOnPercent(10);
-            currencyConfig.setBuyAtPrice(0);
-            currencyConfig.setSellable(false);
-            currencyConfig.setSellAtPrice(0);
-            currencyConfig.setSellOnPercent(10);
-            currencyConfig.setCurrencyPair(entry.getKey());
-            currencyConfig.setUserId(userId);
-            currencyConfigRepository.save(currencyConfig);
-        }
+        List<BotUser>  botUsers =  this.botUserRepository.findAll();
+//        for (BotUser botUser:botUsers
+//             ) {
+//            for (Map.Entry<String, PoloniexTicker> entry : tickers.entrySet()) {
+//                List<CurrencyConfig>  c = currencyConfigRepository.findByUserId(botUser.getUserId()).stream().filter(r->r.getCurrencyPair().equals((entry.getKey()))).collect(Collectors.toList());
+//
+//
+//if(c.size() == 0){
+//    System.out.println(entry.getKey());
+//    CurrencyConfig currencyConfig = new CurrencyConfig();
+//    currencyConfig.setBuyable(false);
+//    currencyConfig.setBuyOnPercent(10);
+//    currencyConfig.setBuyAtPrice(0);
+//    currencyConfig.setSellable(false);
+//    currencyConfig.setSellAtPrice(0);
+//    currencyConfig.setSellOnPercent(10);
+//    currencyConfig.setCurrencyPair(entry.getKey());
+//    currencyConfig.setUserId(botUser.getUserId());
+//    currencyConfigRepository.save(currencyConfig);
+//}
+//
+//            }
+//        }
+
+
+
     }
 }

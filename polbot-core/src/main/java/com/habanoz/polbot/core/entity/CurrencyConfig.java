@@ -1,6 +1,8 @@
 package com.habanoz.polbot.core.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 /**
@@ -8,6 +10,7 @@ import javax.persistence.Id;
  */
 @Entity
 public class CurrencyConfig {
+    private int currencyConfigId;
     private String currencyPair;
     private float usableBalancePercent;
     private float buyAtPrice = 0;
@@ -19,7 +22,7 @@ public class CurrencyConfig {
     private int userId;
 
 
-    @Id
+
     public String getCurrencyPair() {
         return currencyPair;
     }
@@ -92,5 +95,13 @@ public class CurrencyConfig {
         this.userId = userId;
     }
 
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    public int getCurrencyConfigId() {
+        return currencyConfigId;
+    }
 
+    public void setCurrencyConfigId(int currencyConfigId) {
+        this.currencyConfigId = currencyConfigId;
+    }
 }
