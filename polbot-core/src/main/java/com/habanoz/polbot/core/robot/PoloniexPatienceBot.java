@@ -128,6 +128,10 @@ public class PoloniexPatienceBot {
 
             List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
 
+            // this may indicate invalid currency name
+            if (tickerMap == null)
+                continue;
+
             PoloniexTicker ticker = tickerMap.get(currPair);
 
             // this may indicate invalid currency name
