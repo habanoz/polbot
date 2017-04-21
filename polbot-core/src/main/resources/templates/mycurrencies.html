@@ -144,7 +144,7 @@
                                             <td><input disabled="true" type="checkbox"  th:checked="${cc.sellable}"/></td>
                                             <td>
                                                 <div class="submit">
-                                                    <a th:href="@{/currencyconfig/(show='',currencyConfigId=${cc.currencyConfigId})}"
+                                                    <a th:href="@{/currencyconfig/(show='',currency=${cc.currencyPair})}"
                                                        class="navbar-link">Show</a>
                                                 </div>
                                             </td>

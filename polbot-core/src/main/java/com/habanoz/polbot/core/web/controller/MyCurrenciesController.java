@@ -34,16 +34,15 @@ public class MyCurrenciesController {
     private IAuthenticationFacade authenticationFacade;
 
 
-
-    private CurrencyConfig currentCurrencyConfig = new CurrencyConfig();
-
     @RequestMapping({"/mycurrencies"})
     public String welcome(Map<String, Object> model) {
 
         int userId = authenticationFacade.GetUserId();  //Authenticated User
+
         model.put("currencyConfig", new CurrencyConfig());
         model.put("currencyConfigs", this.currencyConfigRepository.findByUserId(userId));
         model.put("searchKey", "");
+
         return "mycurrencies";
     }
 
@@ -60,6 +59,7 @@ public class MyCurrenciesController {
         model.put("currencyConfig", new CurrencyConfig());
         model.put("currencyConfigs", currencyConfigs);
         model.put("searchKey", search);
+
         return "mycurrencies";
     }
 
@@ -77,7 +77,7 @@ public class MyCurrenciesController {
 
         model.clear();
 
-        return "redirect:/currencyconfig?show=&currencyConfigId=" + currencyConfig.getCurrencyConfigId();
+        return "redirect:/currencyconfig?show=&currency=" + currencyConfig.getCurrencyPair();
     }
 
     @RequestMapping(value = "/currencyconfig", params = {"delete"})
@@ -94,14 +94,21 @@ public class MyCurrenciesController {
     }
 
     @RequestMapping(value = "/currencyconfig", params = {"show"})
-    public String showCurrencyConfig(@RequestParam("currencyConfigId") int currencyConfigId, Map model) {
-        currentCurrencyConfig = this.currencyConfigRepository.findOne(currencyConfigId);
+    public String showCurrencyConfig(@RequestParam("currency") String currency, Principal principal, Map model) {
+
+        BotUser user = botUserRepository.findByUserEmail(principal.getName());
+
+        CurrencyConfig currentCurrencyConfig = null;
+
+        if (user != null)
+            currentCurrencyConfig = this.currencyConfigRepository.findByUserIdAndCurrencyPair(user.getUserId(), currency);
 
         if (currentCurrencyConfig == null)
             currentCurrencyConfig = new CurrencyConfig();
 
-        model.put("currency", currentCurrencyConfig.getCurrencyPair());
+        model.put("currency", currency);
         model.put("currencyConfig", currentCurrencyConfig);
+
         return "/currencyconfig";
     }
 
@@ -111,8 +118,7 @@ public class MyCurrenciesController {
         if (bindingResult.hasErrors()) {
             return "curr";
         }
-        CurrencyConfig  currentCurrencyConfig = new CurrencyConfig();
-        model.put("currencyConfig", currentCurrencyConfig);
+
         return "currencyconfig";
     }
 

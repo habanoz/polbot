@@ -91,12 +91,11 @@
 
                         <form action="#" th:action="@{/currencyconfig}" th:object="${currencyConfig}" method="post">
 
-
-                            <input id="currencyConfigId" type="hidden" th:field="*{currencyConfigId}"   />
-
                             <input id="userId" type="hidden"
                                    th:field="*{userId}"/>
 
+                            <input id="currencyConfigId" type="hidden"
+                                   th:field="*{currencyConfigId}"/>
 
                             <div class="row">
 
