@@ -109,7 +109,7 @@ public class MyCurrenciesController {
         model.put("currency", currency);
         model.put("currencyConfig", currentCurrencyConfig);
 
-        return "/currencyconfig";
+        return "currencyconfig";
     }
 
     @RequestMapping(value = "/currencyconfig")
