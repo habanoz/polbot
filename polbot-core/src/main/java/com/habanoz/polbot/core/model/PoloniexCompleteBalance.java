@@ -6,6 +6,15 @@ public class PoloniexCompleteBalance
     private Float  onOrders;
     private Float  btcValue;
 
+    public PoloniexCompleteBalance() {
+    }
+
+    public PoloniexCompleteBalance(Float available, Float onOrders, Float btcValue) {
+        this.available = available;
+        this.onOrders = onOrders;
+        this.btcValue = btcValue;
+    }
+
     public Float getAvailable() {
         return available;
     }

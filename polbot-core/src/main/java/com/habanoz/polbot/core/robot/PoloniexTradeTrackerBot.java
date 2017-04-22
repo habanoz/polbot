@@ -54,6 +54,7 @@ public class PoloniexTradeTrackerBot {
     @Scheduled(fixedDelay = 300000)
     public void runLogic() {
 
+
         logger.info("Bot started");
 
         List<BotUser> activeBotUsers = userBotRepository.findByBot(getClass().getSimpleName()).stream().map(UserBot::getUser).collect(Collectors.toList());
@@ -77,7 +78,7 @@ public class PoloniexTradeTrackerBot {
 
 
         if (!recentTrades.isEmpty())// if any of them is not empty send mail
-            mailService.sendMail(user.getUserEmail(), "Recent Trades", htmlHelper.getHtmlText(Collections.emptyList(), Collections.emptyList(), recentTrades), true);
+            mailService.sendMail(user.getUserEmail(), "Recent Trades", htmlHelper.getSummaryHTML(Collections.EMPTY_LIST, recentTrades,poloniexTradingApi.returnCompleteBalances()), true);
 
     }
 }

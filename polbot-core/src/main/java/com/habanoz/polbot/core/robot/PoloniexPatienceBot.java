@@ -5,12 +5,10 @@ import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.entity.TradeHistoryTrack;
 import com.habanoz.polbot.core.entity.UserBot;
 import com.habanoz.polbot.core.mail.HtmlHelper;
 import com.habanoz.polbot.core.mail.MailService;
 import com.habanoz.polbot.core.model.*;
-import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
 import com.habanoz.polbot.core.repository.TradeHistoryTrackRepository;
 import com.habanoz.polbot.core.repository.UserBotRepository;
@@ -108,7 +106,6 @@ public class PoloniexPatienceBot {
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
         List<PoloniexOrderResult> orderResults = new ArrayList<>();
-        List<PoloniexTradeResult> tradeResults = new ArrayList<>();
 
         for (CurrencyConfig currencyConfig : currencyConfigs) {
 
@@ -190,8 +187,8 @@ public class PoloniexPatienceBot {
 
         }
 
-        if (!orderResults.isEmpty() || !tradeResults.isEmpty() || !recentHistoryMap.isEmpty())// if any of them is not empty send mail
-            mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getHtmlText(orderResults, tradeResults, recentHistoryMap), true);
+        if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty())// if any of them is not empty send mail
+            mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, tradingApi.returnCompleteBalances()), true);
 
 
         logger.info("Completed for user {}", user);
