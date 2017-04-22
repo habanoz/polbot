@@ -59,6 +59,7 @@ public class PoloniexPatienceBot {
     private UserBotRepository userBotRepository;
 
     private static final double minAmount = 0.0001;
+    private static final long BUY_SELL_SLEEP = 100;
     private static final String BASE_CURR = "BTC";
     private static final String CURR_PAIR_SEPARATOR = "_";
 
@@ -151,6 +152,11 @@ public class PoloniexPatienceBot {
 
                 PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
                 PoloniexOrderResult result = tradingApi.buy(openOrder);
+                try {
+                    Thread.sleep(BUY_SELL_SLEEP);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
                 orderResults.add(result);
 
@@ -181,7 +187,11 @@ public class PoloniexPatienceBot {
 
                 PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "SELL", sellPrice, sellAmount);
                 PoloniexOrderResult result = tradingApi.sell(openOrder);
-
+                try {
+                    Thread.sleep(BUY_SELL_SLEEP);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 orderResults.add(result);
             }
 
