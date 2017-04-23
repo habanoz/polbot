@@ -141,7 +141,10 @@ public class PoloniexPatienceBot {
             //
             //
             // buy logic
-            if (currencyConfig.getUsableBalancePercent() > 0 && currencyConfig.getBuyable() && openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minAmount) {
+            if (currencyConfig.getUsableBalancePercent() > 0 &&
+                    currencyConfig.getBuyable() &&
+                    !openOrderListForCurr.stream().anyMatch(r->r.getType().equalsIgnoreCase("BUY"))
+                    && buyBudget.doubleValue() > minAmount) {
 
                 // buying price should be a little lower to make profit
                 // if set, buy at price will be used, other wise buy on percent will be used

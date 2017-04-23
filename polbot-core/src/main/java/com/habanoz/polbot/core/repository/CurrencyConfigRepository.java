@@ -14,17 +14,18 @@ import java.util.List;
 
 @CacheConfig(cacheNames = "currencyConfigs")
 public interface CurrencyConfigRepository extends JpaRepository<CurrencyConfig, Integer> {
-    @Cacheable
+    //@Cacheable
     @Override
     List<CurrencyConfig> findAll();
 
-    @Cacheable
+    //@Cacheable
     List<CurrencyConfig> findByUserId(Integer userId);
 
-    @Cacheable
+    //@Cacheable
     List<CurrencyConfig> findByUserIdAndBuyableOrSellable(Integer userId, Boolean buyable, Boolean sellable);
 
-    @Cacheable
+    //@Cacheable
+
     CurrencyConfig findByUserIdAndCurrencyPair(Integer userId, String currencyPair);
 
     @Override
