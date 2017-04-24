@@ -32,4 +32,6 @@ public interface PoloniexTradingApi {
     Map<String, List<PoloniexTrade>> returnTradeHistory();
 
     Map<String, List<PoloniexTrade>> returnTradeHistory(Long start);
+
+    boolean cancelOrder(String orderNumber);
 }

@@ -177,4 +177,15 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
             return Collections.emptyMap();
         }
     }
+
+    @Override
+    public boolean cancelOrder(String orderNumber) {
+        List<NameValuePair> additionalPostParams = new ArrayList<>();
+        additionalPostParams.add(new BasicNameValuePair("orderNumber", orderNumber));
+        String result = tradingAPIClient.returnTradingAPICommandResults("cancelOrder", additionalPostParams);
+        if (result != null && result.toLowerCase().contains("success"))
+            return true;
+
+        return false;
+    }
 }
