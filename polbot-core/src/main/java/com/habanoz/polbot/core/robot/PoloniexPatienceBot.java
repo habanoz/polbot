@@ -5,13 +5,14 @@ import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.entity.TradeHistoryTrack;
+import com.habanoz.polbot.core.entity.UserBot;
 import com.habanoz.polbot.core.mail.HtmlHelper;
 import com.habanoz.polbot.core.mail.MailService;
 import com.habanoz.polbot.core.model.*;
-import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
 import com.habanoz.polbot.core.repository.TradeHistoryTrackRepository;
+import com.habanoz.polbot.core.repository.UserBotRepository;
+import com.habanoz.polbot.core.service.TradeTrackerServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,9 +44,6 @@ public class PoloniexPatienceBot {
     private CurrencyConfigRepository currencyConfigRepository;
 
     @Autowired
-    private BotUserRepository botUserRepository;
-
-    @Autowired
     private ApplicationContext applicationContext;
 
     @Autowired
@@ -57,7 +55,11 @@ public class PoloniexPatienceBot {
     @Autowired
     private TradeHistoryTrackRepository tradeHistoryTrackRepository;
 
+    @Autowired
+    private UserBotRepository userBotRepository;
+
     private static final double minAmount = 0.0001;
+    private static final long BUY_SELL_SLEEP = 100;
     private static final String BASE_CURR = "BTC";
     private static final String CURR_PAIR_SEPARATOR = "_";
 
@@ -74,7 +76,7 @@ public class PoloniexPatienceBot {
     public void runLogic() {
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
 
-        List<BotUser> activeBotUsers = botUserRepository.findByActive(true);
+        List<BotUser> activeBotUsers = userBotRepository.findEnabledUsersByBotQuery(getClass().getSimpleName()).stream().map(UserBot::getUser).collect(Collectors.toList());
         for (BotUser user : activeBotUsers) {
             startTradingForEachUser(user, tickerMap);
         }
@@ -93,31 +95,18 @@ public class PoloniexPatienceBot {
 
         //create tradingApi instance for current user
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
-        //let spring autowire marked attributes
-        applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
 
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
-        TradeHistoryTrack tradeHistoryTrack = tradeHistoryTrackRepository.findOne(user.getUserId());
-
-
-        if (tradeHistoryTrack == null) {
-            Long startInSec = System.currentTimeMillis() / 1000 - 24 * 60 * 60;
-            tradeHistoryTrack = new TradeHistoryTrack(user.getUserId(), startInSec);
-        }
-
-        Map<String, List<PoloniexTrade>> recentHistoryMap = tradingApi.returnTradeHistory(tradeHistoryTrack.getLastTimeStampInSec());
         Map<String, List<PoloniexTrade>> historyMap = tradingApi.returnTradeHistory();
 
-        tradeHistoryTrack.setLastTimeStampInSec(System.currentTimeMillis() / 1000);//to sec
-        tradeHistoryTrackRepository.save(tradeHistoryTrack);
+        Map<String, List<PoloniexTrade>> recentHistoryMap = new TradeTrackerServiceImpl(tradeHistoryTrackRepository, tradingApi, user).returnTrades(true);
 
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
         List<PoloniexOrderResult> orderResults = new ArrayList<>();
-        List<PoloniexTradeResult> tradeResults = new ArrayList<>();
 
         for (CurrencyConfig currencyConfig : currencyConfigs) {
 
@@ -152,7 +141,10 @@ public class PoloniexPatienceBot {
             //
             //
             // buy logic
-            if (currencyConfig.getUsableBalancePercent() > 0 && currencyConfig.getBuyable() && openOrderListForCurr.isEmpty() && buyBudget.doubleValue() > minAmount) {
+            if (currencyConfig.getUsableBalancePercent() > 0 &&
+                    currencyConfig.getBuyable() &&
+                    !openOrderListForCurr.stream().anyMatch(r->r.getType().equalsIgnoreCase("BUY"))
+                    && buyBudget.doubleValue() > minAmount) {
 
                 // buying price should be a little lower to make profit
                 // if set, buy at price will be used, other wise buy on percent will be used
@@ -163,6 +155,11 @@ public class PoloniexPatienceBot {
 
                 PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
                 PoloniexOrderResult result = tradingApi.buy(openOrder);
+                try {
+                    Thread.sleep(BUY_SELL_SLEEP);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
                 orderResults.add(result);
 
@@ -193,13 +190,19 @@ public class PoloniexPatienceBot {
 
                 PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "SELL", sellPrice, sellAmount);
                 PoloniexOrderResult result = tradingApi.sell(openOrder);
-
+                try {
+                    Thread.sleep(BUY_SELL_SLEEP);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 orderResults.add(result);
             }
 
-            if (!orderResults.isEmpty() || !tradeResults.isEmpty())
-                mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getHtmlText(orderResults, tradeResults, recentHistoryMap), true);
         }
+
+        if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty())// if any of them is not empty send mail
+            mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, tradingApi.returnCompleteBalances()), true);
+
 
         logger.info("Completed for user {}", user);
     }

@@ -4,16 +4,17 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.io.Serializable;
 
 /**
  * Created by Yuce on 4/9/2017.
  */
 @Entity
-public class BotUser {
+public class BotUser implements Serializable{
     private int userId;
     private String publicKey;
     private String privateKey;
-    private boolean isActive;
+    private boolean active;
     private String userEmail;
     private String userName;
     private String password;
@@ -46,11 +47,11 @@ public class BotUser {
     }
 
     public boolean getActive() {
-        return isActive;
+        return active;
     }
 
     public void setActive(boolean active) {
-        isActive = active;
+        this.active = active;
     }
 
     public String getUserEmail() {
