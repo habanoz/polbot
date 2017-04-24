@@ -21,6 +21,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
@@ -52,6 +53,7 @@ public class OrdersController {
     @Autowired
     private IAuthenticationFacade authenticationFacade;
 
+    private static final long BUY_SELL_SLEEP = 100;
 
 
 //    @RequestMapping(value = "/orders/predefinedorders")
@@ -78,7 +80,43 @@ public class OrdersController {
 
         return "openOrders";
     }
+    @RequestMapping(value = "/orders/cancelopenorders", method = RequestMethod.GET)
+    public String cancelopenorders(@RequestParam("ordercanceltype") String orderCancelType) {
+        int userId= authenticationFacade.GetUserId();
+        BotUser user = botUserRepository.findOne(userId);
+        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
+        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
+        //let spring autowire marked attributes
+        applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
 
+        //String orderCancelType="BUY";  // ALL,BUY,SELL
+        for(Map.Entry<String, List<PoloniexOpenOrder>> mapKey : openOrderMap.entrySet()) {
+            String key = mapKey.getKey();
+            List<PoloniexOpenOrder> ordersForEachCurrency = mapKey.getValue();
+            for (PoloniexOpenOrder order:  ordersForEachCurrency) {
+                try {
+                    if( orderCancelType.equalsIgnoreCase("ALL")){
+                        boolean isResult = tradingApi.cancelOrder(order.getOrderNumber());
+                    }
+                    else if(order.getType().equalsIgnoreCase("BUY") && orderCancelType.equalsIgnoreCase("BUY")){
+                        boolean isResult = tradingApi.cancelOrder(order.getOrderNumber());
+                    }
+                    else if(order.getType().equalsIgnoreCase("SELL") && orderCancelType.equalsIgnoreCase("SELL")){
+                        boolean isResult = tradingApi.cancelOrder(order.getOrderNumber());
+                    }
+
+                    Thread.sleep(BUY_SELL_SLEEP);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+        return "redirect:/orders/openorders";
+    }
     private Map<String, List<PoloniexOpenOrder>> getOpenOrdersList(int userId) {
         BotUser user = botUserRepository.findOne(userId);
         //create tradingApi instance for current user
