@@ -60,6 +60,39 @@
     </div>
     <!-- /.container -->
 </nav>
+<div class="row">
+    <div class="col-md-4">
+        <a class="btn btn-danger" href="/orders/cancelopenorders?ordercanceltype=ALL">CANCEL ALL OPEN ORDERS</a>
+    </div>
+    <div class="col-md-4">
+        <a  class="btn btn-danger" href="/orders/cancelopenorders?ordercanceltype=SELL">CANCEL SELL OPEN ORDERS</a>
+    </div>
+    <div class="col-md-4">
+        <a  class="btn btn-danger" href="/orders/cancelopenorders?ordercanceltype=BUY">CANCEL BUY OPEN ORDERS</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <a class="btn btn-info" href="/orders/stopcurrencyoperations?ordertype=stop_sell">STOP SELL ORDERS</a>
+    </div>
+    <div class="col-md-3">
+        <a  class="btn btn-info" href="/orders/stopcurrencyoperations?ordertype=stop_buy">STOP BUY ORDERS</a>
+    </div>
+    <div class="col-md-3">
+        <a  class="btn btn-info" href="/orders/stopcurrencyoperations?ordertype=start_sell">START SELL ORDERS</a>
+    </div>
+    <div class="col-md-3">
+        <a  class="btn btn-info" href="/orders/stopcurrencyoperations?ordertype=start_buy">START BUY ORDERS</a>
+    </div>
+</div>
+
+
+
+
+
+
+
 <h1>
     YOUR OPEN ORDERS
 </h1>
