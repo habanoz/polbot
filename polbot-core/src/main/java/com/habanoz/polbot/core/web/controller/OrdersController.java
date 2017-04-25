@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -150,4 +151,42 @@ public class OrdersController {
         return openOrderMap;
     }
 
+
+//    public String savePercentageForAllCurrencies(@RequestParam("UsableBalancePercent") float usableBalancePercent,
+//                                                 @RequestParam("SellOnPercent") float sellOnPercent,
+//                                                 @RequestParam("BuyOnPercent") float buyOnPercent) {
+
+    @RequestMapping(value = "/orders/savePercentageForAllCurrencies")
+        public String savePercentageForAllCurrencies(final CurrencyConfig currencyConfig) {
+
+        int userId= authenticationFacade.GetUserId();
+        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
+        for (CurrencyConfig config: userCurrencyConfigs) {
+
+            if(currencyConfig.getUsableBalancePercent() > 0){
+                config.setUsableBalancePercent(currencyConfig.getUsableBalancePercent());
+            }
+            if(currencyConfig.getSellOnPercent() > 0)
+            config.setSellOnPercent(currencyConfig.getSellOnPercent());
+
+            if(currencyConfig.getBuyOnPercent() > 0)
+            config.setBuyOnPercent(currencyConfig.getBuyOnPercent());
+
+            currencyConfigRepository.save(config);
+        }
+
+        return "redirect:/orders/openorders";
+    }
+
+    @RequestMapping(value = "/orders/setPercentageForAllCurrencies")
+    public String setPercentageForAllCurrencies(Principal principal, Map model) {
+
+        int userId= authenticationFacade.GetUserId();
+        CurrencyConfig  currentCurrencyConfig = new CurrencyConfig();
+        currentCurrencyConfig.setUserId(userId);
+
+        model.put("currencyConfig", currentCurrencyConfig);
+
+        return "currencyconfigforall";
+    }
 }
