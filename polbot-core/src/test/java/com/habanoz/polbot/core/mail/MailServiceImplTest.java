@@ -1,6 +1,8 @@
 package com.habanoz.polbot.core.mail;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
+import com.habanoz.polbot.core.api.PoloniexTradingApi;
+import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
@@ -16,10 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +27,13 @@ import java.util.stream.Collectors;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MailServiceImplTest {
+
+
+    private static final double minAmount = 0.0001;
+    private static final long BUY_SELL_SLEEP = 100;
+    private static final String BASE_CURR = "BTC";
+    private static final String CURR_PAIR_SEPARATOR = "_";
+
 
     @Autowired
     MailService mailService;
@@ -48,10 +54,65 @@ public class MailServiceImplTest {
 
 
     @Test
-    public void findByUserIdAndBuyableOrSellable() throws Exception {
+    public void calculateTradingBTCForEachCurrency() throws Exception {
         int userId = 1;
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserIdAndBuyableOrSellable(userId, true, true);
-        int count = currencyConfigs.size();
+        HashMap<String,BigDecimal> tradingBTCMap = new HashMap<>();
+        //User specific currency config list
+        BotUser user = botUserRepository.findOne(userId);
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId()).stream().filter(r -> r.getBuyable() || r.getSellable()).collect(Collectors.toList());
+
+
+        //create tradingApi instance for current user
+        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
+
+        Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
+        BigDecimal btcBalance = balanceMap.get(BASE_CURR);  // Total available balance for that cycle.
+        Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
+
+        //  while(btcBalance.doubleValue() > 0){
+        while(btcBalance.doubleValue() > minAmount){  // Loop through until available BTC distributed based on its percentage or ALT_LIMIT calculation
+            currencyConfigs = currencyConfigs.stream().filter(r -> r.getBuyable()).collect(Collectors.toList());  // setting is buyable
+            for (CurrencyConfig currencyConfig : currencyConfigs) {
+
+
+                String currPair = currencyConfig.getCurrencyPair();
+                String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
+
+                BigDecimal currBalance = balanceMap.get(currName);
+
+                List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
+
+                if (currencyConfig.getUsableBalancePercent() > 0 &&
+                        currencyConfig.getBuyable() &&
+                        !openOrderListForCurr.stream().anyMatch(r->r.getType().equalsIgnoreCase("BUY"))) {
+                    // only pre-defined percentage of available balance can be used for buying a currency
+                    BigDecimal buyBudget = new BigDecimal(btcBalance.doubleValue() * currencyConfig.getUsableBalancePercent() * 0.01);
+
+                    if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
+                        buyBudget = new BigDecimal(minAmount);
+
+                        if(tradingBTCMap.containsKey(currName)){
+                            buyBudget=buyBudget.add(tradingBTCMap.get(currName));  // Increase its limit until we do not have any BTC available.
+                            tradingBTCMap.put(currName,buyBudget);
+                        }else{
+                            tradingBTCMap.put(currName,buyBudget);
+                        }
+
+                    }else{
+                        tradingBTCMap.put(currName,buyBudget);  // Percantage calculation  is done for that currency
+                        currencyConfig.setBuyable(false);     // Do not make calculation again for that currency
+                    }
+
+
+                    btcBalance = btcBalance.subtract(buyBudget);
+
+
+                }
+            }
+        }
+
+
+
     }
 
     @Test
