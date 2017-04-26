@@ -8,7 +8,10 @@ import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.entity.UserBot;
 import com.habanoz.polbot.core.mail.HtmlHelper;
 import com.habanoz.polbot.core.mail.MailService;
-import com.habanoz.polbot.core.model.*;
+import com.habanoz.polbot.core.model.PoloniexOpenOrder;
+import com.habanoz.polbot.core.model.PoloniexOrderResult;
+import com.habanoz.polbot.core.model.PoloniexTicker;
+import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
 import com.habanoz.polbot.core.repository.TradeHistoryTrackRepository;
 import com.habanoz.polbot.core.repository.UserBotRepository;
@@ -23,9 +26,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * Created by habanoz on 05.04.2017.
  */
 @Component
-public class PoloniexPatienceBot {
+public class PoloniexMeanPatienceBot {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
 
     @Autowired
@@ -67,7 +67,7 @@ public class PoloniexPatienceBot {
     private static final String CURR_PAIR_SEPARATOR = "_";
 
 
-    public PoloniexPatienceBot() {
+    public PoloniexMeanPatienceBot() {
 
     }
 
@@ -146,7 +146,7 @@ public class PoloniexPatienceBot {
             // buy logic
             if (currencyConfig.getUsableBalancePercent() > 0 &&
                     currencyConfig.getBuyable() &&
-                    !openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))
+                    !openOrderListForCurr.stream().anyMatch(r->r.getType().equalsIgnoreCase("BUY"))
                     && buyBudget.doubleValue() > minAmount) {
 
                 // buying price should be a little lower to make profit
@@ -178,22 +178,12 @@ public class PoloniexPatienceBot {
                 List<PoloniexTrade> currHistoryList = historyMap.get(currPair);
 
                 // get last buying price to calculate selling price
-
-                BigDecimal lastBuyPrice = highestSellPrice;
+                BigDecimal lastBuyPrice = currHistoryList.get(0).getRate();
                 final BigDecimal sellAmount = currBalance;
 
-                if (currHistoryList.get(0) != null) {
-
-                    for (PoloniexTrade history : currHistoryList) {
-                        // if remaining history records are too old, dont use them for selling price base
-                        if (history.getDate().plus(1, ChronoUnit.WEEKS).isBefore(LocalDateTime.now()))
-                            break;
-
-                        // use most recent buy action as sell base
-                        if (history.getType().equalsIgnoreCase("buy")) {
-                            lastBuyPrice = history.getRate();
-                            break;
-                        }
+                for (PoloniexTrade history : currHistoryList) {
+                    if (history.getType().equalsIgnoreCase("buy")) {
+                        lastBuyPrice = history.getRate();
                     }
                 }
 
