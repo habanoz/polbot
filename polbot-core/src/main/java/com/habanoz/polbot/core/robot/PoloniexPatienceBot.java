@@ -137,8 +137,8 @@ public class PoloniexPatienceBot {
             // only pre-defined percentage of available balance can be used for buying a currency
             BigDecimal buyBudget = new BigDecimal(btcBalance.doubleValue() * currencyConfig.getUsableBalancePercent() * 0.01);
 
-            if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
-                buyBudget = new BigDecimal(minAmount);
+            if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount * currencyConfig.getUsableBalancePercent()) {
+                buyBudget = new BigDecimal(minAmount * currencyConfig.getUsableBalancePercent());
             }
 
             //
