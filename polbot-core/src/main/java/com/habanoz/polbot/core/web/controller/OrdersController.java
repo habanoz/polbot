@@ -39,7 +39,7 @@ public class OrdersController {
 
 
     private static final Logger logger = LoggerFactory.getLogger(OrdersController.class);
-
+    private static final String CURR_PAIR_SEPARATOR = "_";
 
 
     @Autowired
@@ -118,25 +118,33 @@ public class OrdersController {
 
         return "redirect:/orders/openorders";
     }
-    @RequestMapping(value = "/orders/stopcurrencyoperations", method = RequestMethod.GET)
-    public String stopCurrencyOperations(@RequestParam("ordertype") String orderType) {
+
+    @RequestMapping(value = "/orders/stopbuyordersforcurrencies", method = RequestMethod.GET)
+    public String stopbuyordersforcurrencies() {
         int userId= authenticationFacade.GetUserId();
+        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
         List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
         for (CurrencyConfig config: userCurrencyConfigs) {
-            if(orderType.equalsIgnoreCase("STOP_BUY")){
-                config.setBuyable(false);
-            }else if(orderType.equalsIgnoreCase("STOP_SELL")) {
-                config.setSellable(false);
-            }else if(orderType.equalsIgnoreCase("START_BUY")) {
-                config.setBuyable(true);
-            }else if(orderType.equalsIgnoreCase("START_SELL")) {
-                config.setSellable(true);
+            try {
+
+                String currPair = config.getCurrencyPair();
+                String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
+                List<PoloniexOpenOrder>  openOrders =   openOrderMap.get(currName);
+                if(openOrders.stream().filter(r->r.getType().equalsIgnoreCase("SELL")).count() >= 3){
+                    config.setBuyable(false);
+                    currencyConfigRepository.save(config);
+                }
+
+            }catch (Exception e){
+
             }
-            currencyConfigRepository.save(config);
         }
 
         return "redirect:/orders/openorders";
     }
+
+
+
     private Map<String, List<PoloniexOpenOrder>> getOpenOrdersList(int userId) {
         BotUser user = botUserRepository.findOne(userId);
         //create tradingApi instance for current user
@@ -152,11 +160,9 @@ public class OrdersController {
     }
 
 
-//    public String savePercentageForAllCurrencies(@RequestParam("UsableBalancePercent") float usableBalancePercent,
-//                                                 @RequestParam("SellOnPercent") float sellOnPercent,
-//                                                 @RequestParam("BuyOnPercent") float buyOnPercent) {
 
-    @RequestMapping(value = "/orders/savePercentageForAllCurrencies")
+
+       @RequestMapping(value = "/orders/savePercentageForAllCurrencies")
         public String savePercentageForAllCurrencies(final CurrencyConfig currencyConfig) {
 
         int userId= authenticationFacade.GetUserId();
@@ -177,6 +183,9 @@ public class OrdersController {
 
         return "redirect:/orders/openorders";
     }
+
+
+
 
     @RequestMapping(value = "/orders/setPercentageForAllCurrencies")
     public String setPercentageForAllCurrencies(Principal principal, Map model) {

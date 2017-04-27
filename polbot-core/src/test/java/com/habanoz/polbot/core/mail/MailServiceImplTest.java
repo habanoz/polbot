@@ -56,7 +56,7 @@ public class MailServiceImplTest {
     @Test
     public void calculateTradingBTCForEachCurrency() throws Exception {
         int userId = 1;
-        HashMap<String,BigDecimal> tradingBTCMap = new HashMap<>();
+        HashMap<String, BigDecimal> tradingBTCMap = new HashMap<>();
         //User specific currency config list
         BotUser user = botUserRepository.findOne(userId);
         List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId()).stream().filter(r -> r.getBuyable() || r.getSellable()).collect(Collectors.toList());
@@ -70,37 +70,35 @@ public class MailServiceImplTest {
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
         //  while(btcBalance.doubleValue() > 0){
-        while(btcBalance.doubleValue() > minAmount){  // Loop through until available BTC distributed based on its percentage or ALT_LIMIT calculation
-            currencyConfigs = currencyConfigs.stream().filter(r -> r.getBuyable()).collect(Collectors.toList());  // setting is buyable
+        while (btcBalance.doubleValue() > minAmount) {  // Loop through until available BTC distributed based on its percentage or ALT_LIMIT calculation
+            currencyConfigs = currencyConfigs.stream().filter(r -> r.getUsableBalancePercent() > 0).collect(Collectors.toList());  // setting  usable percentage 0 to prevent its next calculation
             for (CurrencyConfig currencyConfig : currencyConfigs) {
 
 
                 String currPair = currencyConfig.getCurrencyPair();
                 String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
 
-                BigDecimal currBalance = balanceMap.get(currName);
 
                 List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
+                // Just calculate BTC value for the currencies who does not have any buy order
+                if (!openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
 
-                if (currencyConfig.getUsableBalancePercent() > 0 &&
-                        currencyConfig.getBuyable() &&
-                        !openOrderListForCurr.stream().anyMatch(r->r.getType().equalsIgnoreCase("BUY"))) {
                     // only pre-defined percentage of available balance can be used for buying a currency
                     BigDecimal buyBudget = new BigDecimal(btcBalance.doubleValue() * currencyConfig.getUsableBalancePercent() * 0.01);
 
                     if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
                         buyBudget = new BigDecimal(minAmount);
 
-                        if(tradingBTCMap.containsKey(currName)){
-                            buyBudget=buyBudget.add(tradingBTCMap.get(currName));  // Increase its limit until we do not have any BTC available.
-                            tradingBTCMap.put(currName,buyBudget);
-                        }else{
-                            tradingBTCMap.put(currName,buyBudget);
+                        if (tradingBTCMap.containsKey(currName)) {
+                            buyBudget = buyBudget.add(tradingBTCMap.get(currName));  // Increase its limit until we do not have any BTC available.
+                            tradingBTCMap.put(currName, buyBudget);
+                        } else {
+                            tradingBTCMap.put(currName, buyBudget);
                         }
 
-                    }else{
-                        tradingBTCMap.put(currName,buyBudget);  // Percantage calculation  is done for that currency
-                        currencyConfig.setBuyable(false);     // Do not make calculation again for that currency
+                    } else {
+                        tradingBTCMap.put(currName, buyBudget);  // Percantage calculation  is done for that currency
+                        currencyConfig.setUsableBalancePercent(0);     // Do not make calculation again for that currency
                     }
 
 
@@ -108,9 +106,10 @@ public class MailServiceImplTest {
 
 
                 }
+
+
             }
         }
-
 
 
     }
@@ -119,7 +118,7 @@ public class MailServiceImplTest {
     public void saveAllCurrencies() throws Exception {
 
         Map<String, PoloniexTicker> tickers = publicApi.returnTicker();
-        List<BotUser>  botUsers =  this.botUserRepository.findAll();
+        List<BotUser> botUsers = this.botUserRepository.findAll();
 //        for (BotUser botUser:botUsers
 //             ) {
 //            for (Map.Entry<String, PoloniexTicker> entry : tickers.entrySet()) {
@@ -142,7 +141,6 @@ public class MailServiceImplTest {
 //
 //            }
 //        }
-
 
 
     }
