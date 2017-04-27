@@ -19,6 +19,7 @@ public class BotUser implements Serializable{
     private String userName;
     private String password;
     private String role;
+    private Integer buyOrderCancelationDay;
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -91,5 +92,13 @@ public class BotUser implements Serializable{
         return "BotUser{" +
                 "userName='" + userName + '\'' +
                 '}';
+    }
+
+    public Integer getBuyOrderCancelationDay() {
+        return buyOrderCancelationDay;
+    }
+
+    public void setBuyOrderCancelationDay(Integer buyOrderCancelationDay) {
+        this.buyOrderCancelationDay = buyOrderCancelationDay;
     }
 }

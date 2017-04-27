@@ -5,11 +5,13 @@ import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
+import com.habanoz.polbot.core.entity.CurrenyOrder;
 import com.habanoz.polbot.core.entity.UserBot;
 import com.habanoz.polbot.core.mail.HtmlHelper;
 import com.habanoz.polbot.core.mail.MailService;
 import com.habanoz.polbot.core.model.*;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
+import com.habanoz.polbot.core.repository.CurrenyOrderRepository;
 import com.habanoz.polbot.core.repository.TradeHistoryTrackRepository;
 import com.habanoz.polbot.core.repository.UserBotRepository;
 import com.habanoz.polbot.core.service.TradeTrackerServiceImpl;
@@ -45,6 +47,9 @@ public class PoloniexPatienceBot {
 
     @Autowired
     private CurrencyConfigRepository currencyConfigRepository;
+
+    @Autowired
+    private CurrenyOrderRepository currenyOrderRepository;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -99,10 +104,20 @@ public class PoloniexPatienceBot {
         //create tradingApi instance for current user
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
 
-        Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
-
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
+        // TODO: Cancel BUY orders based on user's buy cancellation day value. NO need to wait a unfilled buy orders
+        for(Map.Entry<String, List<PoloniexOpenOrder>> mapKey : openOrderMap.entrySet()) {
+            String key = mapKey.getKey();
+            List<PoloniexOpenOrder> ordersForEachCurrency = mapKey.getValue();
+            for (PoloniexOpenOrder order : ordersForEachCurrency) {
+                if(order.getType().equalsIgnoreCase("BUY")){
+
+                }
+            }
+        }
+
+        Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
         Map<String, List<PoloniexTrade>> historyMap = tradingApi.returnTradeHistory();
 
         Map<String, List<PoloniexTrade>> recentHistoryMap = new TradeTrackerServiceImpl(tradeHistoryTrackRepository, tradingApi, user).returnTrades(true);
@@ -158,8 +173,35 @@ public class PoloniexPatienceBot {
 
                 PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
                 PoloniexOrderResult result = tradingApi.buy(openOrder);
+
                 try {
                     Thread.sleep(BUY_SELL_SLEEP);
+
+                    //TODO: Persistence operation for BUY order so that we can trace and cancel them based on user cancellation day.
+                    if(result.getTradeResult().getResultingTrades().size() > 0){
+                        for (PoloniexTrade t: result.getTradeResult().getResultingTrades()) {
+                            CurrenyOrder currenyOrder = new CurrenyOrder();
+                            currenyOrder.setUserId(user.getUserId());
+                            currenyOrder.setOrderType("BUY");
+                            currenyOrder.setCurrencyPair(currPair);
+                            currenyOrder.setOrderNumber(result.getOrder().getOrderNumber());
+                            currenyOrder.setTradeID(t.getTradeID());
+                            currenyOrder.setOrderDate(t.getDate());
+                            currenyOrderRepository.save(currenyOrder);
+                        }
+                    }else{
+                        CurrenyOrder currenyOrder = new CurrenyOrder();
+                        currenyOrder.setUserId(user.getUserId());
+                        currenyOrder.setOrderType("BUY");
+                        currenyOrder.setCurrencyPair(currPair);
+                        currenyOrder.setOrderNumber(result.getOrder().getOrderNumber());
+                        currenyOrder.setTradeID("");
+                        currenyOrder.setOrderDate(LocalDateTime.now());
+                        currenyOrderRepository.save(currenyOrder);
+                    }
+
+
+
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
