@@ -59,8 +59,12 @@ public class MailServiceImplTest {
         HashMap<String, BigDecimal> tradingBTCMap = new HashMap<>();
         //User specific currency config list
         BotUser user = botUserRepository.findOne(userId);
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId()).stream().filter(r -> r.getBuyable() || r.getSellable()).collect(Collectors.toList());
 
+        //Just get Buyable currencies from db.
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId())
+                .stream().filter(r -> r.getBuyable() || r.getSellable())
+                .sorted((f1, f2) -> Float.compare(f1.getUsableBalancePercent(), f2.getUsableBalancePercent()))
+                .collect(Collectors.toList());
 
         //create tradingApi instance for current user
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
@@ -69,49 +73,69 @@ public class MailServiceImplTest {
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);  // Total available balance for that cycle.
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
-        //  while(btcBalance.doubleValue() > 0){
-        while (btcBalance.doubleValue() > minAmount) {  // Loop through until available BTC distributed based on its percentage or ALT_LIMIT calculation
-            currencyConfigs = currencyConfigs.stream().filter(r -> r.getUsableBalancePercent() > 0).collect(Collectors.toList());  // setting  usable percentage 0 to prevent its next calculation
-            for (CurrencyConfig currencyConfig : currencyConfigs) {
+        System.out.println("Total Available btcBalance: "+btcBalance);
 
-
-                String currPair = currencyConfig.getCurrencyPair();
-                String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
-
-
-                List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
-                // Just calculate BTC value for the currencies who does not have any buy order
-                if (!openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
-
-                    // only pre-defined percentage of available balance can be used for buying a currency
-                    BigDecimal buyBudget = new BigDecimal(btcBalance.doubleValue() * currencyConfig.getUsableBalancePercent() * 0.01);
-
-                    if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
-                        buyBudget = new BigDecimal(minAmount);
-
-                        if (tradingBTCMap.containsKey(currName)) {
-                            buyBudget = buyBudget.add(tradingBTCMap.get(currName));  // Increase its limit until we do not have any BTC available.
-                            tradingBTCMap.put(currName, buyBudget);
-                        } else {
-                            tradingBTCMap.put(currName, buyBudget);
-                        }
-
-                    } else {
-                        tradingBTCMap.put(currName, buyBudget);  // Percantage calculation  is done for that currency
-                        currencyConfig.setUsableBalancePercent(0);     // Do not make calculation again for that currency
-                    }
-
-
-                    btcBalance = btcBalance.subtract(buyBudget);
-
-
-                }
-
-
-            }
+        // Distribute the available btc based on the Usable Balance Percent of each currency.
+       // btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, true );
+       while (btcBalance.doubleValue() > minAmount) {  // Loop through until the available BTC is over
+           btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, false);
+           sleep();
+            System.out.println("Total Available btcBalance: "+btcBalance);
         }
 
+        BigDecimal totalBalance = new BigDecimal(0);
+        int index=1;
+        for(Map.Entry<String, BigDecimal> mapKey : tradingBTCMap.entrySet()) {
+            String key = mapKey.getKey();
+            System.out.println(index+")"+key+" "+mapKey.getValue().doubleValue());
+            index++;
+            totalBalance = totalBalance.add(mapKey.getValue());
+        }
+        System.out.println("Total Balance: "+totalBalance+"  BtcBalance: "+btcBalance);
+    }
+    private void sleep() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private BigDecimal CalculationForUsableBTC(HashMap<String, BigDecimal> tradingBTCMap,
+                                               List<CurrencyConfig> currencyConfigs,
+                                               BigDecimal btcBalance, Map<String,
+            List<PoloniexOpenOrder>> openOrderMap,
+                                               boolean isMultiplierForEachCurrencyEnabled) {
+
+        if(btcBalance.doubleValue() <= 0){
+            return btcBalance;
+        }
+        for (CurrencyConfig currencyConfig : currencyConfigs) {
+
+
+            String currPair = currencyConfig.getCurrencyPair();
+            String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
+            List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
+            // Just calculate BTC value for the currencies who does not have any buy order
+            if (!openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
+                //
+                BigDecimal buyBudget = new BigDecimal(minAmount);
+                if(isMultiplierForEachCurrencyEnabled){
+                    buyBudget = new BigDecimal(minAmount * currencyConfig.getUsableBalancePercent());
+                }
+                if (tradingBTCMap.containsKey(currName)) {
+                    buyBudget = buyBudget.add(tradingBTCMap.get(currName));  // Increase its limit until we do not have any BTC available.
+                    tradingBTCMap.put(currName, buyBudget);
+                } else {
+                    tradingBTCMap.put(currName, buyBudget);
+                }
+                btcBalance = btcBalance.subtract(buyBudget);
+            }
+            if(btcBalance.doubleValue() <= minAmount){
+                return btcBalance;
+            }
+        }
+        return btcBalance;
     }
 
     @Test
