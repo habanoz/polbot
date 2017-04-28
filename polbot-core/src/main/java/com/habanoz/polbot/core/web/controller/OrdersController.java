@@ -81,6 +81,27 @@ public class OrdersController {
 
         return "openOrders";
     }
+
+    @RequestMapping(value = "/orders/stopcurrencyoperations", method = RequestMethod.GET)
+    public String stopCurrencyOperations(@RequestParam("ordertype") String orderType) {
+        int userId= authenticationFacade.GetUserId();
+        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
+        for (CurrencyConfig config: userCurrencyConfigs) {
+            if(orderType.equalsIgnoreCase("STOP_BUY")){
+                config.setBuyable(false);
+            }else if(orderType.equalsIgnoreCase("STOP_SELL")) {
+                config.setSellable(false);
+            }else if(orderType.equalsIgnoreCase("START_BUY")) {
+                config.setBuyable(true);
+            }else if(orderType.equalsIgnoreCase("START_SELL")) {
+                config.setSellable(true);
+            }
+            currencyConfigRepository.save(config);
+        }
+
+        return "redirect:/orders/openorders";
+    }
+
     @RequestMapping(value = "/orders/cancelopenorders", method = RequestMethod.GET)
     public String cancelopenorders(@RequestParam("ordercanceltype") String orderCancelType) {
         int userId= authenticationFacade.GetUserId();
