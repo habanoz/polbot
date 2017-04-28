@@ -107,22 +107,26 @@ public class PoloniexPatienceBot {
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
 
         // TODO: Cancel BUY orders based on user's buy cancellation day value. NO need to wait a unfilled buy orders
-        for(Map.Entry<String, List<PoloniexOpenOrder>> mapKey : openOrderMap.entrySet()) {
+        for (Map.Entry<String, List<PoloniexOpenOrder>> mapKey : openOrderMap.entrySet()) {
             String key = mapKey.getKey();
             List<PoloniexOpenOrder> ordersForEachCurrency = mapKey.getValue();
             for (PoloniexOpenOrder order : ordersForEachCurrency) {
-                if(order.getType().equalsIgnoreCase("BUY")){
+                if (order.getType().equalsIgnoreCase("BUY")) {
 
                 }
             }
         }
 
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
+        Map<String, PoloniexCompleteBalance> completeBalanceMap = tradingApi.returnCompleteBalances();
+
+
         Map<String, List<PoloniexTrade>> historyMap = tradingApi.returnTradeHistory();
 
         Map<String, List<PoloniexTrade>> recentHistoryMap = new TradeTrackerServiceImpl(tradeHistoryTrackRepository, tradingApi, user).returnTrades(true);
 
         BigDecimal btcBalance = balanceMap.get(BASE_CURR);
+        Double allBtcProperty = completeBalanceMap.values().stream().mapToDouble(PoloniexCompleteBalance::getBtcValue).sum();
 
         List<PoloniexOrderResult> orderResults = new ArrayList<>();
 
@@ -149,20 +153,23 @@ public class PoloniexPatienceBot {
             BigDecimal lowestBuyPrice = ticker.getLowestAsk();
             BigDecimal highestSellPrice = ticker.getHighestBid();
 
-            // only pre-defined percentage of available balance can be used for buying a currency
-            BigDecimal buyBudget = new BigDecimal(btcBalance.doubleValue() * currencyConfig.getUsableBalancePercent() * 0.01);
 
-            if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount * currencyConfig.getUsableBalancePercent()) {
-                buyBudget = new BigDecimal(minAmount * currencyConfig.getUsableBalancePercent());
-            }
 
             //
             //
             // buy logic
             if (currencyConfig.getUsableBalancePercent() > 0 &&
                     currencyConfig.getBuyable() &&
-                    !openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))
+                    openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY"))
                     && buyBudget.doubleValue() > minAmount) {
+
+                // only pre-defined percentage of available balance can be used for buying a currency
+                Double targetBuyBudget = allBtcProperty * currencyConfig.getUsableBalancePercent() * 0.01;
+                BigDecimal buyBudget = new BigDecimal(Math.min(targetBuyBudget, targetBuyBudget));
+
+                if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
+                    buyBudget = new BigDecimal(minAmount);
+                }
 
                 // buying price should be a little lower to make profit
                 // if set, buy at price will be used, other wise buy on percent will be used
@@ -178,8 +185,8 @@ public class PoloniexPatienceBot {
                     Thread.sleep(BUY_SELL_SLEEP);
 
                     //TODO: Persistence operation for BUY order so that we can trace and cancel them based on user cancellation day.
-                    if(result.getTradeResult().getResultingTrades().size() > 0){
-                        for (PoloniexTrade t: result.getTradeResult().getResultingTrades()) {
+                    if (result.getTradeResult().getResultingTrades().size() > 0) {
+                        for (PoloniexTrade t : result.getTradeResult().getResultingTrades()) {
                             CurrenyOrder currenyOrder = new CurrenyOrder();
                             currenyOrder.setUserId(user.getUserId());
                             currenyOrder.setOrderType("BUY");
@@ -189,7 +196,7 @@ public class PoloniexPatienceBot {
                             currenyOrder.setOrderDate(t.getDate());
                             currenyOrderRepository.save(currenyOrder);
                         }
-                    }else{
+                    } else {
                         CurrenyOrder currenyOrder = new CurrenyOrder();
                         currenyOrder.setUserId(user.getUserId());
                         currenyOrder.setOrderType("BUY");
@@ -199,7 +206,6 @@ public class PoloniexPatienceBot {
                         currenyOrder.setOrderDate(LocalDateTime.now());
                         currenyOrderRepository.save(currenyOrder);
                     }
-
 
 
                 } catch (InterruptedException e) {
@@ -245,12 +251,10 @@ public class PoloniexPatienceBot {
 
                 PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "SELL", sellPrice, sellAmount);
                 PoloniexOrderResult result = tradingApi.sell(openOrder);
-                try {
-                    Thread.sleep(BUY_SELL_SLEEP);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
                 orderResults.add(result);
+
+                sleep();
             }
 
         }
@@ -260,5 +264,13 @@ public class PoloniexPatienceBot {
 
 
         logger.info("Completed for user {}", user);
+    }
+
+    private void sleep() {
+        try {
+            Thread.sleep(BUY_SELL_SLEEP);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
