@@ -27,6 +27,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -88,7 +89,10 @@ public class PoloniexPatienceBot {
         logger.info("Started for user {}", user);
 
         //User specific currency config list
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId()).stream().filter(r -> r.getBuyable() || r.getSellable()).collect(Collectors.toList());
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId())
+                .stream().filter(r -> r.getBuyable() || r.getSellable())
+                .sorted((f1, f2) -> Float.compare(f1.getUsableBalancePercent(), f2.getUsableBalancePercent()))
+                .collect(Collectors.toList());
 
         if (currencyConfigs.isEmpty()) {
             logger.info("No currency config for user {}, returning ...", user);
@@ -123,7 +127,7 @@ public class PoloniexPatienceBot {
         Double allBtcProperty = completeBalanceMap.values().stream().mapToDouble(PoloniexCompleteBalance::getBtcValue).sum();
 
         List<PoloniexOrderResult> orderResults = new ArrayList<>();
-
+        HashMap<String, BigDecimal> tradingBTCMap  = getBTCTradingMap(currencyConfigs, btcBalance, openOrderMap);
         for (CurrencyConfig currencyConfig : currencyConfigs) {
 
             String currPair = currencyConfig.getCurrencyPair();
@@ -155,7 +159,7 @@ public class PoloniexPatienceBot {
                     currencyConfig.getBuyable() &&
                     openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
 
-                BigDecimal spent = createBuyOrder(user, tradingApi, btcBalance, allBtcProperty, orderResults, currencyConfig, currPair, lowestBuyPrice);
+                BigDecimal spent = createBuyOrder(user, tradingApi, btcBalance, allBtcProperty, orderResults, currencyConfig, currPair, lowestBuyPrice,tradingBTCMap);
 
                 //update balance
                 btcBalance = btcBalance.subtract(spent);
@@ -214,16 +218,16 @@ public class PoloniexPatienceBot {
         orderResults.add(result);
     }
 
-    private BigDecimal createBuyOrder(BotUser user, PoloniexTradingApi tradingApi, BigDecimal btcBalance, Double allBtcProperty, List<PoloniexOrderResult> orderResults, CurrencyConfig currencyConfig, String currPair, BigDecimal lowestBuyPrice) {
-        // only pre-defined percentage of available balance can be used for buying a currency
-        Double targetBuyBudget = allBtcProperty * currencyConfig.getUsableBalancePercent() * 0.01;
-        BigDecimal buyBudget = new BigDecimal(Math.min(targetBuyBudget, targetBuyBudget));
-
-        // if calculated budget is not enough, use minAmount
-        if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
-            buyBudget = new BigDecimal(minAmount);
-        }
-
+    private BigDecimal createBuyOrder(BotUser user,
+                                      PoloniexTradingApi tradingApi,
+                                      BigDecimal btcBalance,
+                                      Double allBtcProperty,
+                                      List<PoloniexOrderResult> orderResults,
+                                      CurrencyConfig currencyConfig,
+                                      String currPair,
+                                      BigDecimal lowestBuyPrice,        HashMap<String, BigDecimal> tradingBTCMap) {
+        String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
+        BigDecimal buyBudget =  tradingBTCMap.get(currName);
         // not enough budget, return 0
         if (buyBudget.doubleValue() < minAmount) {
             return BigDecimal.valueOf(0);
@@ -239,30 +243,7 @@ public class PoloniexPatienceBot {
         PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
         PoloniexOrderResult result = tradingApi.buy(openOrder);
 
-        //TODO: Persistence operation for BUY order so that we can trace and cancel them based on user cancellation day.
-        if (result.getTradeResult().getResultingTrades().size() > 0) {
-            for (PoloniexTrade t : result.getTradeResult().getResultingTrades()) {
-                CurrenyOrder currenyOrder = new CurrenyOrder();
-                currenyOrder.setUserId(user.getUserId());
-                currenyOrder.setOrderType("BUY");
-                currenyOrder.setCurrencyPair(currPair);
-                currenyOrder.setOrderNumber(result.getOrder().getOrderNumber());
-                currenyOrder.setTradeID(t.getTradeID());
-                currenyOrder.setOrderDate(t.getDate());
 
-                currenyOrderRepository.save(currenyOrder);
-            }
-        } else {
-            CurrenyOrder currenyOrder = new CurrenyOrder();
-            currenyOrder.setUserId(user.getUserId());
-            currenyOrder.setOrderType("BUY");
-            currenyOrder.setCurrencyPair(currPair);
-            currenyOrder.setOrderNumber(result.getOrder().getOrderNumber());
-            currenyOrder.setTradeID("");
-            currenyOrder.setOrderDate(LocalDateTime.now());
-
-            currenyOrderRepository.save(currenyOrder);
-        }
 
         orderResults.add(result);
 
@@ -275,5 +256,56 @@ public class PoloniexPatienceBot {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private HashMap<String, BigDecimal> getBTCTradingMap(List<CurrencyConfig> currencyConfigs, BigDecimal btcBalance, Map<String, List<PoloniexOpenOrder>> openOrderMap) {
+        HashMap<String, BigDecimal> tradingBTCMap = new HashMap<>();
+        btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, true );
+        while (btcBalance.doubleValue() > minAmount) {  // Loop through until the available BTC is over
+            btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, false);
+        }
+        return tradingBTCMap;
+    }
+
+
+    private BigDecimal CalculationForUsableBTC(HashMap<String, BigDecimal> tradingBTCMap,
+                                               List<CurrencyConfig> currencyConfigs,
+                                               BigDecimal btcBalance, Map<String,
+            List<PoloniexOpenOrder>> openOrderMap,
+                                               boolean isMultiplierForEachCurrencyEnabled) {
+
+        if(btcBalance.doubleValue() <= 0){
+            return btcBalance;
+        }
+        for (CurrencyConfig currencyConfig : currencyConfigs) {
+
+
+            String currPair = currencyConfig.getCurrencyPair();
+            String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
+            List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
+            // Just calculate BTC value for the currencies who does not have any buy order
+            if (!openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
+                //
+                BigDecimal buyBudget = new BigDecimal(minAmount);
+                if(isMultiplierForEachCurrencyEnabled){
+                    buyBudget = new BigDecimal(minAmount * currencyConfig.getUsableBalancePercent());
+                }
+                if (tradingBTCMap.containsKey(currName)) {
+                    buyBudget = new BigDecimal( buyBudget.doubleValue() + tradingBTCMap.get(currName).doubleValue());
+                    tradingBTCMap.put(currName, buyBudget);
+                } else {
+                    tradingBTCMap.put(currName, buyBudget);
+                }
+                if(isMultiplierForEachCurrencyEnabled){
+                    btcBalance = btcBalance.subtract(buyBudget);
+                }else{
+                    btcBalance = btcBalance.subtract(new BigDecimal(minAmount));
+                }
+            }
+            if(btcBalance.doubleValue() <= minAmount){
+                return btcBalance;
+            }
+        }
+        return btcBalance;
     }
 }

@@ -56,7 +56,6 @@ public class MailServiceImplTest {
     @Test
     public void calculateTradingBTCForEachCurrency() throws Exception {
         int userId = 1;
-        HashMap<String, BigDecimal> tradingBTCMap = new HashMap<>();
         //User specific currency config list
         BotUser user = botUserRepository.findOne(userId);
 
@@ -76,12 +75,7 @@ public class MailServiceImplTest {
         System.out.println("Total Available btcBalance: "+btcBalance);
 
         // Distribute the available btc based on the Usable Balance Percent of each currency.
-       // btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, true );
-       while (btcBalance.doubleValue() > minAmount) {  // Loop through until the available BTC is over
-           btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, false);
-           sleep();
-            System.out.println("Total Available btcBalance: "+btcBalance);
-        }
+        HashMap<String, BigDecimal> tradingBTCMap  = getBTCTradingMap(currencyConfigs, btcBalance, openOrderMap);
 
         BigDecimal totalBalance = new BigDecimal(0);
         int index=1;
@@ -93,13 +87,16 @@ public class MailServiceImplTest {
         }
         System.out.println("Total Balance: "+totalBalance+"  BtcBalance: "+btcBalance);
     }
-    private void sleep() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
+    private HashMap<String, BigDecimal>  getBTCTradingMap(List<CurrencyConfig> currencyConfigs, BigDecimal btcBalance, Map<String, List<PoloniexOpenOrder>> openOrderMap) {
+        HashMap<String, BigDecimal> tradingBTCMap = new HashMap<>();
+        btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, true );
+        while (btcBalance.doubleValue() > minAmount) {  // Loop through until the available BTC is over
+            btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, false);
+         }
+        return tradingBTCMap;
     }
+
 
     private BigDecimal CalculationForUsableBTC(HashMap<String, BigDecimal> tradingBTCMap,
                                                List<CurrencyConfig> currencyConfigs,
@@ -124,12 +121,16 @@ public class MailServiceImplTest {
                     buyBudget = new BigDecimal(minAmount * currencyConfig.getUsableBalancePercent());
                 }
                 if (tradingBTCMap.containsKey(currName)) {
-                    buyBudget = buyBudget.add(tradingBTCMap.get(currName));  // Increase its limit until we do not have any BTC available.
+                    buyBudget = new BigDecimal( buyBudget.doubleValue() + tradingBTCMap.get(currName).doubleValue());
                     tradingBTCMap.put(currName, buyBudget);
                 } else {
                     tradingBTCMap.put(currName, buyBudget);
                 }
-                btcBalance = btcBalance.subtract(buyBudget);
+                if(isMultiplierForEachCurrencyEnabled){
+                    btcBalance = btcBalance.subtract(buyBudget);
+                }else{
+                    btcBalance = btcBalance.subtract(new BigDecimal(minAmount));
+                }
             }
             if(btcBalance.doubleValue() <= minAmount){
                 return btcBalance;
