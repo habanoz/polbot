@@ -146,7 +146,7 @@ public class PoloniexMeanPatienceBot {
             // buy logic
             if (currencyConfig.getUsableBalancePercent() > 0 &&
                     currencyConfig.getBuyable() &&
-                    !openOrderListForCurr.stream().anyMatch(r->r.getType().equalsIgnoreCase("BUY"))
+                    openOrderListForCurr.stream().noneMatch(r->r.getType().equalsIgnoreCase("BUY"))
                     && buyBudget.doubleValue() > minAmount) {
 
                 // buying price should be a little lower to make profit
@@ -158,6 +158,7 @@ public class PoloniexMeanPatienceBot {
 
                 PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
                 PoloniexOrderResult result = tradingApi.buy(openOrder);
+
                 try {
                     Thread.sleep(BUY_SELL_SLEEP);
                 } catch (InterruptedException e) {

@@ -18,7 +18,6 @@ import com.habanoz.polbot.core.service.TradeTrackerServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +26,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,9 +50,6 @@ public class PoloniexPatienceBot {
     private CurrenyOrderRepository currenyOrderRepository;
 
     @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
     private HtmlHelper htmlHelper;
 
     @Autowired
@@ -73,7 +68,6 @@ public class PoloniexPatienceBot {
 
 
     public PoloniexPatienceBot() {
-
     }
 
     @PostConstruct
@@ -154,69 +148,19 @@ public class PoloniexPatienceBot {
             BigDecimal highestSellPrice = ticker.getHighestBid();
 
 
-
             //
             //
             // buy logic
             if (currencyConfig.getUsableBalancePercent() > 0 &&
                     currencyConfig.getBuyable() &&
-                    openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY"))
-                    && buyBudget.doubleValue() > minAmount) {
+                    openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
 
-                // only pre-defined percentage of available balance can be used for buying a currency
-                Double targetBuyBudget = allBtcProperty * currencyConfig.getUsableBalancePercent() * 0.01;
-                BigDecimal buyBudget = new BigDecimal(Math.min(targetBuyBudget, targetBuyBudget));
+                BigDecimal spent = createBuyOrder(user, tradingApi, btcBalance, allBtcProperty, orderResults, currencyConfig, currPair, lowestBuyPrice);
 
-                if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
-                    buyBudget = new BigDecimal(minAmount);
-                }
+                //update balance
+                btcBalance = btcBalance.subtract(spent);
 
-                // buying price should be a little lower to make profit
-                // if set, buy at price will be used, other wise buy on percent will be used
-                BigDecimal buyPrice = currencyConfig.getBuyAtPrice() == 0 ? new BigDecimal(lowestBuyPrice.doubleValue() * (100 - currencyConfig.getBuyOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getBuyAtPrice());
-
-                // calculate amount that can be bought with buyBudget and buyPrice
-                BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
-
-                PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
-                PoloniexOrderResult result = tradingApi.buy(openOrder);
-
-                try {
-                    Thread.sleep(BUY_SELL_SLEEP);
-
-                    //TODO: Persistence operation for BUY order so that we can trace and cancel them based on user cancellation day.
-                    if (result.getTradeResult().getResultingTrades().size() > 0) {
-                        for (PoloniexTrade t : result.getTradeResult().getResultingTrades()) {
-                            CurrenyOrder currenyOrder = new CurrenyOrder();
-                            currenyOrder.setUserId(user.getUserId());
-                            currenyOrder.setOrderType("BUY");
-                            currenyOrder.setCurrencyPair(currPair);
-                            currenyOrder.setOrderNumber(result.getOrder().getOrderNumber());
-                            currenyOrder.setTradeID(t.getTradeID());
-                            currenyOrder.setOrderDate(t.getDate());
-                            currenyOrderRepository.save(currenyOrder);
-                        }
-                    } else {
-                        CurrenyOrder currenyOrder = new CurrenyOrder();
-                        currenyOrder.setUserId(user.getUserId());
-                        currenyOrder.setOrderType("BUY");
-                        currenyOrder.setCurrencyPair(currPair);
-                        currenyOrder.setOrderNumber(result.getOrder().getOrderNumber());
-                        currenyOrder.setTradeID("");
-                        currenyOrder.setOrderDate(LocalDateTime.now());
-                        currenyOrderRepository.save(currenyOrder);
-                    }
-
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                orderResults.add(result);
-
-                if (result != null) {
-                    btcBalance = btcBalance.subtract(buyBudget);
-                }
+                sleep();
             }
 
             //
@@ -225,34 +169,7 @@ public class PoloniexPatienceBot {
             if (currencyConfig.getSellable() && currBalance.doubleValue() > minAmount) {
                 List<PoloniexTrade> currHistoryList = historyMap.get(currPair);
 
-                // get last buying price to calculate selling price
-
-                BigDecimal lastBuyPrice = highestSellPrice;
-                final BigDecimal sellAmount = currBalance;
-
-                if (currHistoryList.get(0) != null) {
-
-                    for (PoloniexTrade history : currHistoryList) {
-                        // if remaining history records are too old, dont use them for selling price base
-                        if (history.getDate().plus(1, ChronoUnit.WEEKS).isBefore(LocalDateTime.now()))
-                            break;
-
-                        // use most recent buy action as sell base
-                        if (history.getType().equalsIgnoreCase("buy")) {
-                            lastBuyPrice = history.getRate();
-                            break;
-                        }
-                    }
-                }
-
-                //selling price should be a little higher to make profit
-                // if set, sell at price will be used, otherwise sell on percent will be used
-                BigDecimal sellPrice = currencyConfig.getSellAtPrice() == 0 ? new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getSellAtPrice());
-
-                PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "SELL", sellPrice, sellAmount);
-                PoloniexOrderResult result = tradingApi.sell(openOrder);
-
-                orderResults.add(result);
+                createSellOrder(tradingApi, orderResults, currencyConfig, currPair, currBalance, highestSellPrice, currHistoryList);
 
                 sleep();
             }
@@ -264,6 +181,92 @@ public class PoloniexPatienceBot {
 
 
         logger.info("Completed for user {}", user);
+    }
+
+    private void createSellOrder(PoloniexTradingApi tradingApi, List<PoloniexOrderResult> orderResults, CurrencyConfig currencyConfig, String currPair, BigDecimal currBalance, BigDecimal highestSellPrice, List<PoloniexTrade> currHistoryList) {
+        // get last buying price to calculate selling price
+
+        BigDecimal lastBuyPrice = highestSellPrice;
+        final BigDecimal sellAmount = currBalance;
+
+        if (currHistoryList.get(0) != null) {
+
+            for (PoloniexTrade history : currHistoryList) {
+                // if remaining history records are too old, dont use them for selling price base
+                if (history.getDate().plus(1, ChronoUnit.WEEKS).isBefore(LocalDateTime.now()))
+                    break;
+
+                // use most recent buy action as sell base
+                if (history.getType().equalsIgnoreCase("buy")) {
+                    lastBuyPrice = history.getRate();
+                    break;
+                }
+            }
+        }
+
+        //selling price should be a little higher to make profit
+        // if set, sell at price will be used, otherwise sell on percent will be used
+        BigDecimal sellPrice = currencyConfig.getSellAtPrice() == 0 ? new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getSellAtPrice());
+
+        PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "SELL", sellPrice, sellAmount);
+        PoloniexOrderResult result = tradingApi.sell(openOrder);
+
+        orderResults.add(result);
+    }
+
+    private BigDecimal createBuyOrder(BotUser user, PoloniexTradingApi tradingApi, BigDecimal btcBalance, Double allBtcProperty, List<PoloniexOrderResult> orderResults, CurrencyConfig currencyConfig, String currPair, BigDecimal lowestBuyPrice) {
+        // only pre-defined percentage of available balance can be used for buying a currency
+        Double targetBuyBudget = allBtcProperty * currencyConfig.getUsableBalancePercent() * 0.01;
+        BigDecimal buyBudget = new BigDecimal(Math.min(targetBuyBudget, targetBuyBudget));
+
+        // if calculated budget is not enough, use minAmount
+        if (buyBudget.doubleValue() < minAmount && btcBalance.doubleValue() >= minAmount) {
+            buyBudget = new BigDecimal(minAmount);
+        }
+
+        // not enough budget, return 0
+        if (buyBudget.doubleValue() < minAmount) {
+            return BigDecimal.valueOf(0);
+        }
+
+        // buying price should be a little lower to make profit
+        // if set, buy at price will be used, other wise buy on percent will be used
+        BigDecimal buyPrice = currencyConfig.getBuyAtPrice() == 0 ? new BigDecimal(lowestBuyPrice.doubleValue() * (100 - currencyConfig.getBuyOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getBuyAtPrice());
+
+        // calculate amount that can be bought with buyBudget and buyPrice
+        BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
+
+        PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
+        PoloniexOrderResult result = tradingApi.buy(openOrder);
+
+        //TODO: Persistence operation for BUY order so that we can trace and cancel them based on user cancellation day.
+        if (result.getTradeResult().getResultingTrades().size() > 0) {
+            for (PoloniexTrade t : result.getTradeResult().getResultingTrades()) {
+                CurrenyOrder currenyOrder = new CurrenyOrder();
+                currenyOrder.setUserId(user.getUserId());
+                currenyOrder.setOrderType("BUY");
+                currenyOrder.setCurrencyPair(currPair);
+                currenyOrder.setOrderNumber(result.getOrder().getOrderNumber());
+                currenyOrder.setTradeID(t.getTradeID());
+                currenyOrder.setOrderDate(t.getDate());
+
+                currenyOrderRepository.save(currenyOrder);
+            }
+        } else {
+            CurrenyOrder currenyOrder = new CurrenyOrder();
+            currenyOrder.setUserId(user.getUserId());
+            currenyOrder.setOrderType("BUY");
+            currenyOrder.setCurrencyPair(currPair);
+            currenyOrder.setOrderNumber(result.getOrder().getOrderNumber());
+            currenyOrder.setTradeID("");
+            currenyOrder.setOrderDate(LocalDateTime.now());
+
+            currenyOrderRepository.save(currenyOrder);
+        }
+
+        orderResults.add(result);
+
+        return new BigDecimal(buyBudget.doubleValue());
     }
 
     private void sleep() {
