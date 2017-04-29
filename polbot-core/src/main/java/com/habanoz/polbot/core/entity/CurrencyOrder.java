@@ -6,20 +6,20 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * Created by Yuce on 4/27/2017.
  */
 @Entity
-public class CurrenyOrder implements Serializable {
+public class CurrencyOrder implements Serializable {
     private Integer currenyOrderId;
     private String orderNumber;
     private String currencyPair;
     private String orderType;
     private Integer userId;
-    private LocalDateTime orderDate;
-    private String tradeID;
-
+    private Date orderDate;
+    private Boolean IsActive;
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -63,19 +63,19 @@ public class CurrenyOrder implements Serializable {
         this.userId = userId;
     }
 
-    public LocalDateTime getOrderDate() {
+    public Date getOrderDate() {
         return orderDate;
     }
 
-    public void setOrderDate(LocalDateTime orderDate) {
+    public void setOrderDate(Date orderDate) {
         this.orderDate = orderDate;
     }
 
-    public String getTradeID() {
-        return tradeID;
+    public Boolean getActive() {
+        return IsActive;
     }
 
-    public void setTradeID(String tradeID) {
-        this.tradeID = tradeID;
+    public void setActive(Boolean active) {
+        IsActive = active;
     }
 }

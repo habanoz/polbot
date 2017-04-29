@@ -5,16 +5,17 @@ import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.entity.CurrenyOrder;
+import com.habanoz.polbot.core.entity.CurrencyOrder;
 import com.habanoz.polbot.core.entity.UserBot;
 import com.habanoz.polbot.core.mail.HtmlHelper;
 import com.habanoz.polbot.core.mail.MailService;
 import com.habanoz.polbot.core.model.*;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
-import com.habanoz.polbot.core.repository.CurrenyOrderRepository;
+import com.habanoz.polbot.core.repository.CurrencyOrderRepository;
 import com.habanoz.polbot.core.repository.TradeHistoryTrackRepository;
 import com.habanoz.polbot.core.repository.UserBotRepository;
 import com.habanoz.polbot.core.service.TradeTrackerServiceImpl;
+import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +25,10 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +47,7 @@ public class PoloniexPatienceBot {
     private CurrencyConfigRepository currencyConfigRepository;
 
     @Autowired
-    private CurrenyOrderRepository currenyOrderRepository;
+    private CurrencyOrderRepository currencyOrderRepository;
 
     @Autowired
     private HtmlHelper htmlHelper;
@@ -102,19 +101,11 @@ public class PoloniexPatienceBot {
         //create tradingApi instance for current user
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
 
+
+        CancelUnFilledBuyOrders(user, tradingApi);
+
+
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
-
-        // TODO: Cancel BUY orders based on user's buy cancellation day value. NO need to wait a unfilled buy orders
-        for (Map.Entry<String, List<PoloniexOpenOrder>> mapKey : openOrderMap.entrySet()) {
-            String key = mapKey.getKey();
-            List<PoloniexOpenOrder> ordersForEachCurrency = mapKey.getValue();
-            for (PoloniexOpenOrder order : ordersForEachCurrency) {
-                if (order.getType().equalsIgnoreCase("BUY")) {
-
-                }
-            }
-        }
-
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
         Map<String, PoloniexCompleteBalance> completeBalanceMap = tradingApi.returnCompleteBalances();
 
@@ -180,11 +171,38 @@ public class PoloniexPatienceBot {
 
         }
 
-        if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty())// if any of them is not empty send mail
+        if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty()) {// if any of them is not empty send mail
             mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, tradingApi.returnCompleteBalances()), true);
 
 
+
+
+
+
+        }
+
+
         logger.info("Completed for user {}", user);
+    }
+    // Why are we waiting so long to get buy order work? Fuck them all, cancel it. Screw them.
+    private void CancelUnFilledBuyOrders(BotUser user, PoloniexTradingApi tradingApi) {
+        try {
+            // TODO: Cancel BUY orders based on user's buy cancellation day value. NO need to wait a unfilled buy orders
+            if(user.getBuyOrderCancelationDay() > 0){
+                Date date = DateUtils.addDays(new Date(), -1 * user.getBuyOrderCancelationDay());
+                // I hope it gonna work, JPA magic. GEt User active buy order greater than his cancellation day
+                List<CurrencyOrder> currencyOrderList = currencyOrderRepository.findByUserIdAndIsActiveAndOrderDateGreaterThanOrderDateByOrderDateAsc(user.getUserId(),true,date);
+                if(currencyOrderList!=null)
+                for (CurrencyOrder currencyOrder : currencyOrderList) {
+                    if (currencyOrder.getOrderType().equalsIgnoreCase("BUY")) {
+                        // Good Bye..
+                        boolean isResult = tradingApi.cancelOrder(currencyOrder.getOrderNumber());
+                    }
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     private void createSellOrder(PoloniexTradingApi tradingApi, List<PoloniexOrderResult> orderResults, CurrencyConfig currencyConfig, String currPair, BigDecimal currBalance, BigDecimal highestSellPrice, List<PoloniexTrade> currHistoryList) {
@@ -243,7 +261,24 @@ public class PoloniexPatienceBot {
         PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
         PoloniexOrderResult result = tradingApi.buy(openOrder);
 
+        try {
+            if (result.getSuccess()) {
 
+                //TODO: Persistence operation for BUY order so that we can trace and cancel them based on user cancellation day.
+
+                CurrencyOrder currenyOrder = new CurrencyOrder();
+                currenyOrder.setUserId(user.getUserId());
+                currenyOrder.setOrderType("BUY");
+                currenyOrder.setCurrencyPair(currPair);
+                currenyOrder.setOrderNumber(result.getTradeResult().getOrderNumber());
+                currenyOrder.setOrderDate(Date.class.newInstance());
+                currenyOrder.setActive(true);
+                currencyOrderRepository.save(currenyOrder);
+
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
 
         orderResults.add(result);
 
