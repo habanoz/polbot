@@ -1,5 +1,6 @@
 package com.habanoz.polbot.core.mail;
 
+import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ public class MailServiceImpl implements MailService {
 
     @Autowired
     private TemplateEngine templateEngine;
+
 
     public MailServiceImpl(@Value("${spring.mail.from}") String from) {
         this.from = from;

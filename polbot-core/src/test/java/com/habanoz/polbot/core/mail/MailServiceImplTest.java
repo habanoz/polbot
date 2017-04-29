@@ -90,10 +90,22 @@ public class MailServiceImplTest {
 
     private HashMap<String, BigDecimal>  getBTCTradingMap(List<CurrencyConfig> currencyConfigs, BigDecimal btcBalance, Map<String, List<PoloniexOpenOrder>> openOrderMap) {
         HashMap<String, BigDecimal> tradingBTCMap = new HashMap<>();
+
         btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, true );
         while (btcBalance.doubleValue() > minAmount) {  // Loop through until the available BTC is over
+            double initialBtcValue = btcBalance.doubleValue();
             btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, false);
+            if(initialBtcValue == btcBalance.doubleValue()){
+                break;
+            }
          }
+
+        if(currencyConfigs.size()>0 && tradingBTCMap.keySet().size() > 0){
+            Map.Entry<String, BigDecimal> mapKey = tradingBTCMap.entrySet().iterator().next();
+            BigDecimal  buyBudget = new BigDecimal( btcBalance.doubleValue() + tradingBTCMap.get(mapKey.getKey()).doubleValue());
+            tradingBTCMap.put(mapKey.getKey(),buyBudget);
+            btcBalance = btcBalance.subtract(buyBudget);
+        }
         return tradingBTCMap;
     }
 
@@ -102,11 +114,12 @@ public class MailServiceImplTest {
                                                List<CurrencyConfig> currencyConfigs,
                                                BigDecimal btcBalance, Map<String,
             List<PoloniexOpenOrder>> openOrderMap,
-                                               boolean isMultiplierForEachCurrencyEnabled) {
+                                               boolean isMultiplierForEachCurrencyEnabled ) {
 
         if(btcBalance.doubleValue() <= 0){
             return btcBalance;
         }
+
         for (CurrencyConfig currencyConfig : currencyConfigs) {
 
 
@@ -115,6 +128,7 @@ public class MailServiceImplTest {
             List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
             // Just calculate BTC value for the currencies who does not have any buy order
             if (!openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
+
                 //
                 BigDecimal buyBudget = new BigDecimal(minAmount);
                 if(isMultiplierForEachCurrencyEnabled){
@@ -131,11 +145,15 @@ public class MailServiceImplTest {
                 }else{
                     btcBalance = btcBalance.subtract(new BigDecimal(minAmount));
                 }
+            }else{
+
             }
             if(btcBalance.doubleValue() <= minAmount){
                 return btcBalance;
             }
         }
+
+
         return btcBalance;
     }
 

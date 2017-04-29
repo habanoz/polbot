@@ -1,7 +1,9 @@
 package com.habanoz.polbot.core.mail;
 
+import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
 import com.habanoz.polbot.core.model.PoloniexOrderResult;
+import com.habanoz.polbot.core.model.PoloniexTicker;
 import com.habanoz.polbot.core.model.PoloniexTrade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,7 +23,15 @@ public class HtmlHelper {
     @Autowired
     private TemplateEngine templateEngine;
 
+    @Autowired
+    private PoloniexPublicApi publicApi;
+
+
     public String getSummaryHTML(List<PoloniexOrderResult> orderResults, Map<String, List<PoloniexTrade>> recentHistoryMap, Map<String, PoloniexCompleteBalance> balancesMap) {
+
+
+        Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
+        PoloniexTicker ticker = tickerMap.get("USDT_BTC");
 
         List<PoloniexOrderResult> successful = orderResults.stream().filter(e -> e.getSuccess()).collect(Collectors.toList());
         List<PoloniexOrderResult> failed = orderResults.stream().filter(e -> !e.getSuccess()).collect(Collectors.toList());
@@ -36,6 +46,7 @@ public class HtmlHelper {
         context.setVariable("failedOrders", failed);
         context.setVariable("balances", balancesMap);
         context.setVariable("btcBalance", btcBalance);
+        context.setVariable("btcBalanceUsd", btcBalance * ticker.getLowestAsk().doubleValue());
 
         return templateEngine.process("mail-operation-result", context);
     }

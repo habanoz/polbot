@@ -46,7 +46,9 @@
 
 </style>
 <body>
-
+<div>
+    <span style="color:black;font-size:large" th:text="'Estimated value of holdings: $'+${btcBalanceUsd}+'  /  '+${btcBalance}+' BTC'"></span>
+</div>
 <div th:unless="${recentHistoryMap.isEmpty()}" id="tradeHistoryTable">
     <h2>Recent Trades</h2>
     <div th:each="trades:${recentHistoryMap}">
@@ -149,9 +151,7 @@
     </tbody>
 </table>
 <br />
-<div>
-    <span th:text="'Total Balance '+${btcBalance}+' BTC'"></span>
-</div>
+
 
 </body>
 </html>

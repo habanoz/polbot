@@ -40,6 +40,6 @@ public class HtmlHelperTest {
         completeBalanceMap.put("ETH", new PoloniexCompleteBalance(0.2f, 0.1f, 0.012f));
         completeBalanceMap.put("XMR", new PoloniexCompleteBalance(0.345f, 0.1f, 0.00014f));
 
-        mailService.sendMail("huseyinabanox@gmail.com", "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentTrades, completeBalanceMap), true);
+        mailService.sendMail("eminyuce@gmail.com", "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentTrades, completeBalanceMap), true);
     }
 }
