@@ -296,7 +296,7 @@ public class PoloniexPatienceBot {
             String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
             List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
             // Just calculate BTC value for the currencies who does not have any buy order
-            if (!openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
+            if (openOrderListForCurr!=null && openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
                 //
                 BigDecimal buyBudget = new BigDecimal(minAmount);
                 if(isMultiplierForEachCurrencyEnabled){
