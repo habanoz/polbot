@@ -148,6 +148,7 @@ public class PoloniexPatienceBot {
             // buy logic
             if (currencyConfig.getUsableBalancePercent() > 0 &&
                     currencyConfig.getBuyable() &&
+                    tradingBTCMap.keySet().size() > 0 &&
                     openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
 
                 BigDecimal spent = createBuyOrder(user, tradingApi, btcBalance, allBtcProperty, orderResults, currencyConfig, currPair, lowestBuyPrice,tradingBTCMap);

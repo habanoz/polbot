@@ -149,15 +149,15 @@ public class OrdersController {
             try {
 
                 String currPair = config.getCurrencyPair();
-                String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
-                List<PoloniexOpenOrder>  openOrders =   openOrderMap.get(currName);
+                //String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
+                List<PoloniexOpenOrder>  openOrders =   openOrderMap.get(currPair);
                 if(openOrders.stream().filter(r->r.getType().equalsIgnoreCase("SELL")).count() >= 3){
                     config.setBuyable(false);
                     currencyConfigRepository.save(config);
                 }
 
             }catch (Exception e){
-
+                    e.printStackTrace();
             }
         }
 
