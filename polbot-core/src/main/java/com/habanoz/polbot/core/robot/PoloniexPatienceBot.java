@@ -191,10 +191,12 @@ public class PoloniexPatienceBot {
             if(user.getBuyOrderCancelationDay() > 0){
                 Date date = DateUtils.addDays(new Date(), -1 * user.getBuyOrderCancelationDay());
                 // I hope it gonna work, JPA magic. GEt User active buy order greater than his cancellation day
-                List<CurrencyOrder> currencyOrderList = currencyOrderRepository.findByUserIdAndIsActiveAndOrderDateGreaterThanOrderDateByOrderDateAsc(user.getUserId(),true,date);
+               // List<CurrencyOrder> currencyOrderList = currencyOrderRepository.findByUserIdAndActiveAndOrderDateGreaterThanOrderDateByOrderDateAsc(user.getUserId(),true,date);
+               List<CurrencyOrder> currencyOrderList = currencyOrderRepository.findByUserIdAndActive(user.getUserId(),true);
                 if(currencyOrderList!=null)
                 for (CurrencyOrder currencyOrder : currencyOrderList) {
-                    if (currencyOrder.getOrderType().equalsIgnoreCase("BUY")) {
+                    //TODO: Not so sure it is right expression to compare date.
+                    if (currencyOrder.getOrderType().equalsIgnoreCase("BUY") && currencyOrder.getOrderDate().compareTo(date) < 0) {
                         // Good Bye..
                         boolean isResult = tradingApi.cancelOrder(currencyOrder.getOrderNumber());
                     }

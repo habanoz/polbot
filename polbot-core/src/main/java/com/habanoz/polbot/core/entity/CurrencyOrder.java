@@ -19,7 +19,7 @@ public class CurrencyOrder implements Serializable {
     private String orderType;
     private Integer userId;
     private Date orderDate;
-    private Boolean IsActive;
+    private boolean active;
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -71,11 +71,12 @@ public class CurrencyOrder implements Serializable {
         this.orderDate = orderDate;
     }
 
-    public Boolean getActive() {
-        return IsActive;
+
+    public boolean isActive() {
+        return active;
     }
 
-    public void setActive(Boolean active) {
-        IsActive = active;
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

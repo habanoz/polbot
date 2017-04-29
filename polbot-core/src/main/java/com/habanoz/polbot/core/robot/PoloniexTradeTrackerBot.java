@@ -96,16 +96,16 @@ public class PoloniexTradeTrackerBot {
         try {
             for (Map.Entry<String, List<PoloniexTrade>> mapKey : recentTrades.entrySet()) {
                 String key = mapKey.getKey();
-                List<PoloniexTrade> poloniexTrades = mapKey.getValue();
+                List<PoloniexTrade> poloniexTrades = mapKey.getValue().stream().filter(r->r.getType().equalsIgnoreCase("BUY")).collect(Collectors.toList());
+                if(poloniexTrades!=null)
                 for (PoloniexTrade poloniexTrade : poloniexTrades) {
-                    if (poloniexTrade.getType().equalsIgnoreCase("BUY")) {
                         CurrencyOrder currencyOrder = currencyOrderRepository.findByUserIdAndOrderNumber(user.getUserId(), poloniexTrade.getOrderNumber());
                         if (currencyOrder != null) {
                             currencyOrder.setActive(false);
                             currencyOrderRepository.save(currencyOrder);
-                        }
                     }
                 }
+
             }
 
         } catch (Exception e) {
