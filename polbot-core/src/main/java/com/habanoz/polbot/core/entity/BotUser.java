@@ -20,6 +20,7 @@ public class BotUser implements Serializable{
     private String password;
     private String role;
     private Integer buyOrderCancelationDay;
+    private boolean emailNotification;
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -100,5 +101,13 @@ public class BotUser implements Serializable{
 
     public void setBuyOrderCancelationDay(Integer buyOrderCancelationDay) {
         this.buyOrderCancelationDay = buyOrderCancelationDay;
+    }
+
+    public boolean isEmailNotification() {
+        return emailNotification;
+    }
+
+    public void setEmailNotification(boolean emailNotification) {
+        this.emailNotification = emailNotification;
     }
 }

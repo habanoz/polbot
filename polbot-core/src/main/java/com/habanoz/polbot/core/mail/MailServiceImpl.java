@@ -1,6 +1,7 @@
 package com.habanoz.polbot.core.mail;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
+import com.habanoz.polbot.core.entity.BotUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,13 @@ public class MailServiceImpl implements MailService {
             javaMailSender.send(mail);
         } catch (MessagingException e) {
             logger.error("Error while sending mail", e);
+        }
+    }
+
+    @Override
+    public void sendMail(BotUser user, String header, String body, boolean isHtml) {
+        if(user.isEmailNotification()){
+            this.sendMail(user.getUserEmail(),header,body,isHtml);
         }
     }
 }

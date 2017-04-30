@@ -85,7 +85,8 @@ public class PoloniexTradeTrackerBot {
 
 
         if (!recentTrades.isEmpty()) {// if any of them is not empty send mail
-            mailService.sendMail(user.getUserEmail(), "Recent Trades", htmlHelper.getSummaryHTML(Collections.EMPTY_LIST, recentTrades, poloniexTradingApi.returnCompleteBalances()), true);
+            mailService.sendMail(user, "Recent Trades", htmlHelper.getSummaryHTML(Collections.EMPTY_LIST, recentTrades, poloniexTradingApi.returnCompleteBalances()), true);
+
             DeactivateUnfilledBuyOrders(user, recentTrades);
 
         }
