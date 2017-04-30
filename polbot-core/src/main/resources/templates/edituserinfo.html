@@ -70,82 +70,45 @@
 
 
             <div class="form-group">
-                <label th:for="inputPublicKey" th:text="#{botuser.publicKey} "/>
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input id="inputPublicKey" type="text" th:field="*{publicKey}"
+                <label for="inputPublicKey"> Public Key:</label>
+                        <input id="inputPublicKey" class="form-control"  type="text" th:field="*{publicKey}"
                                th:errorclass="fieldError"/>
 
-                        <br/>
-                    </div>
-                </div>
             </div>
             <div class="form-group">
-                <label th:for="inputprivateKey" th:text="#{botuser.privateKey} "/>
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input id="inputprivateKey" type="text" th:field="*{privateKey}"
+                <label for="inputprivateKey"> Private Key:</label>
+                        <input id="inputprivateKey" class="form-control" type="text" th:field="*{privateKey}"
                                th:errorclass="fieldError"/>
 
-                        <br/>
-                    </div>
-                </div>
             </div>
             <div class="form-group">
-                <label th:for="inputuserEmail" th:text="#{botuser.userEmail} "/>
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input id="inputuserEmail" type="text" th:field="*{userEmail}"
+                <label for="inputuserEmail"> User Email:</label>
+                        <input id="inputuserEmail" class="form-control"  type="text" th:field="*{userEmail}"
                                th:errorclass="fieldError"/>
 
-                        <br/>
-                    </div>
-                </div>
             </div>
             <div class="form-group">
-                <label th:for="inputuserName" th:text="#{botuser.userName} "/>
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input id="inputuserName" type="text" th:field="*{userName}"
+                <label for="inputuserName"> User Name:</label>
+                        <input id="inputuserName"  class="form-control"  type="text" th:field="*{userName}"
                                th:errorclass="fieldError"/>
 
-                        <br/>
-                    </div>
-                </div>
             </div>
             <div class="form-group">
-                <label th:for="inputpassword" th:text="#{botuser.password} "/>
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input id="inputpassword" type="text" th:field="*{password}"
+                <label for="inputpassword"> Password:</label>
+                        <input id="inputpassword" class="form-control" type="text" th:field="*{password}"
                                th:errorclass="fieldError"/>
 
-                        <br/>
-                    </div>
-                </div>
             </div>
             <div class="form-group">
-                <label th:for="inputrole" th:text="#{botuser.role} "/>
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input id="inputrole" type="text" th:field="*{role}"
+                <label for="inputrole"> Role:</label>
+                        <input id="inputrole"  class="form-control" type="text" th:field="*{role}"
                                th:errorclass="fieldError"/>
 
-                        <br/>
-                    </div>
-                </div>
             </div>
             <div class="form-group">
-
-                <label th:for="inputbuyOrderCancelationDay" th:text="#{botuser.buyOrderCancelationDay} "/>
-                <div class="col-md-8">
-                    <div class="input-group">
-                        <input id="inputbuyOrderCancelationDay" type="text" th:field="*{buyOrderCancelationDay}"
+                <label for="inputbuyOrderCancelationDay"> Buy Order Cancellation Day:</label>
+                        <input id="inputbuyOrderCancelationDay" class="form-control" type="text" th:field="*{buyOrderCancelationDay}"
                                th:errorclass="fieldError"/>
-
-                        <br/>
-                    </div>
-                </div>
              </div>
         <div class="submit">
             <button type="submit" class="btn btn-primary btn-primary-group"

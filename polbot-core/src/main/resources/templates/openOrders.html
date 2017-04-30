@@ -58,28 +58,28 @@
 
 <div class="row">
     <div class="col-md-4">
-        <a class="btn btn-danger" href="/orders/cancelopenorders?ordercanceltype=ALL">CANCEL ALL OPEN ORDERS</a>
+        <a class="btn btn-danger" onclick="return confirm('Want to do?')" href="/orders/cancelopenorders?ordercanceltype=ALL">CANCEL ALL OPEN ORDERS</a>
     </div>
     <div class="col-md-4">
-        <a  class="btn btn-danger" href="/orders/cancelopenorders?ordercanceltype=SELL">CANCEL SELL OPEN ORDERS</a>
+        <a  class="btn btn-danger" onclick="return confirm('Want to do?')" href="/orders/cancelopenorders?ordercanceltype=SELL">CANCEL SELL OPEN ORDERS</a>
     </div>
     <div class="col-md-4">
-        <a  class="btn btn-danger" href="/orders/cancelopenorders?ordercanceltype=BUY">CANCEL BUY OPEN ORDERS</a>
+        <a  class="btn btn-danger" onclick="return confirm('Want to do?')" href="/orders/cancelopenorders?ordercanceltype=BUY">CANCEL BUY OPEN ORDERS</a>
     </div>
 </div>
 
 <div class="row">
     <div class="col-md-3">
-        <a class="btn btn-info" href="/orders/stopcurrencyoperations?ordertype=stop_sell">STOP SELL ORDERS</a>
+        <a class="btn btn-info" onclick="return confirm('Want to do?')" href="/orders/stopcurrencyoperations?ordertype=stop_sell">STOP SELL ORDERS</a>
     </div>
     <div class="col-md-3">
-        <a  class="btn btn-info" href="/orders/stopcurrencyoperations?ordertype=stop_buy">STOP BUY ORDERS</a>
+        <a  class="btn btn-info" onclick="return confirm('Want to do?')" href="/orders/stopcurrencyoperations?ordertype=stop_buy">STOP BUY ORDERS</a>
     </div>
     <div class="col-md-3">
-        <a  class="btn btn-info" href="/orders/stopcurrencyoperations?ordertype=start_sell">START SELL ORDERS</a>
+        <a  class="btn btn-info" onclick="return confirm('Want to do?')" href="/orders/stopcurrencyoperations?ordertype=start_sell">START SELL ORDERS</a>
     </div>
     <div class="col-md-3">
-        <a  class="btn btn-info" href="/orders/stopcurrencyoperations?ordertype=start_buy">START BUY ORDERS</a>
+        <a  class="btn btn-info" onclick="return confirm('Want to do?')" href="/orders/stopcurrencyoperations?ordertype=start_buy">START BUY ORDERS</a>
     </div>
 </div>
 
@@ -88,7 +88,7 @@
         <a class="btn btn-info" href="/orders/setPercentageForAllCurrencies">Set Percentage For All Currencies</a>
     </div>
     <div class="col-md-3">
-        <a class="btn btn-info" href="/orders/stopbuyordersforcurrencies">stop buy orders for currencies with too much sell orders</a>
+        <a class="btn btn-info" onclick="return confirm('Want to do?')" href="/orders/stopbuyordersforcurrencies">stop buy orders for currencies with too much sell orders</a>
     </div>
 </div>
 
