@@ -206,6 +206,22 @@ public class OrdersController {
     }
 
 
+    @RequestMapping(value = "/edituserinfo", params = {"show"})
+    public String showEdituserinfo(Principal principal, Map model) {
+
+        int userId= authenticationFacade.GetUserId();
+        BotUser user = botUserRepository.findOne(userId);
+        model.put("botuser", user);
+
+        return "edituserinfo";
+    }
+    @RequestMapping(value = "/edituserinfo", params = {"save"})
+    public String saveEdituserinfo(Principal principal, final  BotUser botuser, Map model) {
+
+        botUserRepository.save(botuser);
+
+        return "redirect:/edituserinfo?show=";
+    }
 
 
     @RequestMapping(value = "/orders/setPercentageForAllCurrencies")
@@ -219,4 +235,6 @@ public class OrdersController {
 
         return "currencyconfigforall";
     }
+
+
 }
