@@ -205,7 +205,7 @@ public class PoloniexMeanPatienceBot {
         }
 
         if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty())// if any of them is not empty send mail
-            mailService.sendMail(user.getUserEmail(), "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, tradingApi.returnCompleteBalances()), true);
+            mailService.sendMail(user, "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, tradingApi.returnCompleteBalances()), true);
 
 
         logger.info("Completed for user {}", user);
