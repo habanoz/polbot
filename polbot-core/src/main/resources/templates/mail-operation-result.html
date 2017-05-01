@@ -53,7 +53,7 @@
     <h2>Recent Trades</h2>
     <div th:each="trades:${recentHistoryMap}">
         <p th:text="${trades.key}"></p>
-        <table class="orderBook orderBookRight"
+        <table border="1" class="orderBook orderBookRight"
                style="width:100%;border: 1px solid #d3e7d9;border-collapse: separate;border-spacing: 0px;background-color: #ffffff;">
             <thead style="display: table-header-group;vertical-align: middle;border-color: inherit;">
             <tr>
@@ -79,7 +79,7 @@
 
 <div th:unless="${successfulOrders.isEmpty()}" id="successTable">
     <h2>Successful Orders</h2>
-    <table class="orderBook orderBookRight"
+    <table border="1" class="orderBook orderBookRight"
            style="width:100%;border: 1px solid #d3e7d9;border-collapse: separate;border-spacing: 0px;background-color: #ffffff;">
         <thead style="display: table-header-group;vertical-align: middle;border-color: inherit;">
         <tr>
@@ -104,7 +104,7 @@
 
 <div th:unless="${failedOrders.isEmpty()}" id="failedTable">
     <h2>Failed Orders</h2>
-    <table class="orderBook orderBookRight"
+    <table border="1" class="orderBook orderBookRight"
            style="width:100%;border: 1px solid #d3e7d9;border-collapse: separate;border-spacing: 0px;background-color: #ffffff;">
         <thead style="display: table-header-group;vertical-align: middle;border-color: inherit;">
         <tr>
@@ -131,7 +131,7 @@
 <hr/>
 
 <h2>Balances</h2>
-<table class="orderBook orderBookRight"
+<table border="1" class="orderBook orderBookRight"
        style="width:100%;border: 1px solid #d3e7d9;border-collapse: separate;border-spacing: 0px;background-color: #ffffff;">
     <thead style="display: table-header-group;vertical-align: middle;border-color: inherit;">
     <tr>
