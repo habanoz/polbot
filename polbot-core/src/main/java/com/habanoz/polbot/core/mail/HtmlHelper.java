@@ -1,10 +1,7 @@
 package com.habanoz.polbot.core.mail;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
-import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
-import com.habanoz.polbot.core.model.PoloniexOrderResult;
-import com.habanoz.polbot.core.model.PoloniexTicker;
-import com.habanoz.polbot.core.model.PoloniexTrade;
+import com.habanoz.polbot.core.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
@@ -40,7 +37,7 @@ public class HtmlHelper {
                 .sorted(Comparator.comparingDouble(f -> f.getOrder().getTotal().doubleValue()))
                 .collect(Collectors.toList());
         List<PoloniexOrderResult> failed = orderResults.stream().filter(e -> !e.getSuccess())
-                .sorted(Comparator.comparingDouble(f -> f.getOrder().getTotal().doubleValue()))
+                .sorted(Comparator.comparing(o -> o.getOrder().getTotal()))
                 .collect(Collectors.toList());
 
         //pre process balance records

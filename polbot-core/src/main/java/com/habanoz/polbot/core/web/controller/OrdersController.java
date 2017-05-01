@@ -43,6 +43,9 @@ public class OrdersController {
 
 
     @Autowired
+    private PoloniexPublicApi publicApi;
+
+    @Autowired
     private CurrencyConfigRepository currencyConfigRepository;
 
     @Autowired
@@ -72,7 +75,7 @@ public class OrdersController {
     //Develop poloneix open orders page to manage any currency cancellation,  any of them or all of them together.
     @RequestMapping(value = "/orders/openorders")
     public String openOrders(Map<String, Object> model) {
-        int userId= authenticationFacade.GetUserId();
+        int userId = authenticationFacade.GetUserId();
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
 
@@ -84,16 +87,16 @@ public class OrdersController {
 
     @RequestMapping(value = "/orders/stopcurrencyoperations", method = RequestMethod.GET)
     public String stopCurrencyOperations(@RequestParam("ordertype") String orderType) {
-        int userId= authenticationFacade.GetUserId();
+        int userId = authenticationFacade.GetUserId();
         List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
-        for (CurrencyConfig config: userCurrencyConfigs) {
-            if(orderType.equalsIgnoreCase("STOP_BUY")){
+        for (CurrencyConfig config : userCurrencyConfigs) {
+            if (orderType.equalsIgnoreCase("STOP_BUY")) {
                 config.setBuyable(false);
-            }else if(orderType.equalsIgnoreCase("STOP_SELL")) {
+            } else if (orderType.equalsIgnoreCase("STOP_SELL")) {
                 config.setSellable(false);
-            }else if(orderType.equalsIgnoreCase("START_BUY")) {
+            } else if (orderType.equalsIgnoreCase("START_BUY")) {
                 config.setBuyable(true);
-            }else if(orderType.equalsIgnoreCase("START_SELL")) {
+            } else if (orderType.equalsIgnoreCase("START_SELL")) {
                 config.setSellable(true);
             }
             currencyConfigRepository.save(config);
@@ -104,7 +107,7 @@ public class OrdersController {
 
     @RequestMapping(value = "/orders/cancelopenorders", method = RequestMethod.GET)
     public String cancelopenorders(@RequestParam("ordercanceltype") String orderCancelType) {
-        int userId= authenticationFacade.GetUserId();
+        int userId = authenticationFacade.GetUserId();
         BotUser user = botUserRepository.findOne(userId);
         Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
@@ -112,25 +115,23 @@ public class OrdersController {
         applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
 
         //String orderCancelType="BUY";  // ALL,BUY,SELL
-        for(Map.Entry<String, List<PoloniexOpenOrder>> mapKey : openOrderMap.entrySet()) {
+        for (Map.Entry<String, List<PoloniexOpenOrder>> mapKey : openOrderMap.entrySet()) {
             String key = mapKey.getKey();
             List<PoloniexOpenOrder> ordersForEachCurrency = mapKey.getValue();
-            for (PoloniexOpenOrder order:  ordersForEachCurrency) {
+            for (PoloniexOpenOrder order : ordersForEachCurrency) {
                 try {
-                    if( orderCancelType.equalsIgnoreCase("ALL")){
+                    if (orderCancelType.equalsIgnoreCase("ALL")) {
                         boolean isResult = tradingApi.cancelOrder(order.getOrderNumber());
-                    }
-                    else if(order.getType().equalsIgnoreCase("BUY") && orderCancelType.equalsIgnoreCase("BUY")){
+                    } else if (order.getType().equalsIgnoreCase("BUY") && orderCancelType.equalsIgnoreCase("BUY")) {
                         boolean isResult = tradingApi.cancelOrder(order.getOrderNumber());
-                    }
-                    else if(order.getType().equalsIgnoreCase("SELL") && orderCancelType.equalsIgnoreCase("SELL")){
+                    } else if (order.getType().equalsIgnoreCase("SELL") && orderCancelType.equalsIgnoreCase("SELL")) {
                         boolean isResult = tradingApi.cancelOrder(order.getOrderNumber());
                     }
 
                     Thread.sleep(BUY_SELL_SLEEP);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -142,28 +143,27 @@ public class OrdersController {
 
     @RequestMapping(value = "/orders/stopbuyordersforcurrencies", method = RequestMethod.GET)
     public String stopbuyordersforcurrencies() {
-        int userId= authenticationFacade.GetUserId();
+        int userId = authenticationFacade.GetUserId();
         Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
         List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
-        for (CurrencyConfig config: userCurrencyConfigs) {
+        for (CurrencyConfig config : userCurrencyConfigs) {
             try {
 
                 String currPair = config.getCurrencyPair();
                 //String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
-                List<PoloniexOpenOrder>  openOrders =   openOrderMap.get(currPair);
-                if(openOrders.stream().filter(r->r.getType().equalsIgnoreCase("SELL")).count() >= 3){
+                List<PoloniexOpenOrder> openOrders = openOrderMap.get(currPair);
+                if (openOrders.stream().filter(r -> r.getType().equalsIgnoreCase("SELL")).count() >= 3) {
                     config.setBuyable(false);
                     currencyConfigRepository.save(config);
                 }
 
-            }catch (Exception e){
-                    e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
         return "redirect:/orders/openorders";
     }
-
 
 
     private Map<String, List<PoloniexOpenOrder>> getOpenOrdersList(int userId) {
@@ -176,28 +176,26 @@ public class OrdersController {
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
-        openOrderMap.values().removeAll(openOrderMap.values().stream().filter(r->r.size() == 0).collect(Collectors.toList()));
+        openOrderMap.values().removeAll(openOrderMap.values().stream().filter(r -> r.size() == 0).collect(Collectors.toList()));
         return openOrderMap;
     }
 
 
+    @RequestMapping(value = "/orders/savePercentageForAllCurrencies")
+    public String savePercentageForAllCurrencies(final CurrencyConfig currencyConfig) {
 
-
-       @RequestMapping(value = "/orders/savePercentageForAllCurrencies")
-        public String savePercentageForAllCurrencies(final CurrencyConfig currencyConfig) {
-
-        int userId= authenticationFacade.GetUserId();
+        int userId = authenticationFacade.GetUserId();
         List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
-        for (CurrencyConfig config: userCurrencyConfigs) {
+        for (CurrencyConfig config : userCurrencyConfigs) {
 
-            if(currencyConfig.getUsableBalancePercent() > 0){
+            if (currencyConfig.getUsableBalancePercent() > 0) {
                 config.setUsableBalancePercent(currencyConfig.getUsableBalancePercent());
             }
-            if(currencyConfig.getSellOnPercent() > 0)
-            config.setSellOnPercent(currencyConfig.getSellOnPercent());
+            if (currencyConfig.getSellOnPercent() > 0)
+                config.setSellOnPercent(currencyConfig.getSellOnPercent());
 
-            if(currencyConfig.getBuyOnPercent() > 0)
-            config.setBuyOnPercent(currencyConfig.getBuyOnPercent());
+            if (currencyConfig.getBuyOnPercent() > 0)
+                config.setBuyOnPercent(currencyConfig.getBuyOnPercent());
 
             currencyConfigRepository.save(config);
         }
@@ -209,26 +207,55 @@ public class OrdersController {
     @RequestMapping(value = "/edituserinfo", params = {"show"})
     public String showEdituserinfo(Principal principal, Map model) {
 
-        int userId= authenticationFacade.GetUserId();
+        int userId = authenticationFacade.GetUserId();
         BotUser user = botUserRepository.findOne(userId);
         model.put("botuser", user);
 
         return "edituserinfo";
     }
+
     @RequestMapping(value = "/edituserinfo", params = {"save"})
-    public String saveEdituserinfo(Principal principal, final  BotUser botuser, Map model) {
+    public String saveEdituserinfo(Principal principal, final BotUser botuser, Map model) {
 
         botUserRepository.save(botuser);
 
         return "redirect:/edituserinfo?show=";
     }
 
+    @RequestMapping(value = "/orders/addMissingCurrencies")
+    public String addMissingCurrencies(Principal principal, final Map model) {
+
+        int userId = authenticationFacade.GetUserId();
+        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
+        Map<String, PoloniexTicker> tickers = publicApi.returnTicker();
+        for (Map.Entry<String, PoloniexTicker> entry : tickers.entrySet()) {
+            List<CurrencyConfig> c = userCurrencyConfigs.stream().filter(r -> r.getCurrencyPair().equals((entry.getKey()))).collect(Collectors.toList());
+
+            if (c.size() == 0)
+            {
+                System.out.println(entry.getKey());
+                CurrencyConfig currencyConfig = new CurrencyConfig();
+                currencyConfig.setBuyable(false);
+                currencyConfig.setBuyOnPercent(10);
+                currencyConfig.setBuyAtPrice(0);
+                currencyConfig.setSellable(false);
+                currencyConfig.setSellAtPrice(0);
+                currencyConfig.setSellOnPercent(10);
+                currencyConfig.setCurrencyPair(entry.getKey());
+                currencyConfig.setUserId(userId);
+                currencyConfigRepository.save(currencyConfig);
+            }
+        }
+
+        return "redirect:/orders/openorders";
+    }
+
 
     @RequestMapping(value = "/orders/setPercentageForAllCurrencies")
     public String setPercentageForAllCurrencies(Principal principal, Map model) {
 
-        int userId= authenticationFacade.GetUserId();
-        CurrencyConfig  currentCurrencyConfig = new CurrencyConfig();
+        int userId = authenticationFacade.GetUserId();
+        CurrencyConfig currentCurrencyConfig = new CurrencyConfig();
         currentCurrencyConfig.setUserId(userId);
 
         model.put("currencyConfig", currentCurrencyConfig);
