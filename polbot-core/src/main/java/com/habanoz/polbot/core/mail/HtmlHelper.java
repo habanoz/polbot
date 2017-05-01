@@ -28,7 +28,9 @@ public class HtmlHelper {
     private PoloniexPublicApi publicApi;
 
 
-    public String getSummaryHTML(List<PoloniexOrderResult> orderResults, Map<String, List<PoloniexTrade>> recentHistoryMap, Map<String, PoloniexCompleteBalance> balancesMap) {
+    public String getSummaryHTML(List<PoloniexOrderResult> orderResults,
+                                 Map<String, List<PoloniexTrade>> recentHistoryMap,
+                                 Map<String, PoloniexCompleteBalance> balancesMap) {
 
 
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
@@ -37,11 +39,17 @@ public class HtmlHelper {
         List<PoloniexOrderResult> successful = orderResults.stream().filter(e -> e.getSuccess())
                 .sorted(Comparator.comparingDouble(f -> f.getOrder().getTotal().doubleValue()))
                 .collect(Collectors.toList());
-        List<PoloniexOrderResult> failed = orderResults.stream().filter(e -> !e.getSuccess()).collect(Collectors.toList());
+        List<PoloniexOrderResult> failed = orderResults.stream().filter(e -> !e.getSuccess())
+                .sorted(Comparator.comparingDouble(f -> f.getOrder().getTotal().doubleValue()))
+                .collect(Collectors.toList());
 
         //pre process balance records
         Double btcBalance = balancesMap.values().stream().mapToDouble(PoloniexCompleteBalance::getBtcValue).sum();
-        balancesMap = balancesMap.entrySet().stream().filter(map -> map.getValue().getBtcValue() > 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        balancesMap = balancesMap.entrySet()
+                .stream()
+                .filter(map -> map.getValue().getBtcValue() > 0)
+                .sorted(Comparator.comparingDouble(f -> f.getValue().getBtcValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Context context = new Context();
         context.setVariable("recentHistoryMap", recentHistoryMap);
