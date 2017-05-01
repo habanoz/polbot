@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,7 +34,9 @@ public class HtmlHelper {
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
         PoloniexTicker ticker = tickerMap.get("USDT_BTC");
 
-        List<PoloniexOrderResult> successful = orderResults.stream().filter(e -> e.getSuccess()).collect(Collectors.toList());
+        List<PoloniexOrderResult> successful = orderResults.stream().filter(e -> e.getSuccess())
+                .sorted(Comparator.comparingDouble(f -> f.getOrder().getTotal().doubleValue()))
+                .collect(Collectors.toList());
         List<PoloniexOrderResult> failed = orderResults.stream().filter(e -> !e.getSuccess()).collect(Collectors.toList());
 
         //pre process balance records
