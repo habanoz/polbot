@@ -5,12 +5,10 @@ import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.model.PoloniexOpenOrder;
-import com.habanoz.polbot.core.model.PoloniexOrderResult;
-import com.habanoz.polbot.core.model.PoloniexTicker;
-import com.habanoz.polbot.core.model.PoloniexTradeResult;
-import com.habanoz.polbot.core.repository.BotUserRepository;
-import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
+import com.habanoz.polbot.core.model.*;
+import com.habanoz.polbot.core.repository.*;
+import com.habanoz.polbot.core.service.TradeTrackerService;
+import com.habanoz.polbot.core.service.TradeTrackerServiceImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,12 +45,40 @@ public class MailServiceImplTest {
     @Autowired
     private BotUserRepository botUserRepository;
 
+    @Autowired
+    private UserBotRepository userBotRepository;
+
+    @Autowired
+    private TradeHistoryTrackRepository tradeHistoryTrackRepository;
+
+
+    @Autowired
+    private CurrencyOrderRepository currencyOrderRepository;
     @Test
     public void sendMail() throws Exception {
         mailService.sendMail("huseyinabanox@gmail.com", "merab", "naber", true);
     }
 
+    @Test
+    public void sortingExample() throws Exception {
+        int userId = 1;
+        //User specific currency config list
+        BotUser user = botUserRepository.findOne(userId);
+        PoloniexTradingApi poloniexTradingApi = new PoloniexTradingApiImpl(user);
 
+        Map<String, PoloniexCompleteBalance> balancesMap=poloniexTradingApi.returnCompleteBalances();
+        balancesMap =         balancesMap.entrySet()
+                .stream()
+                .filter(map -> map.getValue().getBtcValue() > 0)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        for(Map.Entry<String, PoloniexCompleteBalance> mapKey : balancesMap.entrySet()) {
+            String key = mapKey.getKey();
+            PoloniexCompleteBalance m = mapKey.getValue();
+            System.out.println(key+"="+m.getBtcValue());
+        }
+
+    }
     @Test
     public void calculateTradingBTCForEachCurrency() throws Exception {
         int userId = 1;

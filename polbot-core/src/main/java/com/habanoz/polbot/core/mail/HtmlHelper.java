@@ -37,7 +37,7 @@ public class HtmlHelper {
                 .sorted(Comparator.comparingDouble(f -> f.getOrder().getTotal().doubleValue()))
                 .collect(Collectors.toList());
         List<PoloniexOrderResult> failed = orderResults.stream().filter(e -> !e.getSuccess())
-                .sorted(Comparator.comparing(o -> o.getOrder().getTotal()))
+                .sorted(Comparator.comparingDouble(f -> f.getOrder().getTotal().doubleValue()))
                 .collect(Collectors.toList());
 
         //pre process balance records

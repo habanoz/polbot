@@ -248,11 +248,20 @@ public class PoloniexPatienceBot {
                                       String currPair,
                                       BigDecimal lowestBuyPrice,        HashMap<String, BigDecimal> tradingBTCMap) {
         String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
-        BigDecimal buyBudget =  tradingBTCMap.get(currName);
-        // not enough budget, return 0
-        if (buyBudget.doubleValue() < minAmount) {
+        BigDecimal buyBudget;
+        // TODO: check tradingBTCMap again
+        if(tradingBTCMap.containsKey(currName)){
+            buyBudget =  tradingBTCMap.get(currName);
+            // not enough budget, return 0
+            if (buyBudget !=null && buyBudget.doubleValue() < minAmount) {
+                logger.info("No Budget for currency: "+currName+" for user: "+user.getUserEmail());
+                return BigDecimal.valueOf(0);
+            }
+        }else{
+            logger.info("No Budget for currency: "+currName+" for user: "+user.getUserEmail());
             return BigDecimal.valueOf(0);
         }
+
 
         // buying price should be a little lower to make profit
         // if set, buy at price will be used, other wise buy on percent will be used
@@ -314,6 +323,7 @@ public class PoloniexPatienceBot {
             tradingBTCMap.put(mapKey.getKey(),buyBudget);
             btcBalance = btcBalance.subtract(buyBudget);
         }
+
         return tradingBTCMap;
     }
 
