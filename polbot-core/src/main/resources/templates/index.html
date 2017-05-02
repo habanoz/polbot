@@ -31,14 +31,14 @@
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <script src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.15/js/dataTables.bootstrap.min.js"></script>
-    <link href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/DataTables/datatables.min.css}"/>
+    <script type="text/javascript" th:src="@{/DataTables/datatables.min.js}"></script>
+
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#ctable').DataTable({responsive: true});
-
+            $('#ctable').dataTable({responsive: true, pageLength: 100});
         });
+
     </script>
 
 </head>

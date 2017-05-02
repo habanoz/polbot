@@ -25,36 +25,12 @@ public class IndexController {
     @Autowired
     private PoloniexPublicApi poloniexPublicApi;
 
-    private CurrencyConfig currentCurrencyConfig = new CurrencyConfig();
-
-    @Autowired
-    private IAuthenticationFacade authenticationFacade;
-
-
     @RequestMapping({"/", "/index"})
     public String welcome(Map<String, Object> model) {
         //int userId = authenticationFacade.GetUserId();  //Authenticated User
         model.put("poloniexTicker", new PoloniexTicker());
         model.put("poloniexTickers", this.poloniexPublicApi.returnTicker());
         model.put("searchKey", "");
-        return "index";
-    }
-
-    @RequestMapping(value="/searchTicker", method= RequestMethod.POST)
-    public String searchPost(@RequestParam("search") String search, ModelMap model) {
-
-        //int userId = authenticationFacade.GetUserId();  //Authenticated User
-        Map<String,PoloniexTicker> tickers =this.poloniexPublicApi.returnTicker();
-
-        if(search != null && !search.trim().isEmpty()){
-            tickers =tickers.entrySet().stream()
-                    .filter(map -> map.getKey().toLowerCase().contains(search.toLowerCase()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        }
-
-        model.put("poloniexTicker", new CurrencyConfig());
-        model.put("poloniexTickers", tickers);
-        model.put("searchKey", search);
         return "index";
     }
 

@@ -30,13 +30,14 @@
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <script src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.15/js/dataTables.bootstrap.min.js"></script>
-    <link href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/DataTables/datatables.min.css}"/>
+    <script type="text/javascript" th:src="@{/DataTables/datatables.min.js}"></script>
+
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#ctable').DataTable({responsive: true,  pageLength: 100});
+            $('#ctable').dataTable({responsive: true, pageLength: 100});
         });
+
     </script>
 
 </head>
@@ -108,7 +109,7 @@
                             <div class="panel panel-default">
                                 <div class="panel-body">
 
-                                    <table id="ctable" class="table table-responsive">
+                                    <table id="ctable" class="display table table-responsive" cellspacing="0" width="100%">
                                         <thead>
                                         <tr>
                                             <th>Currency Pair</th>
@@ -131,8 +132,9 @@
                                             <td th:text="${cc.sellOnPercent}">5</td>
                                             <td th:text="${cc.buyAtPrice}">0.0025</td>
                                             <td th:text="${cc.sellAtPrice}">0.0025</td>
-                                            <td><input disabled="true" type="checkbox"  th:checked="${cc.buyable}" /></td>
-                                            <td><input disabled="true" type="checkbox"  th:checked="${cc.sellable}"/></td>
+                                            <td><input disabled="true" type="checkbox" th:checked="${cc.buyable}"/></td>
+                                            <td><input disabled="true" type="checkbox" th:checked="${cc.sellable}"/>
+                                            </td>
                                             <td>
                                                 <div class="submit">
                                                     <a th:href="@{/currencyconfig/(show='',currency=${cc.currencyPair})}"
@@ -147,6 +149,7 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
 
             </div>

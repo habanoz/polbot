@@ -12,7 +12,7 @@ import java.util.List;
  * Created by huseyina on 4/7/2017.
  */
 
-@CacheConfig(cacheNames = "currencyConfigs")
+//@CacheConfig(cacheNames = "currencyConfigs")
 public interface CurrencyConfigRepository extends JpaRepository<CurrencyConfig, Integer> {
     //@Cacheable
     @Override
