@@ -5,7 +5,7 @@
 <body>
 
 
-<nav class="navbar navbar-inverse" th:fragment="header">
+<nav class="navbar navbar-inverse  navbar-fixed-top" th:fragment="header">
     <div class="container-fluid">
         <div class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
@@ -22,18 +22,23 @@
                 <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/orders/openorders}">Open Orders</a></li>
                 <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/edituserinfo?show=}">Edit Your Info</a></li>
             </ul>
+
             <ul class="nav navbar-nav navbar-right">
                 <li th:if="${#authorization?.expression('!isAuthenticated()')}">
                     <a href="/signin" th:href="@{/login}">Sign in</a>
                 </li>
-                <li th:if="${#authorization?.expression('isAuthenticated()')}">
-                    <form id="formout" th:action="@{/logout}" method="post">
+
+            </ul>
+            <form id="formout" th:action="@{/logout}" method="post">
+                <ul class="nav navbar-nav navbar-right">
+
+                    <li th:if="${#authorization?.expression('isAuthenticated()')}">
 
                         <a href="#" th:inline="text" onclick="formout.submit();">[[${#httpServletRequest.remoteUser}]]
                             Logout</a>
-                    </form>
-                </li>
-            </ul>
+                    </li>
+                </ul>
+            </form>
 
         </div>
     </div>

@@ -29,7 +29,6 @@
 <body>
 
 
-
 <div th:replace="header :: header">
     <!-- Navigation -->
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -55,93 +54,108 @@
         <!-- /.container -->
     </nav>
 </div>
+<!-- Page Content -->
+<div class="container">
+    <h3>Cancel Orders</h3>
+    <hr />
+    <div class="row">
 
-<div class="row">
-    <div class="col-md-4">
-        <a class="btn btn-danger" onclick="return confirm('Want to cancel ALL open orders?')" href="/orders/cancelopenorders?ordercanceltype=ALL">CANCEL ALL OPEN ORDERS</a>
+        <div class="col-md-4">
+            <a class="btn btn-danger" onclick="return confirm('Want to cancel ALL open orders?')"
+               href="/orders/cancelopenorders?ordercanceltype=ALL">CANCEL ALL OPEN ORDERS</a>
+        </div>
+
+        <div class="col-md-4">
+            <a class="btn btn-danger" onclick="return confirm('Want to cancel SELL open orders?')"
+               href="/orders/cancelopenorders?ordercanceltype=SELL">CANCEL SELL OPEN ORDERS</a>
+        </div>
+
+        <div class="col-md-4">
+            <a class="btn btn-danger" onclick="return confirm('Want to cancel BUY open orders?')"
+               href="/orders/cancelopenorders?ordercanceltype=BUY">CANCEL BUY OPEN ORDERS</a>
+        </div>
     </div>
-    <div class="col-md-4">
-        <a  class="btn btn-danger" onclick="return confirm('Want to cancel SELL open orders?')" href="/orders/cancelopenorders?ordercanceltype=SELL">CANCEL SELL OPEN ORDERS</a>
+    <h3>Start/Stop Orders</h3>
+    <hr />
+    <div class="row">
+        <div class="col-md-3">
+            <a class="btn btn-info" onclick="return confirm('Want to stop SELL orders?')"
+               href="/orders/stopcurrencyoperations?ordertype=stop_sell">STOP SELL ORDERS</a>
+        </div>
+        <div class="col-md-3">
+            <a class="btn btn-info" onclick="return confirm('Want to stop BUY orders?')"
+               href="/orders/stopcurrencyoperations?ordertype=stop_buy">STOP BUY ORDERS</a>
+        </div>
+        <div class="col-md-3">
+            <a class="btn btn-info" onclick="return confirm('Want to start SELL orders?')"
+               href="/orders/stopcurrencyoperations?ordertype=start_sell">START SELL ORDERS</a>
+        </div>
+        <div class="col-md-3">
+            <a class="btn btn-info" onclick="return confirm('Want to start BUY orders?')"
+               href="/orders/stopcurrencyoperations?ordertype=start_buy">START BUY ORDERS</a>
+        </div>
     </div>
-    <div class="col-md-4">
-        <a  class="btn btn-danger" onclick="return confirm('Want to cancel BUY open orders?')" href="/orders/cancelopenorders?ordercanceltype=BUY">CANCEL BUY OPEN ORDERS</a>
+    <h3>Manage Orders</h3>
+    <hr />
+    <div class="row">
+        <div class="col-md-3">
+            <a class="btn btn-info" href="/orders/setPercentageForAllCurrencies">Set Percentage For All Currencies</a>
+        </div>
+        <div class="col-md-3">
+            <a class="btn btn-info"
+               onclick="return confirm('Want to stop buy orders for currencies with too much sell orders?')"
+               href="/orders/stopbuyordersforcurrencies">stop buy orders for currencies with too much sell orders</a>
+        </div>
+    </div>
+
+    <br/>
+    <h1>
+        YOUR OPEN ORDERS
+    </h1>
+    <br/>
+    <h3>
+        EXCHANGE
+    </h3>
+    <div th:each="entry: ${userOpenOrders}">
+        <span th:text="${entry.key}"></span>
+
+        <table class='table table-hover table-bordered table-striped'>
+            <thead>
+            <tr>
+                <td>
+                    Type
+                </td>
+                <td>
+                    Price (BTC)
+                </td>
+                <td>
+                    Amount (<span th:text="${entry.key}"></span>)
+                </td>
+                <td>
+                    Total (BTC)
+                </td>
+                <td>
+                    Date
+                </td>
+                <td>
+                    Action
+                </td>
+            </tr>
+            </thead>
+            <tbody th:each="poloniexOpenOrder :  ${entry.value}">
+            <tr th:attr="data-open-order-row=${poloniexOpenOrder.orderNumber}">
+                <td th:text="${poloniexOpenOrder.type}"></td>
+                <td th:text="${poloniexOpenOrder.rate}"></td>
+                <td th:text="${poloniexOpenOrder.amount}"></td>
+                <td th:text="${poloniexOpenOrder.total}"></td>
+                <td></td>
+                <td><span class="btn btn-link"
+                          th:attr="data-open-order-cancel=${poloniexOpenOrder.orderNumber}">Cancel</span></td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </div>
-
-<div class="row">
-    <div class="col-md-3">
-        <a class="btn btn-info" onclick="return confirm('Want to stop SELL orders?')" href="/orders/stopcurrencyoperations?ordertype=stop_sell">STOP SELL ORDERS</a>
-    </div>
-    <div class="col-md-3">
-        <a  class="btn btn-info" onclick="return confirm('Want to stop BUY orders?')" href="/orders/stopcurrencyoperations?ordertype=stop_buy">STOP BUY ORDERS</a>
-    </div>
-    <div class="col-md-3">
-        <a  class="btn btn-info" onclick="return confirm('Want to start SELL orders?')" href="/orders/stopcurrencyoperations?ordertype=start_sell">START SELL ORDERS</a>
-    </div>
-    <div class="col-md-3">
-        <a  class="btn btn-info" onclick="return confirm('Want to start BUY orders?')" href="/orders/stopcurrencyoperations?ordertype=start_buy">START BUY ORDERS</a>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-3">
-        <a class="btn btn-info" href="/orders/setPercentageForAllCurrencies">Set Percentage For All Currencies</a>
-    </div>
-    <div class="col-md-3">
-        <a class="btn btn-info" onclick="return confirm('Want to stop buy orders for currencies with too much sell orders?')" href="/orders/stopbuyordersforcurrencies">stop buy orders for currencies with too much sell orders</a>
-    </div>
-</div>
-
-
-<h1>
-    YOUR OPEN ORDERS
-</h1>
-<h3>
-    EXCHANGE
-</h3>
-<p th:each="entry: ${userOpenOrders}">
-    <span  th:text="${entry.key}"></span>
-
-<table class='table table-hover table-bordered table-striped'>
-    <thead>
-    <tr>
-        <td>
-            Type
-        </td>
-        <td>
-            Price (BTC)
-        </td>
-        <td>
-            Amount  (<span  th:text="${entry.key}"></span>)
-        </td>
-        <td>
-            Total (BTC)
-        </td>
-        <td>
-            Date
-        </td>
-        <td>
-            Action
-        </td>
-    </tr>
-    </thead>
-    <tbody th:each="poloniexOpenOrder :  ${entry.value}">
-    <tr  th:attr="data-open-order-row=${poloniexOpenOrder.orderNumber}">
-        <td th:text="${poloniexOpenOrder.type}"></td>
-        <td th:text="${poloniexOpenOrder.rate}"></td>
-        <td th:text="${poloniexOpenOrder.amount}"></td>
-        <td th:text="${poloniexOpenOrder.total}"></td>
-        <td></td>
-        <td> <span class="btn btn-link"  th:attr="data-open-order-cancel=${poloniexOpenOrder.orderNumber}">Cancel</span> </td>
-    </tr>
-    </tbody>
-</table>
-</p>
-
-
-
-
-
 
 
 <!-- /.container -->

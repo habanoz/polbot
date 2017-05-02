@@ -29,7 +29,6 @@
 <body>
 
 
-
 <div th:replace="header :: header">
     <!-- Navigation -->
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -57,75 +56,77 @@
 </div>
 
 
+<div class="container">
 
 
+    <form action="#" th:action="@{/edituserinfo}" th:object="${botuser}" method="post">
 
-<form action="#" th:action="@{/edituserinfo}" th:object="${botuser}" method="post">
+        <input id="userId" type="hidden"
+               th:field="*{userId}"/>
 
-    <input id="userId" type="hidden"
-           th:field="*{userId}"/>
-
-    <input id="active" type="hidden"
-           th:field="*{active}"/>
+        <input id="active" type="hidden"
+               th:field="*{active}"/>
 
 
-            <div class="form-group">
-                <label for="inputPublicKey"> Public Key:</label>
-                        <input id="inputPublicKey" class="form-control"  type="text" th:field="*{publicKey}"
-                               th:errorclass="fieldError"/>
+        <div class="form-group">
+            <label for="inputPublicKey"> Public Key:</label>
+            <input id="inputPublicKey" class="form-control" type="text" th:field="*{publicKey}"
+                   th:errorclass="fieldError"/>
 
-            </div>
-            <div class="form-group">
-                <label for="inputprivateKey"> Private Key:</label>
-                        <input id="inputprivateKey" class="form-control" type="text" th:field="*{privateKey}"
-                               th:errorclass="fieldError"/>
+        </div>
+        <div class="form-group">
+            <label for="inputprivateKey"> Private Key:</label>
+            <input id="inputprivateKey" class="form-control" type="text" th:field="*{privateKey}"
+                   th:errorclass="fieldError"/>
 
-            </div>
-            <div class="form-group">
-                <label for="inputuserEmail"> User Email:</label>
-                        <input id="inputuserEmail" class="form-control"  type="text" th:field="*{userEmail}"
-                               th:errorclass="fieldError"/>
+        </div>
+        <div class="form-group">
+            <label for="inputuserEmail"> User Email:</label>
+            <input id="inputuserEmail" class="form-control" type="text" th:field="*{userEmail}"
+                   th:errorclass="fieldError"/>
 
-            </div>
-            <div class="form-group">
-                <label for="inputuserName"> User Name:</label>
-                        <input id="inputuserName"  class="form-control"  type="text" th:field="*{userName}"
-                               th:errorclass="fieldError"/>
+        </div>
+        <div class="form-group">
+            <label for="inputuserName"> User Name:</label>
+            <input id="inputuserName" class="form-control" type="text" th:field="*{userName}"
+                   th:errorclass="fieldError"/>
 
-            </div>
-            <div class="form-group">
-                <label for="inputpassword"> Password:</label>
-                        <input id="inputpassword" class="form-control" type="text" th:field="*{password}"
-                               th:errorclass="fieldError"/>
+        </div>
+        <div class="form-group">
+            <label for="inputpassword"> Password:</label>
+            <input id="inputpassword" class="form-control" type="text" th:field="*{password}"
+                   th:errorclass="fieldError"/>
 
-            </div>
-            <div class="form-group">
-                <label for="inputrole"> Role:</label>
-                        <input id="inputrole"  class="form-control" type="text" th:field="*{role}"
-                               th:errorclass="fieldError"/>
+        </div>
+        <div class="form-group">
+            <label for="inputrole"> Role:</label>
+            <input id="inputrole" class="form-control" type="text" th:field="*{role}"
+                   th:errorclass="fieldError"/>
 
-            </div>
-            <div class="form-group">
-                <label for="inputbuyOrderCancelationDay"> Buy Order Cancellation Day:</label>
-                        <input id="inputbuyOrderCancelationDay" class="form-control" type="text" th:field="*{buyOrderCancelationDay}"
-                               th:errorclass="fieldError"/>
-             </div>
-    <div class="form-group">
-        <label for="checkboxemailNotification"> Email Notification:</label>
+        </div>
+        <div class="form-group">
+            <label for="inputbuyOrderCancelationDay"> Buy Order Cancellation Day:</label>
+            <input id="inputbuyOrderCancelationDay" class="form-control" type="text"
+                   th:field="*{buyOrderCancelationDay}"
+                   th:errorclass="fieldError"/>
+        </div>
+        <div class="form-group">
+            <label for="checkboxemailNotification"> Email Notification:</label>
 
-        <input type="checkbox" id="checkboxemailNotification"
-               class="form-control"
-               th:field="*{emailNotification}"
-                       th:errorclass="fieldError"/>
-    </div>
+            <input type="checkbox" id="checkboxemailNotification"
+                   class="form-control"
+                   th:field="*{emailNotification}"
+                   th:errorclass="fieldError"/>
+        </div>
         <div class="submit">
             <button type="submit" class="btn btn-primary btn-primary-group"
                     style="float: right"
                     name="save" th:text="Save">Add Seed Starter
             </button>
         </div>
-</form>
+    </form>
 
+</div>
 
 <!-- /.container -->
 
