@@ -7,9 +7,7 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,21 +40,28 @@ public class HtmlHelper {
 
         //pre process balance records
         Double btcBalance = balancesMap.values().stream().mapToDouble(PoloniexCompleteBalance::getBtcValue).sum();
-        balancesMap = balancesMap.entrySet()
-                .stream()
-                .filter(map -> map.getValue().getBtcValue() > 0)
-                .sorted(Comparator.comparingDouble(f -> f.getValue().getBtcValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, PoloniexCompleteBalance> sortedBalancesMap = getSortedBalances(balancesMap);
 
         Context context = new Context();
         context.setVariable("recentHistoryMap", recentHistoryMap);
         context.setVariable("successfulOrders", successful);
         context.setVariable("failedOrders", failed);
-        context.setVariable("balances", balancesMap);
+        context.setVariable("balances",sortedBalancesMap );
         context.setVariable("btcBalance", btcBalance);
         context.setVariable("btcBalanceUsd", btcBalance * ticker.getLowestAsk().doubleValue());
 
         return templateEngine.process("mail-operation-result", context);
+    }
+
+    public Map<String, PoloniexCompleteBalance> getSortedBalances(Map<String, PoloniexCompleteBalance> balancesMap) {
+        Map<String, PoloniexCompleteBalance> result = new LinkedHashMap<>();
+         balancesMap.entrySet()
+                .stream()
+                .filter(map -> map.getValue().getBtcValue() > 0)
+                .sorted(Comparator.comparingDouble(f -> -1*f.getValue().getBtcValue()))
+                .forEachOrdered(  e -> result.put(e.getKey(), e.getValue()));
+
+        return result;
     }
 
     public String getFailText(List<PoloniexOrderResult> orderResults, String str) {

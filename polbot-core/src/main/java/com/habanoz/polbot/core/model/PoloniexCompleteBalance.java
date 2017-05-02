@@ -1,10 +1,9 @@
 package com.habanoz.polbot.core.model;
 
-public class PoloniexCompleteBalance
-{
-    private Float  available;
-    private Float  onOrders;
-    private Float  btcValue;
+public class PoloniexCompleteBalance implements Comparable {
+    private Float available;
+    private Float onOrders;
+    private Float btcValue;
 
     public PoloniexCompleteBalance() {
     }
@@ -46,5 +45,11 @@ public class PoloniexCompleteBalance
                 ", onOrders=" + onOrders +
                 ", btcValue=" + btcValue +
                 '}';
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        PoloniexCompleteBalance balance = (PoloniexCompleteBalance) o;
+        return (int) (this.getBtcValue() - ((PoloniexCompleteBalance) o).getBtcValue());
     }
 }

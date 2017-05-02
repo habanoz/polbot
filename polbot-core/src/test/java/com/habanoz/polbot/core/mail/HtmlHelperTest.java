@@ -42,4 +42,21 @@ public class HtmlHelperTest {
 
         mailService.sendMail("eminyuce@gmail.com", "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentTrades, completeBalanceMap), true);
     }
+
+    @Test
+    public void testSortedBalances() {
+        Map<String,PoloniexCompleteBalance> map=new HashMap<>();
+        map.put("ETC",new PoloniexCompleteBalance(0.1f,0.1f,0.4f));
+        map.put("ETH",new PoloniexCompleteBalance(0.1f,0.1f,0.1f));
+        map.put("LTC",new PoloniexCompleteBalance(0.1f,0.1f,0.2f));
+        map.put("XMR",new PoloniexCompleteBalance(0.1f,0.1f,0.21f));
+        map.put("XRP",new PoloniexCompleteBalance(0.1f,0.1f,0.02f));
+        Map<String,PoloniexCompleteBalance> sortedMap=htmlHelper.getSortedBalances(map);
+
+        for (String key:sortedMap.keySet()){
+            System.out.println(key);
+        }
+    }
+
+
 }
