@@ -5,6 +5,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -20,6 +21,9 @@ public class CurrencyOrder implements Serializable {
     private Integer userId;
     private Date orderDate;
     private boolean active;
+    private float price;
+    private float amount;
+    private float totalBtc;
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -78,5 +82,29 @@ public class CurrencyOrder implements Serializable {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public float getPrice() {
+        return price;
+    }
+
+    public void setPrice(float price) {
+        this.price = price;
+    }
+
+    public float getAmount() {
+        return amount;
+    }
+
+    public void setAmount(float amount) {
+        this.amount = amount;
+    }
+
+    public float getTotalBtc() {
+        return totalBtc;
+    }
+
+    public void setTotalBtc(float totalBtc) {
+        this.totalBtc = totalBtc;
     }
 }

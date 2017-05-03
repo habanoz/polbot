@@ -285,6 +285,9 @@ public class PoloniexPatienceBot {
                 currenyOrder.setOrderNumber(result.getTradeResult().getOrderNumber());
                 currenyOrder.setOrderDate(Date.class.newInstance());
                 currenyOrder.setActive(true);
+                currenyOrder.setPrice(buyPrice.floatValue());
+                currenyOrder.setAmount(buyAmount.floatValue());
+                currenyOrder.setTotalBtc(buyBudget.floatValue());
                 currencyOrderRepository.save(currenyOrder);
 
             }

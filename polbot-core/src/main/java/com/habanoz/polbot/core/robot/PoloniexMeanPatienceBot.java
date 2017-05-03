@@ -202,6 +202,9 @@ public class PoloniexMeanPatienceBot {
                 orderResults.add(result);
             }
 
+
+
+
         }
 
         if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty())// if any of them is not empty send mail
