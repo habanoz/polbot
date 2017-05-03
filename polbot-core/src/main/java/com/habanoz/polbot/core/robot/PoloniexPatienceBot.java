@@ -165,7 +165,7 @@ public class PoloniexPatienceBot {
             if (currencyConfig.getSellable() && currBalance.doubleValue() > minAmount) {
                 List<PoloniexTrade> currHistoryList = historyMap.get(currPair);
 
-                createSellOrder(tradingApi, orderResults, currencyConfig, currPair, currBalance, highestSellPrice, currHistoryList);
+                createSellOrder(user, tradingApi, orderResults, currencyConfig, currPair, currBalance, highestSellPrice, currHistoryList);
 
                 sleep();
             }
@@ -208,7 +208,13 @@ public class PoloniexPatienceBot {
         }
     }
 
-    private void createSellOrder(PoloniexTradingApi tradingApi, List<PoloniexOrderResult> orderResults, CurrencyConfig currencyConfig, String currPair, BigDecimal currBalance, BigDecimal highestSellPrice, List<PoloniexTrade> currHistoryList) {
+    private void createSellOrder(BotUser user,PoloniexTradingApi tradingApi,
+                                 List<PoloniexOrderResult> orderResults,
+                                 CurrencyConfig currencyConfig,
+                                 String currPair,
+                                 BigDecimal currBalance,
+                                 BigDecimal highestSellPrice,
+                                 List<PoloniexTrade> currHistoryList) {
         // get last buying price to calculate selling price
 
         BigDecimal lastBuyPrice = highestSellPrice;
@@ -236,6 +242,7 @@ public class PoloniexPatienceBot {
         PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "SELL", sellPrice, sellAmount);
         PoloniexOrderResult result = tradingApi.sell(openOrder);
 
+        SaveCurrencyTransaction(user, sellPrice.multiply(sellAmount), openOrder, result);
         orderResults.add(result);
     }
 
@@ -269,10 +276,18 @@ public class PoloniexPatienceBot {
 
         // calculate amount that can be bought with buyBudget and buyPrice
         BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
-
-        PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "BUY", buyPrice, buyAmount);
+        String orderType="BUY";
+        PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, buyPrice, buyAmount);
         PoloniexOrderResult result = tradingApi.buy(openOrder);
 
+        SaveCurrencyTransaction(user, buyBudget, openOrder, result);
+
+        orderResults.add(result);
+
+        return new BigDecimal(buyBudget.doubleValue());
+    }
+
+    private void SaveCurrencyTransaction(BotUser user, BigDecimal budget, PoloniexOpenOrder openOrder, PoloniexOrderResult result) {
         try {
             if (result.getSuccess()) {
 
@@ -280,24 +295,20 @@ public class PoloniexPatienceBot {
 
                 CurrencyOrder currenyOrder = new CurrencyOrder();
                 currenyOrder.setUserId(user.getUserId());
-                currenyOrder.setOrderType("BUY");
-                currenyOrder.setCurrencyPair(currPair);
+                currenyOrder.setOrderType(openOrder.getType());
+                currenyOrder.setCurrencyPair(openOrder.getCurrencyPair());
                 currenyOrder.setOrderNumber(result.getTradeResult().getOrderNumber());
                 currenyOrder.setOrderDate(Date.class.newInstance());
                 currenyOrder.setActive(true);
-                currenyOrder.setPrice(buyPrice.floatValue());
-                currenyOrder.setAmount(buyAmount.floatValue());
-                currenyOrder.setTotalBtc(buyBudget.floatValue());
+                currenyOrder.setPrice(openOrder.getRate().floatValue());
+                currenyOrder.setAmount(openOrder.getAmount().floatValue());
+                currenyOrder.setTotalBtc(budget.floatValue());
                 currencyOrderRepository.save(currenyOrder);
 
             }
         }catch(Exception e){
             e.printStackTrace();
         }
-
-        orderResults.add(result);
-
-        return new BigDecimal(buyBudget.doubleValue());
     }
 
     private void sleep() {
