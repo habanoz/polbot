@@ -15,6 +15,7 @@ import com.habanoz.polbot.core.repository.CurrencyOrderRepository;
 import com.habanoz.polbot.core.repository.TradeHistoryTrackRepository;
 import com.habanoz.polbot.core.repository.UserBotRepository;
 import com.habanoz.polbot.core.service.TradeTrackerServiceImpl;
+import com.habanoz.polbot.core.utils.DateUtil;
 import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,8 +103,6 @@ public class PoloniexPatienceBot {
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
 
 
-        CancelUnFilledBuyOrders(user, tradingApi);
-
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
@@ -157,6 +156,10 @@ public class PoloniexPatienceBot {
                 btcBalance = btcBalance.subtract(spent);
 
                 sleep();
+            }else{
+                CancelBuyOrder(user, tradingApi, currencyConfig, openOrderListForCurr);
+
+
             }
 
             //
@@ -185,28 +188,38 @@ public class PoloniexPatienceBot {
 
         logger.info("Completed for user {}", user);
     }
-    // Why are we waiting so long to get buy order work? Fuck them all, cancel it. Screw them.
-    private void CancelUnFilledBuyOrders(BotUser user, PoloniexTradingApi tradingApi) {
+
+    private void CancelBuyOrder(BotUser user, PoloniexTradingApi tradingApi, CurrencyConfig currencyConfig, List<PoloniexOpenOrder> openOrderListForCurr) {
+        // We have a BUY order for the currency pair a while ago and if it is so old, cancel order to release available BTC
+        // The cancel operation will be done for only currency with the cancellation hour
         try {
-            // TODO: Cancel BUY orders based on user's buy cancellation day value. NO need to wait a unfilled buy orders
-            if(user.getBuyOrderCancelationDay() > 0){
-                Date date = DateUtils.addDays(new Date(), -1 * user.getBuyOrderCancelationDay());
-                // I hope it gonna work, JPA magic. GEt User active buy order greater than his cancellation day
-               // List<CurrencyOrder> currencyOrderList = currencyOrderRepository.findByUserIdAndActiveAndOrderDateGreaterThanOrderDateByOrderDateAsc(user.getUserId(),true,date);
-               List<CurrencyOrder> currencyOrderList = currencyOrderRepository.findByUserIdAndActive(user.getUserId(),true);
-                if(currencyOrderList!=null)
-                for (CurrencyOrder currencyOrder : currencyOrderList) {
-                    //TODO: Not so sure it is right expression to compare date.
-                    if (currencyOrder.getOrderType().equalsIgnoreCase("BUY") && currencyOrder.getOrderDate().compareTo(date) < 0) {
-                        // Good Bye..
-                        boolean isResult = tradingApi.cancelOrder(currencyOrder.getOrderNumber());
+
+
+        if(openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))
+                && currencyConfig.getBuyOrderCancellationHour() > 0)
+        {
+
+            for (PoloniexOpenOrder buyOrder : openOrderListForCurr){
+                // User unfulfilled orders
+                CurrencyOrder currencyOrder = currencyOrderRepository.findByUserIdAndOrderNumberAndActive(
+                        user.getUserId(),
+                        buyOrder.getOrderNumber(),true);
+                if(currencyOrder!=null)
+                {
+                    Date cancellationTime = DateUtil.fromLdt(LocalDateTime.now().minusHours(currencyConfig.getBuyOrderCancellationHour()));
+                    if(currencyOrder.getOrderDate().compareTo(cancellationTime) > 0)
+                    {
+                        tradingApi.cancelOrder(buyOrder.getOrderNumber());
                     }
                 }
             }
-        }catch(Exception e){
-            e.printStackTrace();
+        }
+
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
     }
+
 
     private void createSellOrder(BotUser user,PoloniexTradingApi tradingApi,
                                  List<PoloniexOrderResult> orderResults,

@@ -12,6 +12,8 @@ import java.util.List;
 public interface CurrencyOrderRepository extends JpaRepository<CurrencyOrder, Integer> {
     List<CurrencyOrder> findByUserIdAndActive(Integer userId, boolean isActive);
     CurrencyOrder findByUserIdAndOrderNumber(Integer userId, String orderNumber);
+    CurrencyOrder findByUserIdAndOrderNumberAndActive(Integer userId, String orderNumber, boolean isActive);
+
     //List<CurrencyOrder> findByUserIdAndActiveAndOrderDateGreaterThanOrderDateByOrderDateAsc(Integer userId, boolean isActive, Date orderDate);
 
 }

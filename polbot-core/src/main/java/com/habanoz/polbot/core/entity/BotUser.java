@@ -19,7 +19,7 @@ public class BotUser implements Serializable{
     private String userName;
     private String password;
     private String role;
-    private Integer buyOrderCancelationDay;
+
     private boolean emailNotification;
 
     @Id
@@ -95,13 +95,6 @@ public class BotUser implements Serializable{
                 '}';
     }
 
-    public Integer getBuyOrderCancelationDay() {
-        return buyOrderCancelationDay;
-    }
-
-    public void setBuyOrderCancelationDay(Integer buyOrderCancelationDay) {
-        this.buyOrderCancelationDay = buyOrderCancelationDay;
-    }
 
     public boolean isEmailNotification() {
         return emailNotification;

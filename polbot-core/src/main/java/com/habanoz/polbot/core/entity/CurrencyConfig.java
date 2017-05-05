@@ -18,6 +18,7 @@ public class CurrencyConfig {
     private boolean buyable;
     private boolean sellable;
     private Integer userId;
+    private Integer buyOrderCancellationHour;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -134,5 +135,13 @@ public class CurrencyConfig {
         result = 31 * result + (sellable ? 1 : 0);
         result = 31 * result + (userId != null ? userId.hashCode() : 0);
         return result;
+    }
+
+    public Integer getBuyOrderCancellationHour() {
+        return buyOrderCancellationHour;
+    }
+
+    public void setBuyOrderCancellationHour(Integer buyOrderCancellationHour) {
+        this.buyOrderCancellationHour = buyOrderCancellationHour;
     }
 }
