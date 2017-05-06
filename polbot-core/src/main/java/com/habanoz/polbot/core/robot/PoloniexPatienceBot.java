@@ -206,8 +206,11 @@ public class PoloniexPatienceBot {
                         buyOrder.getOrderNumber(),true);
                 if(currencyOrder!=null)
                 {
-                    Date cancellationTime = DateUtil.fromLdt(LocalDateTime.now().minusHours(currencyConfig.getBuyOrderCancellationHour()));
-                    if(currencyOrder.getOrderDate().compareTo(cancellationTime) > 0)
+
+                    Date  localDate = DateUtil.fromLdt(LocalDateTime.now());
+                    Date  cancellationDate = DateUtil.addMinutesToDate(60 * currencyConfig.getBuyOrderCancellationHour(),  currencyOrder.getOrderDate());
+
+                    if(cancellationDate.compareTo(localDate) > 0)
                     {
                         tradingApi.cancelOrder(buyOrder.getOrderNumber());
                     }

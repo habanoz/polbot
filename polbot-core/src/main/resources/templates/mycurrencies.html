@@ -120,6 +120,7 @@
                                             <th>Sell at Price</th>
                                             <th>Can Buy</th>
                                             <th>Can Sell</th>
+                                            <th>Buy Order Cancellation Hour</th>
                                             <th>Show</th>
                                         </tr>
                                         </thead>
@@ -134,6 +135,7 @@
                                             <td th:text="${cc.sellAtPrice}">0.0025</td>
                                             <td><input disabled="true" type="checkbox" th:checked="${cc.buyable}"/></td>
                                             <td><input disabled="true" type="checkbox" th:checked="${cc.sellable}"/>
+                                            <td th:text="${cc.buyOrderCancellationHour}">0.0025</td>
                                             </td>
                                             <td>
                                                 <div class="submit">
