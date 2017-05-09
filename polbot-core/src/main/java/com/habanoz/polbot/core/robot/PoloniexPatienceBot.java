@@ -202,14 +202,16 @@ public class PoloniexPatienceBot {
             for (PoloniexOpenOrder buyOrder : openOrderListForCurr){
                 // User unfulfilled orders
                 CurrencyOrder currencyOrder = currencyOrderRepository.findByUserIdAndOrderNumberAndActive(
-                        user.getUserId(),
+                         user.getUserId(),
                         buyOrder.getOrderNumber(),true);
                 if(currencyOrder!=null)
                 {
 
                     Date  localDate = DateUtil.fromLdt(LocalDateTime.now());
                     Date  cancellationDate = DateUtil.addMinutesToDate(60 * currencyConfig.getBuyOrderCancellationHour(),  currencyOrder.getOrderDate());
-
+                    logger.debug("Cancellation Date:"+cancellationDate);
+                    logger.debug("Currency order Date: "+currencyOrder.getOrderDate()+" Currency Pair:"+currencyConfig.getCurrencyPair()+"  Cancellation Hour: "+currencyConfig.getBuyOrderCancellationHour());
+                    logger.debug("LocalDate: "+localDate);
                     if(cancellationDate.compareTo(localDate) > 0)
                     {
                         tradingApi.cancelOrder(buyOrder.getOrderNumber());
@@ -236,7 +238,7 @@ public class PoloniexPatienceBot {
         BigDecimal lastBuyPrice = highestSellPrice;
         final BigDecimal sellAmount = currBalance;
 
-        if (currHistoryList.get(0) != null) {
+        if (currHistoryList!=null && currHistoryList.size() > 0 && currHistoryList.get(0) != null) {
 
             for (PoloniexTrade history : currHistoryList) {
                 // if remaining history records are too old, dont use them for selling price base
