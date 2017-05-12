@@ -5,8 +5,10 @@ import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
+import com.habanoz.polbot.core.entity.CurrencyCollectiveOrder;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
+import com.habanoz.polbot.core.model.PoloniexOrderResult;
 import com.habanoz.polbot.core.model.PoloniexTicker;
 import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.repository.BotUserRepository;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -262,6 +265,84 @@ public class OrdersController {
 
         return "currencyconfigforall";
     }
+    @RequestMapping(value = "/orders/collectiveOrders",  params = {"getorders"})
+    public String collectiveOrders(Principal principal, Map model) {
+        CurrencyCollectiveOrder collectiveCurrencyOrder = new CurrencyCollectiveOrder();
+
+        collectiveCurrencyOrder.setCurrencyPair("BTC_STR");
+        collectiveCurrencyOrder.setOrderType("BUY");
+        collectiveCurrencyOrder.setTopPrice(0.000015);
+        collectiveCurrencyOrder.setBottomPrice(0.000010);
+        collectiveCurrencyOrder.setPricePercentSplitter(0);
+        collectiveCurrencyOrder.setPriceSplitter(20);
+        collectiveCurrencyOrder.setTotalBtcAmount(1);
+
+        model.put("collectiveCurrencyOrder", collectiveCurrencyOrder);
+
+        return "collectiveorder";
+    }
+    @RequestMapping(value = "/orders/collectiveOrders", params = {"startorder"})
+    public String collectiveOrders(final CurrencyCollectiveOrder collectiveCurrencyOrder ) {
+        int userId = authenticationFacade.GetUserId();
+        BotUser user = botUserRepository.findOne(userId);
+        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
+        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
+        //let spring autowire marked attributes
+        applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
+
+
+        collectiveOrders(collectiveCurrencyOrder, tradingApi);
+        return "redirect:/orders/openorders";
+    }
+    private void collectiveOrders(CurrencyCollectiveOrder collectiveCurrencyOrder, PoloniexTradingApi tradingApi) {
+
+
+        if(collectiveCurrencyOrder.getPricePercentSplitter() > 0){
+
+        }else if(collectiveCurrencyOrder.getPriceSplitter() > 0){
+
+            double btcAmountForEachIteration=collectiveCurrencyOrder.getTotalBtcAmount()/collectiveCurrencyOrder.getPriceSplitter();
+            double priceIncreaseForEachIteration=(collectiveCurrencyOrder.getTopPrice()-collectiveCurrencyOrder.getBottomPrice())/collectiveCurrencyOrder.getPriceSplitter();
+
+            for (int i=0; i<collectiveCurrencyOrder.getPriceSplitter(); i++) {
+                double priceForEachIteration = collectiveCurrencyOrder.getBottomPrice() + priceIncreaseForEachIteration * i;
+
+                if ( collectiveCurrencyOrder.getTotalBtcAmount() > 0) {
+                    try {
+                        System.out.println(i + ")  Price Of Order: " + priceForEachIteration + " Amount of BTC " + btcAmountForEachIteration);
+
+                        BigDecimal buyBudget = new BigDecimal(btcAmountForEachIteration);
+                        // buying price should be a little lower to make profit
+                        // if set, buy at price will be used, other wise buy on percent will be used
+                        BigDecimal buyPrice = new BigDecimal(priceForEachIteration);
+                        String currPair=collectiveCurrencyOrder.getCurrencyPair();
+                        // calculate amount that can be bought with buyBudget and buyPrice
+                        BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
+                        String orderType=collectiveCurrencyOrder.getOrderType();
+                        PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, buyPrice, buyAmount);
+                        logger.info("PoloniexOpenOrder="+openOrder);
+                        PoloniexOrderResult result = tradingApi.buy(openOrder);
+                        collectiveCurrencyOrder.setTotalBtcAmount(collectiveCurrencyOrder.getTotalBtcAmount()-priceForEachIteration);
+
+                    }catch(Exception ex){
+                      ex.printStackTrace();
+                    }
+                    sleep();
+
+                }else{
+                    System.out.println("No BTC is left for order:"+collectiveCurrencyOrder.getTotalBtcAmount());
+                }
+            }
+        }
+    }
+    private void sleep() {
+        try {
+            Thread.sleep(BUY_SELL_SLEEP);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
 }

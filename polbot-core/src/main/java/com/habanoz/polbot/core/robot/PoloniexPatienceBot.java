@@ -63,7 +63,7 @@ public class PoloniexPatienceBot {
     private UserBotRepository userBotRepository;
 
     private static final double minAmount = 0.0001;
-    private static final long BUY_SELL_SLEEP = 100;
+    private static final long BUY_SELL_SLEEP = 300;
     private static final String BASE_CURR = "BTC";
     private static final String CURR_PAIR_SEPARATOR = "_";
 
