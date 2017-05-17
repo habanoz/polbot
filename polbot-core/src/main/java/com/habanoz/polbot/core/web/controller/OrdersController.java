@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -311,17 +313,28 @@ public class OrdersController {
                     try {
                         System.out.println(i + ")  Price Of Order: " + priceForEachIteration + " Amount of BTC " + btcAmountForEachIteration);
 
-                        BigDecimal buyBudget = new BigDecimal(btcAmountForEachIteration);
-                        // buying price should be a little lower to make profit
-                        // if set, buy at price will be used, other wise buy on percent will be used
-                        BigDecimal buyPrice = new BigDecimal(priceForEachIteration);
-                        String currPair=collectiveCurrencyOrder.getCurrencyPair();
-                        // calculate amount that can be bought with buyBudget and buyPrice
-                        BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
                         String orderType=collectiveCurrencyOrder.getOrderType();
-                        PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, buyPrice, buyAmount);
-                        logger.info("PoloniexOpenOrder="+openOrder);
-                        PoloniexOrderResult result = tradingApi.buy(openOrder);
+                        String currPair=collectiveCurrencyOrder.getCurrencyPair();
+
+                        if(collectiveCurrencyOrder.getOrderType().equalsIgnoreCase("BUY")){
+                            BigDecimal buyBudget = new BigDecimal(btcAmountForEachIteration);
+                            // buying price should be a little lower to make profit
+                            // if set, buy at price will be used, other wise buy on percent will be used
+                            BigDecimal buyPrice = new BigDecimal(priceForEachIteration);
+                            // calculate amount that can be bought with buyBudget and buyPrice
+                            BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
+                            PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, buyPrice, buyAmount);
+                            logger.info("PoloniexOpenOrder="+openOrder);
+                            PoloniexOrderResult result = tradingApi.buy(openOrder);
+
+                        }else  if(collectiveCurrencyOrder.getOrderType().equalsIgnoreCase("SELL")){
+                            BigDecimal sellAmount  = new BigDecimal(btcAmountForEachIteration);
+                            BigDecimal sellPrice = new BigDecimal(priceForEachIteration);
+
+                            PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType,  sellPrice, sellAmount);
+                            PoloniexOrderResult result = tradingApi.sell(openOrder);
+                        }
+
                         collectiveCurrencyOrder.setTotalBtcAmount(collectiveCurrencyOrder.getTotalBtcAmount()-priceForEachIteration);
 
                     }catch(Exception ex){
