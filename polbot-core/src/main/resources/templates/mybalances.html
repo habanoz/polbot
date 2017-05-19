@@ -33,11 +33,23 @@
     <link rel="stylesheet" type="text/css" th:href="@{/DataTables/datatables.min.css}"/>
     <script type="text/javascript" th:src="@{/DataTables/datatables.min.js}"></script>
 
-    <script type="text/javascript">
+    <script type="text/javascript" th:inline="javascript">
+        /*<![CDATA[*/
         $(document).ready(function () {
-            $('#ctable').dataTable({responsive: true, pageLength: 100});
+            $('#ctable').dataTable({
+                responsive: true, pageLength: 100,
+                rowCallback: function (row, data, index) {
+                    if (parseFloat(data[7].split("BTC")[0].trim())<0) {
+                        $(row).find('td:eq(6)').addClass('falling')
+                        $(row).find('td:eq(7)').addClass('falling')
+                    }else{
+                        $(row).find('td:eq(6)').addClass('rising')
+                        $(row).find('td:eq(7)').addClass('rising')
+                    }
+                }
+            });
         });
-
+        /*]]>*/
     </script>
 
 </head>
@@ -83,63 +95,53 @@
                 <div class="well">
 
                     <div class="text-left">
-                        <h2 th:text="#{currencyconfig.title}">Leave a Review</h2>
+                        <h2 th:text="#{balance.title}">My Balances</h2>
                     </div>
 
                     <hr/>
 
-                    <div class="row">
-                        <form action="#" th:action="@{/currencyconfig}" th:object="${currencyConfig}"
-                              method="post">
-
-                            <input type="hidden" name="currency"
-                                   th:value="${currencyConfig.currencyPair}" value=""/>
-
-                            <div class="submit">
-                                <button type="submit" class="btn btn-default btn-primary-group"
-                                        style="float: right;margin: 10px;"
-                                        name="show" th:text="New">Add Seed Starter
-                                </button>
-                            </div>
-                        </form>
+                    <div>
+                        <span style="color:black;font-size:large"
+                              th:text="'Estimated value of holdings: $'+${btcBalanceUsd}+'  /  '+${btcBalance}+' BTC'"></span>
                     </div>
+
+                    <hr/>
 
                     <div class="row">
                         <div class="col-md-12">
                             <div class="panel panel-default">
                                 <div class="panel-body">
 
-                                    <table id="ctable" class="table table-responsive table-striped table-bordered" cellspacing="0" width="100%">
+                                    <table id="ctable" class="table table-responsive table-striped table-bordered"
+                                           cellspacing="0"
+                                           width="100%">
                                         <thead>
                                         <tr>
-                                            <th>Currency Pair</th>
-                                            <th>Usable Percent</th>
-                                            <th>Buy Percent</th>
-                                            <th>Sell Percent</th>
-                                            <th>Buy Price</th>
-                                            <th>Sell Price</th>
-                                            <th>Can Buy</th>
-                                            <th>Can Sell</th>
-                                            <th>Cancel Limit</th>
+                                            <th>Currency</th>
+                                            <th>Available</th>
+                                            <th>Orders</th>
+                                            <th>BTC Value</th>
+                                            <th>Curr. Price</th>
+                                            <th>Avg. Price</th>
+                                            <th>Diff. Price</th>
+                                            <th>Gain/Loss</th>
                                             <th>Show</th>
                                         </tr>
                                         </thead>
 
                                         <tbody>
-                                        <tr th:each="cc : ${currencyConfigs}">
-                                            <td th:text="${cc.currencyPair}">BTC_ETH</td>
-                                            <td th:text="${cc.usableBalancePercent}">25</td>
-                                            <td th:text="${cc.buyOnPercent}">5</td>
-                                            <td th:text="${cc.sellOnPercent}">5</td>
-                                            <td th:text="${cc.buyAtPrice}">0.0025</td>
-                                            <td th:text="${cc.sellAtPrice}">0.0025</td>
-                                            <td><input disabled="true" type="checkbox" th:checked="${cc.buyable}"/></td>
-                                            <td><input disabled="true" type="checkbox" th:checked="${cc.sellable}"/>
-                                            <td th:text="${cc.buyOrderCancellationHour}">0.0025</td>
-                                            </td>
+                                        <tr th:each="o: ${balances}">
+                                            <td th:text="${o.key}">ETH</td>
+                                            <td th:text="${o.value.available}">0.2</td>
+                                            <td th:text="${o.value.onOrders}">0.2</td>
+                                            <td th:text="${o.value.btcValue}">0.002</td>
+                                            <td th:text="${details[o.key].currentPrice}">0.002</td>
+                                            <td th:text="${details[o.key].averagePrice}">0.002</td>
+                                            <td th:text="${'%'+details[o.key].differencePricePercent}">0.002</td>
+                                            <td th:text="${details[o.key].gainLoss}+ 'BTC'">0.002</td>
                                             <td>
                                                 <div class="submit">
-                                                    <a th:href="@{/currencyconfig/(show='',currency=${cc.currencyPair})}"
+                                                    <a th:href="@{/balance/(show='',currency=${o.key})}"
                                                        class="navbar-link">Show</a>
                                                 </div>
                                             </td>
@@ -161,12 +163,10 @@
     </div>
 
 </div>
-<!-- /.container -->
 
 <div class="container">
     <div th:replace="footer :: footer">&copy; 2016 The Static Templates</div>
 </div>
-<!-- /.container -->
 
 </body>
 

@@ -1,23 +1,21 @@
 package com.habanoz.polbot.core.entity;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import java.io.Serializable;
 
 @Entity
 public class UserRole implements Serializable{
-    private String user_email;
+    private String userName;
     private String role;
 
     @Id
-    public String getUser_email() {
-        return user_email;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setUser_email(String user_email) {
-        this.user_email = user_email;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     @Id
@@ -27,5 +25,23 @@ public class UserRole implements Serializable{
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UserRole userRole = (UserRole) o;
+
+        if (userName != null ? !userName.equals(userRole.userName) : userRole.userName != null) return false;
+        return role != null ? role.equals(userRole.role) : userRole.role == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = userName != null ? userName.hashCode() : 0;
+        result = 31 * result + (role != null ? role.hashCode() : 0);
+        return result;
     }
 }

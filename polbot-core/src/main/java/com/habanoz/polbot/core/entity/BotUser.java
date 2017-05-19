@@ -18,8 +18,6 @@ public class BotUser implements Serializable{
     private String userEmail;
     private String userName;
     private String password;
-    private String role;
-
     private boolean emailNotification;
 
     @Id
@@ -78,14 +76,6 @@ public class BotUser implements Serializable{
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
     }
 
     @Override

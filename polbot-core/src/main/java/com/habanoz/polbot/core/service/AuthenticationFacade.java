@@ -27,7 +27,7 @@ public class AuthenticationFacade implements IAuthenticationFacade {
         String userName =  authentication.getName();
 
        // BotUser botUser2 =  (BotUser) authentication.getPrincipal();
-        BotUser botUser =  botUserRepository.findByUserEmail(userName);
+        BotUser botUser =  botUserRepository.findByUserName(userName);
         return botUser.getUserId();
     }
 

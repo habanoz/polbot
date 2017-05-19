@@ -46,23 +46,6 @@ public class MyCurrenciesController {
         return "mycurrencies";
     }
 
-    @RequestMapping(value = "/searchCurrencyConfig", method = RequestMethod.POST)
-    public String searchPost(@RequestParam("search") String search, ModelMap model) {
-
-        int userId = authenticationFacade.GetUserId();  //Authenticated User
-        List<CurrencyConfig> currencyConfigs = this.currencyConfigRepository.findByUserId(userId);
-
-        if (search != null && !search.trim().isEmpty()) {
-            currencyConfigs = currencyConfigs.stream().filter(r -> r.getCurrencyPair().toLowerCase().indexOf(search.toLowerCase()) > 0).collect(Collectors.toList());
-        }
-
-        model.put("currencyConfig", new CurrencyConfig());
-        model.put("currencyConfigs", currencyConfigs);
-        model.put("searchKey", search);
-
-        return "mycurrencies";
-    }
-
     @RequestMapping(value = "/currencyconfig", params = {"save"})
     public String saveCurrencyConfig(Principal principal, final CurrencyConfig currencyConfig, final BindingResult bindingResult, final ModelMap model) {
 
@@ -70,14 +53,15 @@ public class MyCurrenciesController {
             return "currencyconfig";
         }
 
-        BotUser botUser = this.botUserRepository.findByUserEmail(principal.getName());
+        BotUser botUser = this.botUserRepository.findByUserName(principal.getName());
 
         currencyConfig.setUserId(botUser.getUserId());
         this.currencyConfigRepository.save(currencyConfig);
 
         model.clear();
 
-        return "redirect:/currencyconfig?show=&currency=" + currencyConfig.getCurrencyPair();
+        //return "redirect:/currencyconfig?show=&currency=" + currencyConfig.getCurrencyPair();
+        return "redirect:/mycurrencies";
     }
 
     @RequestMapping(value = "/currencyconfig", params = {"delete"})
@@ -96,7 +80,7 @@ public class MyCurrenciesController {
     @RequestMapping(value = "/currencyconfig", params = {"show"})
     public String showCurrencyConfig(@RequestParam("currency") String currency, Principal principal, Map model) {
 
-        BotUser user = botUserRepository.findByUserEmail(principal.getName());
+        BotUser user = botUserRepository.findByUserName(principal.getName());
 
         CurrencyConfig currentCurrencyConfig = null;
 

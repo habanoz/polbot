@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by habanoz on 02.04.2017.
@@ -135,8 +136,13 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
     @Override
     public Map<String, PoloniexCompleteBalance> returnCompleteBalances() {
-        return runCommand("returnCompleteBalances", new TypeReference<HashMap<String, PoloniexCompleteBalance>>() {
+        Map<String, PoloniexCompleteBalance> completeBalanceMap = runCommand("returnCompleteBalances", new TypeReference<HashMap<String, PoloniexCompleteBalance>>() {
         });
+
+        completeBalanceMap = completeBalanceMap.entrySet().stream().filter(map -> map.getValue().getBtcValue() > 0)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        return completeBalanceMap;
     }
 
     @Override

@@ -39,11 +39,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .usersByUsernameQuery(
 
-                        "select user_email,password, active from bot_user where user_email=?")
+                        "select user_name,password, active from bot_user where user_name=?")
 
                 .authoritiesByUsernameQuery(
 
-                        "select user_email, role from user_role where user_email=?");
+                        "select user_name, role from user_role where user_name=?");
 
     }
 }

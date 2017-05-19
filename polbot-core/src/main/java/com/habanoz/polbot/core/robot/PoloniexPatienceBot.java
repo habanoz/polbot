@@ -16,7 +16,6 @@ import com.habanoz.polbot.core.repository.TradeHistoryTrackRepository;
 import com.habanoz.polbot.core.repository.UserBotRepository;
 import com.habanoz.polbot.core.service.TradeTrackerServiceImpl;
 import com.habanoz.polbot.core.utils.DateUtil;
-import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -103,7 +101,6 @@ public class PoloniexPatienceBot {
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
 
 
-
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
         Map<String, PoloniexCompleteBalance> completeBalanceMap = tradingApi.returnCompleteBalances();
@@ -117,7 +114,7 @@ public class PoloniexPatienceBot {
         Double allBtcProperty = completeBalanceMap.values().stream().mapToDouble(PoloniexCompleteBalance::getBtcValue).sum();
 
         List<PoloniexOrderResult> orderResults = new ArrayList<>();
-        HashMap<String, BigDecimal> tradingBTCMap  = getBTCTradingMap(currencyConfigs, btcBalance, openOrderMap);
+        HashMap<String, BigDecimal> tradingBTCMap = getBTCTradingMap(currencyConfigs, btcBalance, openOrderMap);
         for (CurrencyConfig currencyConfig : currencyConfigs) {
 
             String currPair = currencyConfig.getCurrencyPair();
@@ -150,13 +147,13 @@ public class PoloniexPatienceBot {
                     tradingBTCMap.keySet().size() > 0 &&
                     openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY"))) {
 
-                BigDecimal spent = createBuyOrder(user, tradingApi, btcBalance, allBtcProperty, orderResults, currencyConfig, currPair, lowestBuyPrice,tradingBTCMap);
+                BigDecimal spent = createBuyOrder(user, tradingApi, btcBalance, allBtcProperty, orderResults, currencyConfig, currPair, lowestBuyPrice, tradingBTCMap);
 
                 //update balance
                 btcBalance = btcBalance.subtract(spent);
 
                 sleep();
-            }else{
+            } else {
                 CancelBuyOrder(user, tradingApi, currencyConfig, openOrderListForCurr);
 
 
@@ -176,13 +173,7 @@ public class PoloniexPatienceBot {
         }
 
         if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty()) {// if any of them is not empty send mail
-            mailService.sendMail(user, "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, tradingApi.returnCompleteBalances()), true);
-
-
-
-
-
-
+            mailService.sendMail(user, "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, completeBalanceMap), true);
         }
 
 
@@ -195,38 +186,35 @@ public class PoloniexPatienceBot {
         try {
 
 
-        if(openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))
-                && currencyConfig.getBuyOrderCancellationHour() > 0)
-        {
+            if (openOrderListForCurr.stream().anyMatch(r -> r.getType().equalsIgnoreCase("BUY"))
+                    && currencyConfig.getBuyOrderCancellationHour() > 0) {
 
-            for (PoloniexOpenOrder buyOrder : openOrderListForCurr){
-                // User unfulfilled orders
-                CurrencyOrder currencyOrder = currencyOrderRepository.findByUserIdAndOrderNumberAndActive(
-                         user.getUserId(),
-                        buyOrder.getOrderNumber(),true);
-                if(currencyOrder!=null)
-                {
+                for (PoloniexOpenOrder buyOrder : openOrderListForCurr) {
+                    // User unfulfilled orders
+                    CurrencyOrder currencyOrder = currencyOrderRepository.findByUserIdAndOrderNumberAndActive(
+                            user.getUserId(),
+                            buyOrder.getOrderNumber(), true);
+                    if (currencyOrder != null) {
 
-                    Date  localDate = DateUtil.fromLdt(LocalDateTime.now());
-                    Date  cancellationDate = DateUtil.addMinutesToDate(60 * currencyConfig.getBuyOrderCancellationHour(),  currencyOrder.getOrderDate());
-                    logger.debug("Cancellation Date:"+cancellationDate);
-                    logger.debug("Currency order Date: "+currencyOrder.getOrderDate()+" Currency Pair:"+currencyConfig.getCurrencyPair()+"  Cancellation Hour: "+currencyConfig.getBuyOrderCancellationHour());
-                    logger.debug("LocalDate: "+localDate);
-                    if(cancellationDate.compareTo(localDate) > 0)
-                    {
-                        tradingApi.cancelOrder(buyOrder.getOrderNumber());
+                        Date localDate = DateUtil.fromLdt(LocalDateTime.now());
+                        Date cancellationDate = DateUtil.addMinutesToDate(60 * currencyConfig.getBuyOrderCancellationHour(), currencyOrder.getOrderDate());
+                        logger.debug("Cancellation Date:" + cancellationDate);
+                        logger.debug("Currency order Date: " + currencyOrder.getOrderDate() + " Currency Pair:" + currencyConfig.getCurrencyPair() + "  Cancellation Hour: " + currencyConfig.getBuyOrderCancellationHour());
+                        logger.debug("LocalDate: " + localDate);
+                        if (cancellationDate.compareTo(localDate) > 0) {
+                            tradingApi.cancelOrder(buyOrder.getOrderNumber());
+                        }
                     }
                 }
             }
-        }
 
-        }catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
 
-    private void createSellOrder(BotUser user,PoloniexTradingApi tradingApi,
+    private void createSellOrder(BotUser user, PoloniexTradingApi tradingApi,
                                  List<PoloniexOrderResult> orderResults,
                                  CurrencyConfig currencyConfig,
                                  String currPair,
@@ -238,7 +226,7 @@ public class PoloniexPatienceBot {
         BigDecimal lastBuyPrice = highestSellPrice;
         final BigDecimal sellAmount = currBalance;
 
-        if (currHistoryList!=null && currHistoryList.size() > 0 && currHistoryList.get(0) != null) {
+        if (currHistoryList != null && currHistoryList.size() > 0 && currHistoryList.get(0) != null) {
 
             for (PoloniexTrade history : currHistoryList) {
                 // if remaining history records are too old, dont use them for selling price base
@@ -271,19 +259,19 @@ public class PoloniexPatienceBot {
                                       List<PoloniexOrderResult> orderResults,
                                       CurrencyConfig currencyConfig,
                                       String currPair,
-                                      BigDecimal lowestBuyPrice,        HashMap<String, BigDecimal> tradingBTCMap) {
+                                      BigDecimal lowestBuyPrice, HashMap<String, BigDecimal> tradingBTCMap) {
         String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
         BigDecimal buyBudget;
         // TODO: check tradingBTCMap again
-        if(tradingBTCMap.containsKey(currName)){
-            buyBudget =  tradingBTCMap.get(currName);
+        if (tradingBTCMap.containsKey(currName)) {
+            buyBudget = tradingBTCMap.get(currName);
             // not enough budget, return 0
-            if (buyBudget !=null && buyBudget.doubleValue() < minAmount) {
-                logger.info("No Budget for currency: "+currName+" for user: "+user.getUserEmail());
+            if (buyBudget != null && buyBudget.doubleValue() < minAmount) {
+                logger.info("No Budget for currency: " + currName + " for user: " + user.getUserEmail());
                 return BigDecimal.valueOf(0);
             }
-        }else{
-            logger.info("No Budget for currency: "+currName+" for user: "+user.getUserEmail());
+        } else {
+            logger.info("No Budget for currency: " + currName + " for user: " + user.getUserEmail());
             return BigDecimal.valueOf(0);
         }
 
@@ -294,7 +282,7 @@ public class PoloniexPatienceBot {
 
         // calculate amount that can be bought with buyBudget and buyPrice
         BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
-        String orderType="BUY";
+        String orderType = "BUY";
         PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, buyPrice, buyAmount);
         PoloniexOrderResult result = tradingApi.buy(openOrder);
 
@@ -324,7 +312,7 @@ public class PoloniexPatienceBot {
                 currencyOrderRepository.save(currenyOrder);
 
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -340,19 +328,19 @@ public class PoloniexPatienceBot {
     private HashMap<String, BigDecimal> getBTCTradingMap(List<CurrencyConfig> currencyConfigs, BigDecimal btcBalance, Map<String, List<PoloniexOpenOrder>> openOrderMap) {
         HashMap<String, BigDecimal> tradingBTCMap = new HashMap<>();
 
-        btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, true );
+        btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, true);
         while (btcBalance.doubleValue() > minAmount) {  // Loop through until the available BTC is over
             double initialBtcValue = btcBalance.doubleValue();
             btcBalance = CalculationForUsableBTC(tradingBTCMap, currencyConfigs, btcBalance, openOrderMap, false);
-            if(initialBtcValue == btcBalance.doubleValue()){
+            if (initialBtcValue == btcBalance.doubleValue()) {
                 break;
             }
         }
 
-        if(currencyConfigs.size()>0 && tradingBTCMap.keySet().size() > 0){
+        if (currencyConfigs.size() > 0 && tradingBTCMap.keySet().size() > 0) {
             Map.Entry<String, BigDecimal> mapKey = tradingBTCMap.entrySet().iterator().next();
-            BigDecimal  buyBudget = new BigDecimal( btcBalance.doubleValue() + tradingBTCMap.get(mapKey.getKey()).doubleValue());
-            tradingBTCMap.put(mapKey.getKey(),buyBudget);
+            BigDecimal buyBudget = new BigDecimal(btcBalance.doubleValue() + tradingBTCMap.get(mapKey.getKey()).doubleValue());
+            tradingBTCMap.put(mapKey.getKey(), buyBudget);
             btcBalance = btcBalance.subtract(buyBudget);
         }
 
@@ -366,7 +354,7 @@ public class PoloniexPatienceBot {
             List<PoloniexOpenOrder>> openOrderMap,
                                                boolean isMultiplierForEachCurrencyEnabled) {
 
-        if(btcBalance.doubleValue() <= 0){
+        if (btcBalance.doubleValue() <= 0) {
             return btcBalance;
         }
         for (CurrencyConfig currencyConfig : currencyConfigs) {
@@ -376,25 +364,25 @@ public class PoloniexPatienceBot {
             String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
             List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
             // Just calculate BTC value for the currencies who does not have any buy order
-            if (openOrderListForCurr!=null && openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY")) && currencyConfig.getBuyable()) {
+            if (openOrderListForCurr != null && openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase("BUY")) && currencyConfig.getBuyable()) {
                 //
                 BigDecimal buyBudget = new BigDecimal(minAmount);
-                if(isMultiplierForEachCurrencyEnabled){
+                if (isMultiplierForEachCurrencyEnabled) {
                     buyBudget = new BigDecimal(minAmount * currencyConfig.getUsableBalancePercent());
                 }
                 if (tradingBTCMap.containsKey(currName)) {
-                    buyBudget = new BigDecimal( buyBudget.doubleValue() + tradingBTCMap.get(currName).doubleValue());
+                    buyBudget = new BigDecimal(buyBudget.doubleValue() + tradingBTCMap.get(currName).doubleValue());
                     tradingBTCMap.put(currName, buyBudget);
                 } else {
                     tradingBTCMap.put(currName, buyBudget);
                 }
-                if(isMultiplierForEachCurrencyEnabled){
+                if (isMultiplierForEachCurrencyEnabled) {
                     btcBalance = btcBalance.subtract(buyBudget);
-                }else{
+                } else {
                     btcBalance = btcBalance.subtract(new BigDecimal(minAmount));
                 }
             }
-            if(btcBalance.doubleValue() <= minAmount){
+            if (btcBalance.doubleValue() <= minAmount) {
                 return btcBalance;
             }
         }
