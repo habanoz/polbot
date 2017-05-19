@@ -30,3 +30,11 @@ body {
 footer {
     margin: 50px 0;
 }
+
+rising{
+    color:green;
+}
+
+falling{
+    color:red;
+}

@@ -18,7 +18,7 @@ public class CurrencyConfig {
     private boolean buyable;
     private boolean sellable;
     private Integer userId;
-    private Integer buyOrderCancellationHour;
+    private Integer buyOrderCancellationHour=0;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

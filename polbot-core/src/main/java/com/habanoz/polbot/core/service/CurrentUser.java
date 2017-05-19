@@ -11,7 +11,7 @@ public class CurrentUser extends org.springframework.security.core.userdetails.U
     private BotUser user;
 
     public CurrentUser(BotUser user) {
-        super(user.getUserEmail(), user.getPassword(), AuthorityUtils.createAuthorityList(user.getRole()));
+        super(user.getUserEmail(), user.getPassword(), AuthorityUtils.createAuthorityList());
         this.user = user;
     }
 
@@ -22,9 +22,4 @@ public class CurrentUser extends org.springframework.security.core.userdetails.U
     public Integer getId() {
         return user.getUserId();
     }
-
-    public String getRole() {
-        return user.getRole();
-    }
-
 }

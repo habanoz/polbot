@@ -15,8 +15,8 @@ public class CurrentUserDetailsService implements UserDetailsService {
     private BotUserRepository botUserRepository;
 
     @Override
-    public CurrentUser loadUserByUsername(String email)  {
-        BotUser user = botUserRepository.findByUserEmail(email);
+    public CurrentUser loadUserByUsername(String userName)  {
+        BotUser user = botUserRepository.findByUserName(userName);
         return new CurrentUser(user);
     }
 }

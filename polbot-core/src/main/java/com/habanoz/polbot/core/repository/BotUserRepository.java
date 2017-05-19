@@ -32,4 +32,6 @@ public interface BotUserRepository
     void delete(BotUser botUser);
 
     BotUser findByUserEmail(String email);
+
+    BotUser findByUserName(String userName);
 }
