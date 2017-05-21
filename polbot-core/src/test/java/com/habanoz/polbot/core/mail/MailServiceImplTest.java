@@ -4,6 +4,7 @@ import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
+import com.habanoz.polbot.core.entity.CurrencyCollectiveOrder;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.*;
 import com.habanoz.polbot.core.repository.*;
@@ -213,4 +214,10 @@ public class MailServiceImplTest {
 
 
     }
+    @Test
+    public void collectiveOrderForCurrency() throws Exception {
+    //    collectiveOrders();
+    }
+
+
 }
