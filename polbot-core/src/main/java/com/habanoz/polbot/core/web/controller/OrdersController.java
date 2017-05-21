@@ -1,27 +1,24 @@
 package com.habanoz.polbot.core.web.controller;
 
-import com.cf.TradingAPIClient;
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyCollectiveOrder;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
+import com.habanoz.polbot.core.entity.User;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexOrderResult;
 import com.habanoz.polbot.core.model.PoloniexTicker;
-import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
-import com.habanoz.polbot.core.service.IAuthenticationFacade;
+import com.habanoz.polbot.core.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
-import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,8 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.Principal;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,43 +52,33 @@ public class OrdersController {
     private BotUserRepository botUserRepository;
 
     @Autowired
-    private ApplicationContext applicationContext;
+    private UserRepository userRepository;
 
     @Autowired
-    private IAuthenticationFacade authenticationFacade;
+    private ApplicationContext applicationContext;
 
     private static final long BUY_SELL_SLEEP = 100;
 
 
-//    @RequestMapping(value = "/orders/predefinedorders")
-//    public String welcome(Map<String, Object> model) {
-//        return "predefinedorders";
-//    }
-//    @RequestMapping(value = "/orders/cancelallorders")
-//    public String cancelallorders(Map<String, Object> model) {
-//        int userId=1;  //Authenticated User
-//        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
-//
-//        return "predefinedorders";
-//    }
-
     //Develop poloneix open orders page to manage any currency cancellation,  any of them or all of them together.
-    @RequestMapping(value = "/orders/openorders")
-    public String openOrders(Map<String, Object> model) {
-        int userId = authenticationFacade.GetUserId();
+    @RequestMapping(value = "/orders/openorders/{buid}")
+    public String openOrders(Map<String, Object> model, Principal principal, @PathVariable("buid") Integer buid) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
-        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
-
+        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(botUser);
 
         model.put("userOpenOrders", openOrderMap);
 
         return "openOrders";
     }
 
-    @RequestMapping(value = "/orders/stopcurrencyoperations", method = RequestMethod.GET)
-    public String stopCurrencyOperations(@RequestParam("ordertype") String orderType) {
-        int userId = authenticationFacade.GetUserId();
-        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
+    @RequestMapping(value = "/orders/stopcurrencyoperations/{buid}", method = RequestMethod.GET)
+    public String stopCurrencyOperations(@RequestParam("ordertype") String orderType, @PathVariable("buid") Integer buid, Principal principal) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
+
+        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByBotUser(botUser);
         for (CurrencyConfig config : userCurrencyConfigs) {
             if (orderType.equalsIgnoreCase("STOP_BUY")) {
                 config.setBuyable(false);
@@ -110,12 +95,14 @@ public class OrdersController {
         return "redirect:/orders/openorders";
     }
 
-    @RequestMapping(value = "/orders/cancelopenorders", method = RequestMethod.GET)
-    public String cancelopenorders(@RequestParam("ordercanceltype") String orderCancelType) {
-        int userId = authenticationFacade.GetUserId();
-        BotUser user = botUserRepository.findOne(userId);
-        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
-        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
+    @RequestMapping(value = "/orders/cancelopenorders/{buid}", method = RequestMethod.GET)
+    public String cancelopenorders(@RequestParam("ordercanceltype") String orderCancelType, @PathVariable("buid") Integer buid, Principal principal) {
+
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
+
+        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(botUser);
+        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(botUser);
         //let spring autowire marked attributes
         applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
 
@@ -146,11 +133,14 @@ public class OrdersController {
         return "redirect:/orders/openorders";
     }
 
-    @RequestMapping(value = "/orders/stopbuyordersforcurrencies", method = RequestMethod.GET)
-    public String stopbuyordersforcurrencies() {
-        int userId = authenticationFacade.GetUserId();
-        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
-        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
+    @RequestMapping(value = "/orders/stopbuyordersforcurrencies/{buid}", method = RequestMethod.GET)
+    public String stopbuyordersforcurrencies(@PathVariable("buid") Integer buid, Principal principal) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
+
+        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(botUser);
+        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByBotUser(botUser);
+
         for (CurrencyConfig config : userCurrencyConfigs) {
             try {
 
@@ -167,14 +157,14 @@ public class OrdersController {
             }
         }
 
-        return "redirect:/orders/openorders";
+        return "redirect:/orders/openorders/" + buid;
     }
 
 
-    private Map<String, List<PoloniexOpenOrder>> getOpenOrdersList(int userId) {
-        BotUser user = botUserRepository.findOne(userId);
+    private Map<String, List<PoloniexOpenOrder>> getOpenOrdersList(BotUser botUser) {
+
         //create tradingApi instance for current user
-        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
+        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(botUser);
         //let spring autowire marked attributes
         applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
 
@@ -186,11 +176,15 @@ public class OrdersController {
     }
 
 
-    @RequestMapping(value = "/orders/savePercentageForAllCurrencies")
-    public String savePercentageForAllCurrencies(final CurrencyConfig currencyConfig) {
+    @RequestMapping(value = "/orders/savePercentageForAllCurrencies/{buid}")
+    public String savePercentageForAllCurrencies(final CurrencyConfig currencyConfig, Principal principal, @PathVariable("buid") Integer buid) {
 
-        int userId = authenticationFacade.GetUserId();
-        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
+
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
+
+        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByBotUser(botUser);
+
         for (CurrencyConfig config : userCurrencyConfigs) {
 
             if (currencyConfig.getUsableBalancePercent() > 0) {
@@ -205,39 +199,21 @@ public class OrdersController {
             currencyConfigRepository.save(config);
         }
 
-        return "redirect:/orders/openorders";
+        return "redirect:/orders/openorders/" + buid;
     }
 
+    @RequestMapping(value = "/orders/addMissingCurrencies/{buid}")
+    public String addMissingCurrencies(Principal principal, final Map model, @PathVariable("buid") Integer buid) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
-    @RequestMapping(value = "/edituserinfo", params = {"show"})
-    public String showEdituserinfo(Principal principal, Map model) {
+        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByBotUser(botUser);
 
-        int userId = authenticationFacade.GetUserId();
-        BotUser user = botUserRepository.findOne(userId);
-        model.put("botuser", user);
-
-        return "edituserinfo";
-    }
-
-    @RequestMapping(value = "/edituserinfo", params = {"save"})
-    public String saveEdituserinfo(Principal principal, final BotUser botuser, Map model) {
-
-        botUserRepository.save(botuser);
-
-        return "redirect:/edituserinfo?show=";
-    }
-
-    @RequestMapping(value = "/orders/addMissingCurrencies")
-    public String addMissingCurrencies(Principal principal, final Map model) {
-
-        int userId = authenticationFacade.GetUserId();
-        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
         Map<String, PoloniexTicker> tickers = publicApi.returnTicker();
         for (Map.Entry<String, PoloniexTicker> entry : tickers.entrySet()) {
             List<CurrencyConfig> c = userCurrencyConfigs.stream().filter(r -> r.getCurrencyPair().equals((entry.getKey()))).collect(Collectors.toList());
 
-            if (c.size() == 0)
-            {
+            if (c.size() == 0) {
                 System.out.println(entry.getKey());
                 CurrencyConfig currencyConfig = new CurrencyConfig();
                 currencyConfig.setBuyable(false);
@@ -247,27 +223,29 @@ public class OrdersController {
                 currencyConfig.setSellAtPrice(0);
                 currencyConfig.setSellOnPercent(10);
                 currencyConfig.setCurrencyPair(entry.getKey());
-                currencyConfig.setUserId(userId);
+                currencyConfig.setBotUser(botUser);
                 currencyConfigRepository.save(currencyConfig);
             }
         }
 
-        return "redirect:/orders/openorders";
+        return "redirect:/orders/openorders/" + botUser.getBuId();
     }
 
 
-    @RequestMapping(value = "/orders/setPercentageForAllCurrencies")
-    public String setPercentageForAllCurrencies(Principal principal, Map model) {
+    @RequestMapping(value = "/orders/setPercentageForAllCurrencies/{buid}")
+    public String setPercentageForAllCurrencies(Principal principal, Map model, @PathVariable("buid") Integer buid) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
-        int userId = authenticationFacade.GetUserId();
         CurrencyConfig currentCurrencyConfig = new CurrencyConfig();
-        currentCurrencyConfig.setUserId(userId);
+        currentCurrencyConfig.setBotUser(botUser);
 
         model.put("currencyConfig", currentCurrencyConfig);
 
         return "currencyconfigforall";
     }
-    @RequestMapping(value = "/orders/collectiveOrders",  params = {"getorders"})
+
+    @RequestMapping(value = "/orders/collectiveOrders", params = {"getorders"})
     public String collectiveOrders(Principal principal, Map model) {
         CurrencyCollectiveOrder collectiveCurrencyOrder = new CurrencyCollectiveOrder();
 
@@ -283,12 +261,15 @@ public class OrdersController {
 
         return "collectiveorder";
     }
-    @RequestMapping(value = "/orders/collectiveOrders", params = {"startorder"})
-    public String collectiveOrders(final CurrencyCollectiveOrder collectiveCurrencyOrder ) {
-        int userId = authenticationFacade.GetUserId();
-        BotUser user = botUserRepository.findOne(userId);
-        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(userId);
-        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
+
+    @RequestMapping(value = "/orders/collectiveOrders/{buid}", params = {"startorder"})
+    public String collectiveOrders(Principal principal, final CurrencyCollectiveOrder collectiveCurrencyOrder, @PathVariable("buid") Integer buid) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
+
+        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(botUser);
+        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(botUser);
+
         //let spring autowire marked attributes
         applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
 
@@ -296,27 +277,28 @@ public class OrdersController {
         collectiveOrders(collectiveCurrencyOrder, tradingApi);
         return "redirect:/orders/openorders";
     }
+
     private void collectiveOrders(CurrencyCollectiveOrder collectiveCurrencyOrder, PoloniexTradingApi tradingApi) {
 
 
-        if(collectiveCurrencyOrder.getPricePercentSplitter() > 0){
+        if (collectiveCurrencyOrder.getPricePercentSplitter() > 0) {
 
-        }else if(collectiveCurrencyOrder.getPriceSplitter() > 0){
+        } else if (collectiveCurrencyOrder.getPriceSplitter() > 0) {
 
-            double btcAmountForEachIteration=collectiveCurrencyOrder.getTotalBtcAmount()/collectiveCurrencyOrder.getPriceSplitter();
-            double priceIncreaseForEachIteration=(collectiveCurrencyOrder.getTopPrice()-collectiveCurrencyOrder.getBottomPrice())/collectiveCurrencyOrder.getPriceSplitter();
+            double btcAmountForEachIteration = collectiveCurrencyOrder.getTotalBtcAmount() / collectiveCurrencyOrder.getPriceSplitter();
+            double priceIncreaseForEachIteration = (collectiveCurrencyOrder.getTopPrice() - collectiveCurrencyOrder.getBottomPrice()) / collectiveCurrencyOrder.getPriceSplitter();
 
-            for (int i=0; i<collectiveCurrencyOrder.getPriceSplitter(); i++) {
+            for (int i = 0; i < collectiveCurrencyOrder.getPriceSplitter(); i++) {
                 double priceForEachIteration = collectiveCurrencyOrder.getBottomPrice() + priceIncreaseForEachIteration * i;
 
-                if ( collectiveCurrencyOrder.getTotalBtcAmount() > 0) {
+                if (collectiveCurrencyOrder.getTotalBtcAmount() > 0) {
                     try {
                         System.out.println(i + ")  Price Of Order: " + priceForEachIteration + " Amount of BTC " + btcAmountForEachIteration);
 
-                        String orderType=collectiveCurrencyOrder.getOrderType();
-                        String currPair=collectiveCurrencyOrder.getCurrencyPair();
+                        String orderType = collectiveCurrencyOrder.getOrderType();
+                        String currPair = collectiveCurrencyOrder.getCurrencyPair();
 
-                        if(collectiveCurrencyOrder.getOrderType().equalsIgnoreCase("BUY")){
+                        if (collectiveCurrencyOrder.getOrderType().equalsIgnoreCase("BUY")) {
                             BigDecimal buyBudget = new BigDecimal(btcAmountForEachIteration);
                             // buying price should be a little lower to make profit
                             // if set, buy at price will be used, other wise buy on percent will be used
@@ -324,30 +306,31 @@ public class OrdersController {
                             // calculate amount that can be bought with buyBudget and buyPrice
                             BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
                             PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, buyPrice, buyAmount);
-                            logger.info("PoloniexOpenOrder="+openOrder);
+                            logger.info("PoloniexOpenOrder=" + openOrder);
                             PoloniexOrderResult result = tradingApi.buy(openOrder);
 
-                        }else  if(collectiveCurrencyOrder.getOrderType().equalsIgnoreCase("SELL")){
-                            BigDecimal sellAmount  = new BigDecimal(btcAmountForEachIteration);
+                        } else if (collectiveCurrencyOrder.getOrderType().equalsIgnoreCase("SELL")) {
+                            BigDecimal sellAmount = new BigDecimal(btcAmountForEachIteration);
                             BigDecimal sellPrice = new BigDecimal(priceForEachIteration);
 
-                            PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType,  sellPrice, sellAmount);
+                            PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, sellPrice, sellAmount);
                             PoloniexOrderResult result = tradingApi.sell(openOrder);
                         }
 
-                        collectiveCurrencyOrder.setTotalBtcAmount(collectiveCurrencyOrder.getTotalBtcAmount()-priceForEachIteration);
+                        collectiveCurrencyOrder.setTotalBtcAmount(collectiveCurrencyOrder.getTotalBtcAmount() - priceForEachIteration);
 
-                    }catch(Exception ex){
-                      ex.printStackTrace();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
                     }
                     sleep();
 
-                }else{
-                    System.out.println("No BTC is left for order:"+collectiveCurrencyOrder.getTotalBtcAmount());
+                } else {
+                    System.out.println("No BTC is left for order:" + collectiveCurrencyOrder.getTotalBtcAmount());
                 }
             }
         }
     }
+
     private void sleep() {
         try {
             Thread.sleep(BUY_SELL_SLEEP);
@@ -355,7 +338,6 @@ public class OrdersController {
             e.printStackTrace();
         }
     }
-
 
 
 }

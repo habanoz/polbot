@@ -10,7 +10,8 @@ import java.io.Serializable;
 public class UserBot implements Serializable {
     private Integer id;
     private BotUser user;
-    private String bot;
+    private Bot bot;
+    private boolean active;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -32,12 +33,21 @@ public class UserBot implements Serializable {
         this.user = user;
     }
 
-    public String getBot() {
+    @ManyToOne
+    public Bot getBot() {
         return bot;
     }
 
-    public void setBot(String bot) {
+    public void setBot(Bot bot) {
         this.bot = bot;
+    }
+
+    public boolean getActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     @Override
@@ -47,6 +57,7 @@ public class UserBot implements Serializable {
 
         UserBot userBot = (UserBot) o;
 
+        if (active != userBot.active) return false;
         if (id != null ? !id.equals(userBot.id) : userBot.id != null) return false;
         if (user != null ? !user.equals(userBot.user) : userBot.user != null) return false;
         return bot != null ? bot.equals(userBot.bot) : userBot.bot == null;
@@ -57,6 +68,7 @@ public class UserBot implements Serializable {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (user != null ? user.hashCode() : 0);
         result = 31 * result + (bot != null ? bot.hashCode() : 0);
+        result = 31 * result + (active ? 1 : 0);
         return result;
     }
 }

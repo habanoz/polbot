@@ -1,7 +1,7 @@
 package com.habanoz.polbot.core.service;
 
-import com.habanoz.polbot.core.entity.BotUser;
-import com.habanoz.polbot.core.repository.BotUserRepository;
+import com.habanoz.polbot.core.entity.User;
+import com.habanoz.polbot.core.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class AuthenticationFacade implements IAuthenticationFacade {
 
     @Autowired
-    private BotUserRepository botUserRepository;
+    private UserRepository userRepository;
 
     @Override
     public Authentication getAuthentication() {
@@ -27,8 +27,8 @@ public class AuthenticationFacade implements IAuthenticationFacade {
         String userName =  authentication.getName();
 
        // BotUser botUser2 =  (BotUser) authentication.getPrincipal();
-        BotUser botUser =  botUserRepository.findByUserName(userName);
-        return botUser.getUserId();
+        User user =  userRepository.findByUserName(userName);
+        return user.getId();
     }
 
 

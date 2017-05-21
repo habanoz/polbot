@@ -4,12 +4,15 @@ import com.habanoz.polbot.core.api.CoinDeskApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
+import com.habanoz.polbot.core.entity.User;
 import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
 import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.registry.PublicRegistry;
 import com.habanoz.polbot.core.repository.BotUserRepository;
+import com.habanoz.polbot.core.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.security.Principal;
@@ -29,17 +32,22 @@ public class MyBalancesController {
     private BotUserRepository botUserRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+
+    @Autowired
     private PublicRegistry publicRegistry;
 
     @Autowired
     private CoinDeskApi coinDeskApi;
 
-    @RequestMapping({"/mybalances"})
-    public String welcome(Map<String, Object> model, Principal principal) {
-        BotUser user = botUserRepository.findByUserName(principal.getName());
+    @RequestMapping({"/mybalances/{buid}"})
+    public String welcome(@PathVariable Integer buid, Map<String, Object> model, Principal principal) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
         //create tradingApi instance for current user
-        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
+        PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(botUser);
 
         Map<String, PoloniexCompleteBalance> completeBalanceMap = tradingApi.returnCompleteBalances();
         completeBalanceMap = completeBalanceMap.entrySet().stream().filter(map -> map.getValue().getBtcValue() > 0)
@@ -93,6 +101,7 @@ public class MyBalancesController {
             detailsMap.put(currency, detailMap);
         }
 
+        model.put("botUser", botUser);
         model.put("balances", completeBalanceMap);
         model.put("details", detailsMap);
         model.put("btcBalance", allBtcProperty);

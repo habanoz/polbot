@@ -18,7 +18,7 @@ function handleUserCurrencyEvent(e) {
     var caller = e.target;
     var userId = $(caller).attr('data-user-currency');
     var postData="";
-    var ajaxUrl = "/GetAjaxUsers?userId="+parseInt(userId);
+    var ajaxUrl = "/GetAjaxUsers?botUserId="+parseInt(userId);
     ajaxMethodCall(postData,ajaxUrl, function (data) {
 
         var template = $('#userCurrenciesTemplate').html();

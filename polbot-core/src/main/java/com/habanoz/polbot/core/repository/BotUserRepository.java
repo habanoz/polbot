@@ -1,6 +1,7 @@
 package com.habanoz.polbot.core.repository;
 
 import com.habanoz.polbot.core.entity.BotUser;
+import com.habanoz.polbot.core.entity.User;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -31,7 +32,6 @@ public interface BotUserRepository
     @Override
     void delete(BotUser botUser);
 
-    BotUser findByUserEmail(String email);
-
-    BotUser findByUserName(String userName);
+    @Cacheable
+    BotUser findByUserAndBuId(User user, Integer buId);
 }

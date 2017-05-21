@@ -1,5 +1,6 @@
 package com.habanoz.polbot.core.repository;
 
+import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -19,13 +20,10 @@ public interface CurrencyConfigRepository extends JpaRepository<CurrencyConfig, 
     List<CurrencyConfig> findAll();
 
     @Cacheable
-    List<CurrencyConfig> findByUserId(Integer userId);
+    List<CurrencyConfig> findByBotUser(BotUser botUser);
 
     @Cacheable
-    List<CurrencyConfig> findByUserIdAndBuyableOrSellable(Integer userId, Boolean buyable, Boolean sellable);
-
-    @Cacheable
-    CurrencyConfig findByUserIdAndCurrencyPair(Integer userId, String currencyPair);
+    CurrencyConfig findByBotUserAndCurrencyPair(BotUser botUser, String currencyPair);
 
     @Override
     @CacheEvict(allEntries = true)

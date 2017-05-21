@@ -6,7 +6,7 @@ import javax.persistence.*;
  * Created by habanoz on 05.04.2017.
  */
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"userId", "currencyPair"}))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"bot_user", "currencyPair"}))
 public class CurrencyConfig {
     private Integer currencyConfigId;
     private String currencyPair;
@@ -17,7 +17,7 @@ public class CurrencyConfig {
     private float sellOnPercent;
     private boolean buyable;
     private boolean sellable;
-    private Integer userId;
+    private BotUser botUser;
     private Integer buyOrderCancellationHour=0;
 
     @Id
@@ -29,6 +29,18 @@ public class CurrencyConfig {
     public void setCurrencyConfigId(Integer currencyConfigId) {
         this.currencyConfigId = currencyConfigId;
     }
+
+
+    @ManyToOne
+    @JoinColumn(name = "bot_user")
+    public BotUser getBotUser() {
+        return botUser;
+    }
+
+    public void setBotUser(BotUser botUser) {
+        this.botUser = botUser;
+    }
+
 
     public String getCurrencyPair() {
         return currencyPair;
@@ -94,12 +106,12 @@ public class CurrencyConfig {
         this.sellAtPrice = sellAtPrice;
     }
 
-    public Integer getUserId() {
-        return userId;
+    public Integer getBuyOrderCancellationHour() {
+        return buyOrderCancellationHour;
     }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
+    public void setBuyOrderCancellationHour(Integer buyOrderCancellationHour) {
+        this.buyOrderCancellationHour = buyOrderCancellationHour;
     }
 
     @Override
@@ -119,7 +131,8 @@ public class CurrencyConfig {
         if (currencyConfigId != null ? !currencyConfigId.equals(that.currencyConfigId) : that.currencyConfigId != null)
             return false;
         if (currencyPair != null ? !currencyPair.equals(that.currencyPair) : that.currencyPair != null) return false;
-        return userId != null ? userId.equals(that.userId) : that.userId == null;
+        if (botUser != null ? !botUser.equals(that.botUser) : that.botUser != null) return false;
+        return buyOrderCancellationHour != null ? buyOrderCancellationHour.equals(that.buyOrderCancellationHour) : that.buyOrderCancellationHour == null;
     }
 
     @Override
@@ -133,15 +146,8 @@ public class CurrencyConfig {
         result = 31 * result + (sellOnPercent != +0.0f ? Float.floatToIntBits(sellOnPercent) : 0);
         result = 31 * result + (buyable ? 1 : 0);
         result = 31 * result + (sellable ? 1 : 0);
-        result = 31 * result + (userId != null ? userId.hashCode() : 0);
+        result = 31 * result + (botUser != null ? botUser.hashCode() : 0);
+        result = 31 * result + (buyOrderCancellationHour != null ? buyOrderCancellationHour.hashCode() : 0);
         return result;
-    }
-
-    public Integer getBuyOrderCancellationHour() {
-        return buyOrderCancellationHour;
-    }
-
-    public void setBuyOrderCancellationHour(Integer buyOrderCancellationHour) {
-        this.buyOrderCancellationHour = buyOrderCancellationHour;
     }
 }

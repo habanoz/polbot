@@ -1,5 +1,6 @@
 package com.habanoz.polbot.core.web.controller;
 
+import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
@@ -32,19 +33,18 @@ public class AjaxController {
 
     @RequestMapping(value = "/GetAjaxUsers", method = RequestMethod.GET)
     @ResponseBody
-    public String GetUserCurrencies(@RequestParam("userId") int userId) throws IOException {
+    public String GetUserCurrencies(@RequestParam("botUserId") int botUserId) throws IOException {
+        BotUser botUser = botUserRepository.findOne(botUserId);
 
         // int userId=1;
-        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByUserId(userId);
-        List<CurrencyConfig> currencyConfigs = userCurrencyConfigs.stream().filter(r->r.getBuyable() || r.getSellable()).collect(Collectors.toList());
+        List<CurrencyConfig> userCurrencyConfigs = currencyConfigRepository.findByBotUser(botUser);
+        List<CurrencyConfig> currencyConfigs = userCurrencyConfigs.stream().filter(r -> r.getBuyable() || r.getSellable()).collect(Collectors.toList());
 
         String currencyConfigsJson = new ObjectMapper().writeValueAsString(currencyConfigs);
-        Map<String,String> payload = new HashMap<>();
-        payload.put("userCurrencies",currencyConfigsJson);
+        Map<String, String> payload = new HashMap<>();
+        payload.put("userCurrencies", currencyConfigsJson);
 
-
-        String json = new ObjectMapper().writeValueAsString(payload);
-        return json;
+        return new ObjectMapper().writeValueAsString(payload);
     }
 
 }

@@ -26,13 +26,13 @@
     <script th:src="@{/js/mustache.min.js}"></script>
     <script th:src="@{/js/polBotScript.js}"></script>
 
-
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
+
 
 </head>
 
@@ -69,7 +69,7 @@
 <div class="container">
 
 
-    <form action="#" th:action="@{/edituserinfo}" th:object="${user}" method="post">
+    <form action="#" th:action="@{/editbotuserinfo}" th:object="${botuser}" method="post">
 
         <input id="id" type="hidden"
                th:field="*{id}"/>
@@ -78,18 +78,46 @@
                th:field="*{active}"/>
 
 
+        <input id="buId" type="hidden"
+               th:field="*{buId}"/>
+
+        <input id="user" type="hidden"
+               th:field="*{user}"/>
+
         <div class="form-group">
-            <label for="inputuserName"> User Name:</label>
-            <input id="inputuserName" readonly="readonly" class="form-control" type="text" th:field="*{userName}"
+            <label for="inputDescription"> Description:</label>
+            <input id="inputDescription" class="form-control" type="text" th:field="*{description}"
                    th:errorclass="fieldError"/>
         </div>
+
+
         <div class="form-group">
-            <label for="inputpassword"> Password:</label>
-            <input id="inputpassword" class="form-control" type="text" th:field="*{password}"
+            <label for="inputPublicKey"> Public Key:</label>
+            <input id="inputPublicKey" class="form-control" type="text" th:field="*{publicKey}"
+                   th:errorclass="fieldError"/>
+        </div>
+
+        <div class="form-group">
+            <label for="inputprivateKey"> Private Key:</label>
+            <input id="inputprivateKey" class="form-control" type="text" th:field="*{privateKey}"
+                   th:errorclass="fieldError"/>
+
+        </div>
+        <div class="form-group">
+            <label for="inputuserEmail"> User Email:</label>
+            <input id="inputuserEmail" class="form-control" type="text" th:field="*{userEmail}"
                    th:errorclass="fieldError"/>
 
         </div>
 
+        <div class="form-group">
+            <label for="checkboxemailNotification"> Email Notification:</label>
+
+            <input type="checkbox" id="checkboxemailNotification"
+                   class="form-control"
+                   th:field="*{emailNotification}"
+                   th:errorclass="fieldError"/>
+        </div>
         <div class="submit">
             <button type="submit" class="btn btn-primary btn-primary-group"
                     style="float: right"

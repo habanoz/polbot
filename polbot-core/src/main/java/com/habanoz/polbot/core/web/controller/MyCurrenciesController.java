@@ -2,21 +2,20 @@ package com.habanoz.polbot.core.web.controller;
 
 import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
+import com.habanoz.polbot.core.entity.User;
 import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
-import com.habanoz.polbot.core.service.IAuthenticationFacade;
+import com.habanoz.polbot.core.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.security.Principal;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created by huseyina on 4/9/2017.
@@ -31,37 +30,34 @@ public class MyCurrenciesController {
     private BotUserRepository botUserRepository;
 
     @Autowired
-    private IAuthenticationFacade authenticationFacade;
+    private UserRepository userRepository;
 
+    @RequestMapping({"/mycurrencies/{buid}"})
+    public String welcome(@PathVariable("buid") Integer buid, Map<String, Object> model, Principal principal) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
-    @RequestMapping({"/mycurrencies"})
-    public String welcome(Map<String, Object> model) {
-
-        int userId = authenticationFacade.GetUserId();  //Authenticated User
-
+        model.put("botUser", botUser);
+        model.put("buid", buid);
         model.put("currencyConfig", new CurrencyConfig());
-        model.put("currencyConfigs", this.currencyConfigRepository.findByUserId(userId));
-        model.put("searchKey", "");
+        model.put("currencyConfigs", this.currencyConfigRepository.findByBotUser(botUser));
 
         return "mycurrencies";
     }
 
     @RequestMapping(value = "/currencyconfig", params = {"save"})
-    public String saveCurrencyConfig(Principal principal, final CurrencyConfig currencyConfig, final BindingResult bindingResult, final ModelMap model) {
+    public String showCurrencyConfig(CurrencyConfig currencyConfig, Principal principal, Map model, BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
             return "currencyconfig";
         }
 
-        BotUser botUser = this.botUserRepository.findByUserName(principal.getName());
-
-        currencyConfig.setUserId(botUser.getUserId());
         this.currencyConfigRepository.save(currencyConfig);
 
         model.clear();
 
         //return "redirect:/currencyconfig?show=&currency=" + currencyConfig.getCurrencyPair();
-        return "redirect:/mycurrencies";
+        return "redirect:/mycurrencies/" + currencyConfig.getBotUser().getBuId();
     }
 
     @RequestMapping(value = "/currencyconfig", params = {"delete"})
@@ -74,34 +70,29 @@ public class MyCurrenciesController {
         this.currencyConfigRepository.delete(currencyConfig);
         model.clear();
 
-        return "redirect:/mycurrencies";
+        return "redirect:/mycurrencies/" + currencyConfig.getBotUser().getBuId();
     }
 
-    @RequestMapping(value = "/currencyconfig", params = {"show"})
-    public String showCurrencyConfig(@RequestParam("currency") String currency, Principal principal, Map model) {
+    @RequestMapping(value = "/currencyconfig/{buid}", params = {"show"})
+    public String showCurrencyConfig(@RequestParam("currency") String currency, @PathVariable("buid") Integer buid, Principal principal, Map model) {
 
-        BotUser user = botUserRepository.findByUserName(principal.getName());
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
         CurrencyConfig currentCurrencyConfig = null;
 
-        if (user != null)
-            currentCurrencyConfig = this.currencyConfigRepository.findByUserIdAndCurrencyPair(user.getUserId(), currency);
+        if (botUser != null)
+            currentCurrencyConfig = this.currencyConfigRepository.findByBotUserAndCurrencyPair(botUser, currency);
 
         if (currentCurrencyConfig == null)
             currentCurrencyConfig = new CurrencyConfig();
 
+        if (currentCurrencyConfig.getBotUser() == null)
+            currentCurrencyConfig.setBotUser(botUser);
+
+        model.put("botUser", botUser);
         model.put("currency", currency);
         model.put("currencyConfig", currentCurrencyConfig);
-
-        return "currencyconfig";
-    }
-
-    @RequestMapping(value = "/currencyconfig")
-    public String getCurrency(final CurrencyConfig currencyConfig, final BindingResult bindingResult, final ModelMap model) {
-
-        if (bindingResult.hasErrors()) {
-            return "curr";
-        }
 
         return "currencyconfig";
     }

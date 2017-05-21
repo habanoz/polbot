@@ -39,7 +39,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .usersByUsernameQuery(
 
-                        "select user_name,password, active from bot_user where user_name=?")
+                        "select user_name,password, active from user where user_name=?")
 
                 .authoritiesByUsernameQuery(
 

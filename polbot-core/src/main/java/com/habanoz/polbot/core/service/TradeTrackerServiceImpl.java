@@ -26,12 +26,12 @@ public class TradeTrackerServiceImpl implements TradeTrackerService {
 
     @Override
     public Map<String, List<PoloniexTrade>> returnTrades(boolean updateRecord) {
-        TradeHistoryTrack tradeHistoryTrack = tradeHistoryTrackRepository.findOne(user.getUserId());
+        TradeHistoryTrack tradeHistoryTrack = tradeHistoryTrackRepository.findOne(user.getId());
 
 
         if (tradeHistoryTrack == null) {
             Long startInSec = System.currentTimeMillis() / 1000 - 24 * 60 * 60;
-            tradeHistoryTrack = new TradeHistoryTrack(user.getUserId(), startInSec);
+            tradeHistoryTrack = new TradeHistoryTrack(user.getId(), startInSec);
 
             updateRecord = true;
         }

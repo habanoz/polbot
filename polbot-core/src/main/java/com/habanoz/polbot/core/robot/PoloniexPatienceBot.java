@@ -77,7 +77,7 @@ public class PoloniexPatienceBot {
     public void runLogic() {
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
 
-        List<BotUser> activeBotUsers = userBotRepository.findEnabledUsersByBotQuery(getClass().getSimpleName()).stream().map(UserBot::getUser).collect(Collectors.toList());
+        List<BotUser> activeBotUsers = userBotRepository.findByBotQuery(getClass().getSimpleName()).stream().map(UserBot::getUser).collect(Collectors.toList());
         for (BotUser user : activeBotUsers) {
             startTradingForEachUser(user, tickerMap);
         }
@@ -87,7 +87,7 @@ public class PoloniexPatienceBot {
         logger.info("Started for user {}", user);
 
         //User specific currency config list
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId())
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByBotUser(user)
                 .stream().filter(r -> r.getBuyable() || r.getSellable())
                 .sorted((f1, f2) -> Float.compare(f1.getUsableBalancePercent(), f2.getUsableBalancePercent()))
                 .collect(Collectors.toList());
@@ -192,7 +192,7 @@ public class PoloniexPatienceBot {
                 for (PoloniexOpenOrder buyOrder : openOrderListForCurr) {
                     // User unfulfilled orders
                     CurrencyOrder currencyOrder = currencyOrderRepository.findByUserIdAndOrderNumberAndActive(
-                            user.getUserId(),
+                            user.getId(),
                             buyOrder.getOrderNumber(), true);
                     if (currencyOrder != null) {
 
@@ -300,7 +300,7 @@ public class PoloniexPatienceBot {
                 //TODO: Persistence operation for BUY order so that we can trace and cancel them based on user cancellation day.
 
                 CurrencyOrder currenyOrder = new CurrencyOrder();
-                currenyOrder.setUserId(user.getUserId());
+                currenyOrder.setUserId(user.getId());
                 currenyOrder.setOrderType(openOrder.getType());
                 currenyOrder.setCurrencyPair(openOrder.getCurrencyPair());
                 currenyOrder.setOrderNumber(result.getTradeResult().getOrderNumber());

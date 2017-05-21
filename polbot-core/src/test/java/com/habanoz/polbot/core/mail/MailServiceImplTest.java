@@ -86,7 +86,7 @@ public class MailServiceImplTest {
         BotUser user = botUserRepository.findOne(userId);
 
         //Just get Buyable currencies from db.
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByUserId(user.getUserId())
+        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByBotUser((user))
                 .stream().filter(r -> r.getBuyable() || r.getSellable())
                 .sorted((f1, f2) -> Float.compare(f1.getUsableBalancePercent(), f2.getUsableBalancePercent()))
                 .collect(Collectors.toList());

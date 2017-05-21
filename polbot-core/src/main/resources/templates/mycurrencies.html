@@ -89,7 +89,7 @@
                     <hr/>
 
                     <div class="row">
-                        <form action="#" th:action="@{/currencyconfig}" th:object="${currencyConfig}"
+                        <form action="#" th:action="@{/currencyconfig/{buid}(buid=${buid})}" th:object="${currencyConfig}"
                               method="post">
 
                             <input type="hidden" name="currency"
@@ -139,7 +139,7 @@
                                             </td>
                                             <td>
                                                 <div class="submit">
-                                                    <a th:href="@{/currencyconfig/(show='',currency=${cc.currencyPair})}"
+                                                    <a th:href="@{/currencyconfig/{buid}(show='',currency=${cc.currencyPair},buid=${cc.botUser.buId})}"
                                                        class="navbar-link">Show</a>
                                                 </div>
                                             </td>

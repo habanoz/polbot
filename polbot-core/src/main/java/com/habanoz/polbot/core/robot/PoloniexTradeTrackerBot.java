@@ -61,10 +61,10 @@ public class PoloniexTradeTrackerBot {
     @Scheduled(fixedDelay = 300000)
     public void runLogic() {
 
-
         logger.info("Bot started");
 
-        List<BotUser> activeBotUsers = userBotRepository.findByBot(getClass().getSimpleName()).stream().map(UserBot::getUser).collect(Collectors.toList());
+        List<BotUser> activeBotUsers = userBotRepository.findByBotQuery(getClass().getSimpleName()).stream().map(UserBot::getUser).collect(Collectors.toList());
+
         for (BotUser user : activeBotUsers) {
             startTradingForEachUser(user);
         }
@@ -100,7 +100,7 @@ public class PoloniexTradeTrackerBot {
                 List<PoloniexTrade> poloniexTrades = mapKey.getValue().stream().filter(r->r.getType().equalsIgnoreCase("BUY")).collect(Collectors.toList());
                 if(poloniexTrades!=null)
                 for (PoloniexTrade poloniexTrade : poloniexTrades) {
-                        CurrencyOrder currencyOrder = currencyOrderRepository.findByUserIdAndOrderNumber(user.getUserId(), poloniexTrade.getOrderNumber());
+                        CurrencyOrder currencyOrder = currencyOrderRepository.findByUserIdAndOrderNumber(user.getId(), poloniexTrade.getOrderNumber());
                         if (currencyOrder != null) {
                             currencyOrder.setActive(false);
                             currencyOrderRepository.save(currencyOrder);

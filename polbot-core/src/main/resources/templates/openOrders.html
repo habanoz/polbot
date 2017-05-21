@@ -12,7 +12,16 @@
     <title>Shop Item - Start Bootstrap Template</title>
 
     <link rel="stylesheet" type="text/css"
-          href="../webjars/bootstrap/3.3.7/css/bootstrap.min.css"/>
+          th:href="@{/webjars/bootstrap/3.3.7/css/bootstrap.min.css}"/>
+
+    <!-- jQuery -->
+    <script th:src="@{/js/jquery.js}"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+
+    <script th:src="@{/js/mustache.min.js}"></script>
+    <script th:src="@{/js/polBotScript.js}"></script>
 
     <!-- Custom CSS -->
     <link th:href="@{/css/shop-item.css}" href="../../css/shop-item.css" rel="stylesheet"/>
@@ -170,13 +179,6 @@
 <div class="container">
     <div th:replace="footer :: footer">&copy; 2016 The Static Templates</div>
 </div>
-
-<!-- jQuery -->
-<script src="../js/jquery.js"></script>
-<script src="../js/mustache.min.js"></script>
-<script src="../js/polBotScript.js"></script>
-<!-- Bootstrap Core JavaScript -->
-<script src="../js/bootstrap.min.js"></script>
 
 </body>
 

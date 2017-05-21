@@ -26,13 +26,13 @@
     <script th:src="@{/js/mustache.min.js}"></script>
     <script th:src="@{/js/polBotScript.js}"></script>
 
-
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
+
 
 </head>
 
@@ -69,25 +69,32 @@
 <div class="container">
 
 
-    <form action="#" th:action="@{/edituserinfo}" th:object="${user}" method="post">
+    <form action="#" th:action="@{/editbotinfo}" th:object="${userBot}" method="post">
 
         <input id="id" type="hidden"
                th:field="*{id}"/>
 
-        <input id="active" type="hidden"
-               th:field="*{active}"/>
-
+        <input id="user" type="hidden"
+               th:field="*{user}"/>
 
         <div class="form-group">
-            <label for="inputuserName"> User Name:</label>
-            <input id="inputuserName" readonly="readonly" class="form-control" type="text" th:field="*{userName}"
-                   th:errorclass="fieldError"/>
+            <label for="selectBot"> Bot:</label>
+            <div class="form-group blu-margin">
+                <select id="selectBot" class="form-control" th:field="${userBot.bot}">
+                    <option value="0" label="select bot"></option>
+                    <option th:each="bot : ${bots}" th:value="${bot.id}" th:text="${bot.name}"></option>
+                </select>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="inputpassword"> Password:</label>
-            <input id="inputpassword" class="form-control" type="text" th:field="*{password}"
-                   th:errorclass="fieldError"/>
 
+
+        <div class="form-group">
+            <label for="checkboxActive"> Active:</label>
+
+            <input type="checkbox" id="checkboxActive"
+                   class="form-control"
+                   th:field="*{active}"
+                   th:errorclass="fieldError"/>
         </div>
 
         <div class="submit">
