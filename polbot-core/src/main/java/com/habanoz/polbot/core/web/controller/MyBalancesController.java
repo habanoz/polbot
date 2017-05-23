@@ -92,7 +92,7 @@ public class MyBalancesController {
             Float averagePrice = isCloseToZero(subTotal) ? 0 : weightedSum / subTotal;
             Float currentPrice = Optional.ofNullable(tickerPack.getTickerMap().get(currencyPair)).map(s -> s.getHighestBid().floatValue()).orElse(0f);
             Float differencePrice = (currentPrice - averagePrice);
-            Float differencePricePercent = isCloseToZero(averagePrice) ? 0 : differencePrice * 100 / averagePrice;
+            Float differencePricePercent = averagePrice == 0 ? 0 : differencePrice * 100 / averagePrice;
             Float gainLossBtc = totalBalance * differencePrice;
             Float change24H = Optional.ofNullable(tickerPack.getTickerMap().get(currencyPair)).map(s -> s.getPercentChange().floatValue()).orElse(0f);
 
@@ -122,7 +122,7 @@ public class MyBalancesController {
     }
 
     private boolean isCloseToZero(Float subTotal) {
-        return Math.abs(subTotal - 0) <= EQUALS_DIFFERENCE;
+        return Math.abs(subTotal) <= EQUALS_DIFFERENCE;
     }
 
 }
