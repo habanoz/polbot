@@ -2,6 +2,8 @@ package com.habanoz.polbot.core.mail;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.model.*;
+import com.habanoz.polbot.core.registry.PublicCoindeskRegistry;
+import com.habanoz.polbot.core.registry.PublicPoloniexTickerRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
@@ -20,7 +22,7 @@ public class HtmlHelper {
     private TemplateEngine templateEngine;
 
     @Autowired
-    private PoloniexPublicApi publicApi;
+    private PublicCoindeskRegistry coindeskRegistry;
 
 
     public String getSummaryHTML(List<PoloniexOrderResult> orderResults,
@@ -28,8 +30,7 @@ public class HtmlHelper {
                                  Map<String, PoloniexCompleteBalance> balancesMap) {
 
 
-        Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
-        PoloniexTicker ticker = tickerMap.get("USDT_BTC");
+
 
         List<PoloniexOrderResult> successful = orderResults.stream().filter(e -> e.getSuccess())
                 .sorted(Comparator.comparingDouble(f -> f.getOrder().getTotal().doubleValue()))
@@ -48,7 +49,7 @@ public class HtmlHelper {
         context.setVariable("failedOrders", failed);
         context.setVariable("balances",sortedBalancesMap );
         context.setVariable("btcBalance", btcBalance);
-        context.setVariable("btcBalanceUsd", btcBalance * ticker.getLowestAsk().doubleValue());
+        context.setVariable("btcBalanceUsd", btcBalance * coindeskRegistry.getBtcPriceMap().getBtcPriceMap().get("USD").getRate_float());
 
         return templateEngine.process("mail-operation-result", context);
     }
