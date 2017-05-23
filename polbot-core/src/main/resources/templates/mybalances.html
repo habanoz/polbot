@@ -42,7 +42,7 @@
                     colChange24h=6;
                     colDiffPrice=8;
                     colGainLoss=9;
-                    if (parseFloat(data[colDiffPrice].split("BTC")[0].trim())<0) {
+                    if (parseFloat(data[colDiffPrice].split("%")[1].trim())<0) {
                         $(row).find('td:eq('+colDiffPrice+')').addClass('falling');
                         $(row).find('td:eq('+colGainLoss+')').addClass('falling');
                     }else{
@@ -50,7 +50,7 @@
                         $(row).find('td:eq('+colGainLoss+')').addClass('rising');
                     }
 
-                    if (parseFloat(data[colChange24h].split("%")[0].trim())<0) {
+                    if (parseFloat(data[colChange24h].split("%")[1].trim())<0) {
                         $(row).find('td:eq('+colChange24h+')').addClass('falling');
                     }else{
                         $(row).find('td:eq('+colChange24h+')').addClass('rising');
