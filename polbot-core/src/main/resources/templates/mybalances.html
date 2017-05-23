@@ -39,13 +39,23 @@
             $('#ctable').dataTable({
                 responsive: true, pageLength: 100,
                 rowCallback: function (row, data, index) {
-                    if (parseFloat(data[7].split("BTC")[0].trim())<0) {
-                        $(row).find('td:eq(6)').addClass('falling')
-                        $(row).find('td:eq(7)').addClass('falling')
+                    colChange24h=6;
+                    colDiffPrice=8;
+                    colGainLoss=9;
+                    if (parseFloat(data[colDiffPrice].split("BTC")[0].trim())<0) {
+                        $(row).find('td:eq('+colDiffPrice+')').addClass('falling');
+                        $(row).find('td:eq('+colGainLoss+')').addClass('falling');
                     }else{
-                        $(row).find('td:eq(6)').addClass('rising')
-                        $(row).find('td:eq(7)').addClass('rising')
+                        $(row).find('td:eq('+colDiffPrice+')').addClass('rising');
+                        $(row).find('td:eq('+colGainLoss+')').addClass('rising');
                     }
+
+                    if (parseFloat(data[colChange24h].split("%")[0].trim())<0) {
+                        $(row).find('td:eq('+colChange24h+')').addClass('falling');
+                    }else{
+                        $(row).find('td:eq('+colChange24h+')').addClass('rising');
+                    }
+
                 }
             });
         });
@@ -102,7 +112,7 @@
 
                     <div>
                         <span style="color:black;font-size:large"
-                              th:text="'Estimated value of holdings: $'+${btcBalanceUsd}+'  /  '+${btcBalance}+' BTC'"></span>
+                              th:text="'Estimated value of holdings: TRY '+${btcBalanceTry}+' / $ '+${btcBalanceUsd}+'  /  '+${btcBalance}+' BTC'"></span>
                     </div>
 
                     <hr/>
@@ -123,9 +133,10 @@
                                             <th>Orders</th>
                                             <th>BTC Value</th>
                                             <th>Curr. Price</th>
+                                            <th>24H Change</th>
                                             <th>Avg. Price</th>
                                             <th>Diff. Price</th>
-                                            <th>Gain/Loss</th>
+                                            <th>Gain Loss</th>
                                             <th>Show</th>
                                         </tr>
                                         </thead>
@@ -138,9 +149,10 @@
                                             <td th:text="${o.value.onOrders}">0.2</td>
                                             <td th:text="${o.value.btcValue}">0.002</td>
                                             <td th:text="${details[o.key].currentPrice}">0.002</td>
+                                            <td th:text="${'% '+details[o.key].change24H}">+2</td>
                                             <td th:text="${details[o.key].averagePrice}">0.002</td>
-                                            <td th:text="${'%'+details[o.key].differencePricePercent}">0.002</td>
-                                            <td th:text="${details[o.key].gainLoss}+ 'BTC'">0.002</td>
+                                            <td th:text="${'% '+details[o.key].differencePricePercent}">0.002</td>
+                                            <td th:text="${details[o.key].gainLoss}+ ' BTC'">0.002</td>
                                             <td>
                                                 <div class="submit">
                                                     <a th:href="@{/balance/(show='',currency=${o.key})}"

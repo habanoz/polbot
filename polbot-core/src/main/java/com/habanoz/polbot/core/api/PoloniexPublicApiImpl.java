@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by habanoz on 04.04.2017.
@@ -34,8 +35,11 @@ public class PoloniexPublicApiImpl implements PoloniexPublicApi {
         try {
             String url = PUBLIC_URL + "command=returnTicker";
             String tickerJsonStr = client.getHttp(url, null);
-            return new ObjectMapper().readValue(tickerJsonStr, new TypeReference<HashMap<String, PoloniexTicker>>() {
+            Map<String, PoloniexTicker> tickerMap = new ObjectMapper().readValue(tickerJsonStr, new TypeReference<HashMap<String, PoloniexTicker>>() {
             });
+
+            return tickerMap.entrySet().stream().filter(e -> e.getKey().startsWith("BTC")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
         } catch (IOException ex) {
             logger.warn("Call to return ticker API resulted in exception - " + ex.getMessage(), ex);
         }

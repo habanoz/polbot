@@ -31,10 +31,12 @@ footer {
     margin: 50px 0;
 }
 
-rising{
+.rising{
     color:green;
+    font-weight: bold;
 }
 
-falling{
+.falling{
     color:red;
+    font-weight: bold;
 }

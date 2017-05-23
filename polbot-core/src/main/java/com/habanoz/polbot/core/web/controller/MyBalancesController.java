@@ -7,7 +7,8 @@ import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.User;
 import com.habanoz.polbot.core.model.PoloniexCompleteBalance;
 import com.habanoz.polbot.core.model.PoloniexTrade;
-import com.habanoz.polbot.core.registry.PublicRegistry;
+import com.habanoz.polbot.core.registry.PublicCoindeskRegistry;
+import com.habanoz.polbot.core.registry.PublicPoloniexTickerRegistry;
 import com.habanoz.polbot.core.repository.BotUserRepository;
 import com.habanoz.polbot.core.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,19 +28,21 @@ import java.util.stream.Collectors;
 @Controller
 public class MyBalancesController {
 
-    public static final double EQUALS_DIFFERENCE = 0.001;
+    public static final double EQUALS_DIFFERENCE = 0.0001;
     @Autowired
     private BotUserRepository botUserRepository;
 
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PublicPoloniexTickerRegistry publicRegistry;
 
     @Autowired
-    private PublicRegistry publicRegistry;
+    private PublicCoindeskRegistry coindeskRegistry;
 
-    @Autowired
-    private CoinDeskApi coinDeskApi;
+    private NumberFormat numberFormat = new DecimalFormat("#.########");
+    private NumberFormat numberFormat2d = new DecimalFormat("#.##");
 
     @RequestMapping({"/mybalances/{buid}"})
     public String welcome(@PathVariable Integer buid, Map<String, Object> model, Principal principal) {
@@ -60,7 +63,8 @@ public class MyBalancesController {
 
         Map<String, Map<String, Object>> detailsMap = new HashMap<>();
 
-        PublicRegistry.TickerPack tickerPack = publicRegistry.getTickerMap();
+        PublicPoloniexTickerRegistry.TickerPack tickerPack = publicRegistry.getTickerMap();
+        PublicCoindeskRegistry.PricePack btcPricePack = coindeskRegistry.getBtcPriceMap();
 
         final String prefix = "BTC_";
         for (String currency : completeBalanceMap.keySet()) {
@@ -69,7 +73,7 @@ public class MyBalancesController {
             PoloniexCompleteBalance balance = completeBalanceMap.get(currency);
             Float totalBalance = balance.getAvailable() + balance.getOnOrders();
             Float subTotal = 0f;
-            Float weightedSum = 0.000001f;
+            Float weightedSum = 0f;
             for (PoloniexTrade trade : historyList) {
                 if (Math.abs(totalBalance - subTotal) <= EQUALS_DIFFERENCE)
                     break;
@@ -85,30 +89,40 @@ public class MyBalancesController {
                 }
             }
 
-            Float averagePrice = weightedSum / subTotal;
+            Float averagePrice = isCloseToZero(subTotal) ? 0 : weightedSum / subTotal;
             Float currentPrice = Optional.ofNullable(tickerPack.getTickerMap().get(currencyPair)).map(s -> s.getHighestBid().floatValue()).orElse(0f);
             Float differencePrice = (currentPrice - averagePrice);
-            Float differencePricePercent = differencePrice * 100 / averagePrice;
+            Float differencePricePercent = isCloseToZero(averagePrice) ? 0 : differencePrice * 100 / averagePrice;
             Float gainLossBtc = totalBalance * differencePrice;
+            Float change24H = Optional.ofNullable(tickerPack.getTickerMap().get(currencyPair)).map(s -> s.getPercentChange().floatValue()).orElse(0f);
 
-            NumberFormat numberFormat = new DecimalFormat("#.########");
+
             Map<String, Object> detailMap = new HashMap<>();
             detailMap.put("total", totalBalance);
             detailMap.put("averagePrice", numberFormat.format(averagePrice));
             detailMap.put("currentPrice", numberFormat.format(currentPrice));
-            detailMap.put("differencePricePercent", numberFormat.format(differencePricePercent));
-            detailMap.put("gainLoss", numberFormat.format(gainLossBtc));
+            detailMap.put("differencePricePercent", numberFormat2d.format(differencePricePercent));
+            detailMap.put("gainLoss", numberFormat2d.format(gainLossBtc));
+            detailMap.put("change24H", numberFormat2d.format(change24H));
 
             detailsMap.put(currency, detailMap);
         }
 
+        double btcUsd = allBtcProperty * Optional.ofNullable(btcPricePack.getBtcPriceMap().get("USD")).map(s -> s.getRate_float()).orElse(0f);
+        double btcTry = allBtcProperty * Optional.ofNullable(btcPricePack.getBtcPriceMap().get("TRY")).map(s -> s.getRate_float()).orElse(0f);
         model.put("botUser", botUser);
         model.put("balances", completeBalanceMap);
         model.put("details", detailsMap);
-        model.put("btcBalance", allBtcProperty);
-        model.put("btcBalanceUsd", allBtcProperty * Optional.ofNullable(coinDeskApi.getBtcUsdPrice()).map(s -> s.getRate_float()).orElse(0f));
+
+        model.put("btcBalance", numberFormat2d.format(allBtcProperty));
+        model.put("btcBalanceUsd", numberFormat2d.format(btcUsd));
+        model.put("btcBalanceTry", numberFormat2d.format(btcTry));
 
         return "mybalances";
+    }
+
+    private boolean isCloseToZero(Float subTotal) {
+        return Math.abs(subTotal - 0) <= EQUALS_DIFFERENCE;
     }
 
 }

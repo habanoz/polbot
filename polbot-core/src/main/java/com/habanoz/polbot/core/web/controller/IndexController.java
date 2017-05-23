@@ -1,7 +1,7 @@
 package com.habanoz.polbot.core.web.controller;
 
 import com.habanoz.polbot.core.model.PoloniexTicker;
-import com.habanoz.polbot.core.registry.PublicRegistry;
+import com.habanoz.polbot.core.registry.PublicPoloniexTickerRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class IndexController {
 
     @Autowired
-    private PublicRegistry publicRegistry;
+    private PublicPoloniexTickerRegistry publicRegistry;
 
     @RequestMapping({"/", "/index"})
     public String welcome(Map<String, Object> model) {

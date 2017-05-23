@@ -1,5 +1,6 @@
 package com.habanoz.polbot.core.registry;
 
+import com.habanoz.polbot.core.api.CoinDeskApi;
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.model.PoloniexTicker;
 import org.slf4j.Logger;
@@ -17,8 +18,8 @@ import java.util.Optional;
  * Created by huseyina on 5/16/2017.
  */
 @Component
-public class PublicRegistry {
-    private static final Logger logger = LoggerFactory.getLogger(PublicRegistry.class);
+public class PublicPoloniexTickerRegistry {
+    private static final Logger logger = LoggerFactory.getLogger(PublicPoloniexTickerRegistry.class);
     @Autowired
     private PoloniexPublicApi publicApi;
 
@@ -43,11 +44,12 @@ public class PublicRegistry {
                 logger.warn("Error while getting ticker map", e);
             }
 
-            if (tmpTickerMap != null) {
-                tickerMap = tmpTickerMap;
-                lastTickerMapDate = new Date();
-            }
+            if (tmpTickerMap == null) return false;
+
+            tickerMap = tmpTickerMap;
+            lastTickerMapDate = new Date();
         }
+
         return true;
     }
 
