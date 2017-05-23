@@ -34,11 +34,24 @@
     <link rel="stylesheet" type="text/css" th:href="@{/DataTables/datatables.min.css}"/>
     <script type="text/javascript" th:src="@{/DataTables/datatables.min.js}"></script>
 
-    <script type="text/javascript">
+    <script type="text/javascript" th:inline="javascript">
+        /*<![CDATA[*/
         $(document).ready(function () {
-            $('#ctable').dataTable({responsive: true, pageLength: 100});
-        });
+            $('#ctable').dataTable({
+                responsive: true, pageLength: 100,
+                rowCallback: function (row, data, index) {
+                    colChange24h=3;
 
+                    if (parseFloat(data[colChange24h].trim())<0) {
+                        $(row).find('td:eq('+colChange24h+')').addClass('falling');
+                    }else{
+                        $(row).find('td:eq('+colChange24h+')').addClass('rising');
+                    }
+
+                }
+            });
+        });
+        /*]]>*/
     </script>
 
 </head>
