@@ -67,32 +67,33 @@ public class MyBalancesController {
             final String currencyPair = prefix + currency;
             List<PoloniexTrade> historyList = Optional.ofNullable(historyMap.get(currencyPair)).orElse(Collections.EMPTY_LIST);
             PoloniexCompleteBalance balance = completeBalanceMap.get(currency);
-            Float available = balance.getAvailable();
-            Float subAvailable = 0f;
+            Float totalBalance = balance.getAvailable() + balance.getOnOrders();
+            Float subTotal = 0f;
             Float weightedSum = 0.000001f;
             for (PoloniexTrade trade : historyList) {
-                if (Math.abs(available - subAvailable) <= EQUALS_DIFFERENCE)
+                if (Math.abs(totalBalance - subTotal) <= EQUALS_DIFFERENCE)
                     break;
 
                 if (trade.getType().equalsIgnoreCase("buy")) {
                     weightedSum += trade.getAmount().multiply(trade.getRate()).floatValue();
-                    subAvailable += (1 - trade.getFee().floatValue()) * trade.getAmount().floatValue();
+                    subTotal += (1 - trade.getFee().floatValue()) * trade.getAmount().floatValue();
                 }
 
                 if (trade.getType().equalsIgnoreCase("sell")) {
                     weightedSum -= trade.getAmount().multiply(trade.getRate()).floatValue();
-                    subAvailable -= trade.getAmount().floatValue();
+                    subTotal -= trade.getAmount().floatValue();
                 }
             }
 
-            Float averagePrice = weightedSum / subAvailable;
+            Float averagePrice = weightedSum / subTotal;
             Float currentPrice = Optional.ofNullable(tickerPack.getTickerMap().get(currencyPair)).map(s -> s.getHighestBid().floatValue()).orElse(0f);
             Float differencePrice = (currentPrice - averagePrice);
             Float differencePricePercent = differencePrice * 100 / averagePrice;
-            Float gainLossBtc = available * differencePrice;
+            Float gainLossBtc = totalBalance * differencePrice;
 
             NumberFormat numberFormat = new DecimalFormat("#.########");
             Map<String, Object> detailMap = new HashMap<>();
+            detailMap.put("total", totalBalance);
             detailMap.put("averagePrice", numberFormat.format(averagePrice));
             detailMap.put("currentPrice", numberFormat.format(currentPrice));
             detailMap.put("differencePricePercent", numberFormat.format(differencePricePercent));

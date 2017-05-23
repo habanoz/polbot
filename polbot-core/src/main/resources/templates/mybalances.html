@@ -118,6 +118,7 @@
                                         <thead>
                                         <tr>
                                             <th>Currency</th>
+                                            <th>Total</th>
                                             <th>Available</th>
                                             <th>Orders</th>
                                             <th>BTC Value</th>
@@ -132,6 +133,7 @@
                                         <tbody>
                                         <tr th:each="o: ${balances}">
                                             <td th:text="${o.key}">ETH</td>
+                                            <td th:text="${details[o.key].total}">0.2</td>
                                             <td th:text="${o.value.available}">0.2</td>
                                             <td th:text="${o.value.onOrders}">0.2</td>
                                             <td th:text="${o.value.btcValue}">0.002</td>
