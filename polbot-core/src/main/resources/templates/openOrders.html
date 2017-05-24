@@ -66,62 +66,77 @@
 <!-- Page Content -->
 <div class="container">
     <h3>Cancel Orders</h3>
-    <hr />
+    <hr/>
     <div class="row">
 
         <div class="col-md-4">
             <a class="btn btn-danger" onclick="return confirm('Want to cancel ALL open orders?')"
-               href="/orders/cancelopenorders?ordercanceltype=ALL">CANCEL ALL OPEN ORDERS</a>
+               th:href="@{/orders/cancelopenorders/{buid}(ordercanceltype='ALL',buid=${buid})}">
+                CANCEL ALL OPEN ORDERS
+            </a>
         </div>
 
         <div class="col-md-4">
             <a class="btn btn-danger" onclick="return confirm('Want to cancel SELL open orders?')"
-               href="/orders/cancelopenorders?ordercanceltype=SELL">CANCEL SELL OPEN ORDERS</a>
+               th:href="@{/orders/cancelopenorders/{buid}(ordercanceltype='SELL',buid=${buid})}">
+                CANCEL SELL OPEN ORDERS
+            </a>
         </div>
 
         <div class="col-md-4">
             <a class="btn btn-danger" onclick="return confirm('Want to cancel BUY open orders?')"
-               href="/orders/cancelopenorders?ordercanceltype=BUY">CANCEL BUY OPEN ORDERS</a>
+               th:href="@{/orders/cancelopenorders/{buid}(ordercanceltype='BUY',buid=${buid})}">
+                CANCEL BUY OPEN ORDERS
+            </a>
         </div>
     </div>
     <h3>Start/Stop Orders</h3>
-    <hr />
+    <hr/>
     <div class="row">
         <div class="col-md-3">
             <a class="btn btn-info" onclick="return confirm('Want to stop SELL orders?')"
-               href="/orders/stopcurrencyoperations?ordertype=stop_sell">STOP SELL ORDERS</a>
+               th:href="@{/orders/stopcurrencyoperations/{buid}(ordertype='stop_sell',buid=${buid})}">
+                STOP SELL ORDERS
+            </a>
         </div>
         <div class="col-md-3">
             <a class="btn btn-info" onclick="return confirm('Want to stop BUY orders?')"
-               href="/orders/stopcurrencyoperations?ordertype=stop_buy">STOP BUY ORDERS</a>
+               th:href="@{/orders/stopcurrencyoperations/{buid}(ordertype='stop_buy',buid=${buid})}">
+                STOP BUY ORDERS
+            </a>
         </div>
         <div class="col-md-3">
             <a class="btn btn-info" onclick="return confirm('Want to start SELL orders?')"
-               href="/orders/stopcurrencyoperations?ordertype=start_sell">START SELL ORDERS</a>
+               th:href="@{/orders/stopcurrencyoperations/{buid}(ordertype='start_sell',buid=${buid})}">
+                START SELL ORDERS
+            </a>
         </div>
         <div class="col-md-3">
             <a class="btn btn-info" onclick="return confirm('Want to start BUY orders?')"
-               href="/orders/stopcurrencyoperations?ordertype=start_buy">START BUY ORDERS</a>
+               th:href="@{/orders/stopcurrencyoperations/{buid}(ordertype='start_buy',buid=${buid})}">
+                START BUY ORDERS
+            </a>
         </div>
     </div>
     <h3>Manage Orders</h3>
-    <hr />
+    <hr/>
     <div class="row">
-        <div class="col-md-3">
-            <a class="btn btn-info" href="/orders/setPercentageForAllCurrencies">Set Percentage For All Currencies</a>
+        <div class="col-md-4">
+            <a class="btn btn-info" th:href="@{/orders/setPercentageForAllCurrencies/{buid}(buid=${buid})}">
+                Set Percentage For All
+            </a>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <a class="btn btn-info"
                onclick="return confirm('Want to stop buy orders for currencies with too much sell orders?')"
-               href="/orders/stopbuyordersforcurrencies">stop buy orders for currencies with too much sell orders</a>
+               th:href="@{/orders/stopbuyordersforcurrencies/{buid}(buid=${buid})}">
+                Stop Buy for Too much sells
+            </a>
         </div>
-        <div class="col-md-3">
-            <a class="btn btn-info" href="/orders/collectiveOrders">collectiveOrders</a>
-        </div>
-        <div class="col-md-3">
-            <a class="btn btn-info"
-
-               href="/orders/collectiveOrders?getorders=">collectiveOrders</a>
+        <div class="col-md-4">
+            <a class="btn btn-info" th:href="@{/orders/collectiveOrders/{buid}(buid=${buid},getorders='')}">
+                Bulk Orders
+            </a>
         </div>
     </div>
 
