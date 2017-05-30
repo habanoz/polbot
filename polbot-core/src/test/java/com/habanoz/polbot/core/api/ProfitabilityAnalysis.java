@@ -27,7 +27,7 @@ import java.util.List;
 public class ProfitabilityAnalysis {
     private static final Logger logger = LoggerFactory.getLogger(ProfitabilityAnalysis.class);
 
-    private PoloniexPublicApi publicApi=new PoloniexPublicApiImpl();
+    private PoloniexPublicApi publicApi = new PoloniexPublicApiImpl();
 
     @Test
     public void runAnalysis() {
@@ -71,8 +71,11 @@ public class ProfitabilityAnalysis {
         float buyFeeRate = 0.015f;
         float sellFeeRate = 0.025f;
 
+        logger.info("Starting balance btc: {}", initialBTCBalance);
+        logger.info("Starting balance coin: {}", initialCoinBalance);
+
         Map<String, List<PoloniexTrade>> historyMap = new HashMap<>();
-        historyMap.put(currPair,new ArrayList<>());
+        historyMap.put(currPair, new ArrayList<>());
 
 
         CurrencyConfig currencyConfig = new CurrencyConfig(currPair, balancePercent, 0f, buyOnPercent, 0, sellOnPercent);
@@ -97,13 +100,13 @@ public class ProfitabilityAnalysis {
 
                 Map<String, List<PoloniexOpenOrder>> openOrderMap = new HashMap<>();
                 openOrderMap.put(currPair, new ArrayList<>(buyOrders));
-                openOrderMap.put(currPair, new ArrayList<>(sellOrders));
+                openOrderMap.get(currPair).addAll(sellOrders);
 
                 PatienceStrategy patienceStrategy = new PatienceStrategy(openOrderMap, historyMap);
 
                 PoloniexTicker poloniexTicker = new PoloniexTicker(chart.getOpen(), chart.getOpen(), chart.getOpen(), new BigDecimal(0), chart.getVolume());
 
-                List<PoloniexOpenOrder> orders = patienceStrategy.execute(currencyConfig, poloniexTicker, currentBTCBalance, currentBTCBalance.multiply(BigDecimal.valueOf(balancePercent)));
+                List<PoloniexOpenOrder> orders = patienceStrategy.execute(currencyConfig, poloniexTicker, currentBTCBalance.multiply(BigDecimal.valueOf(balancePercent / 100f)), currentCoinBalance);
 
                 for (PoloniexOpenOrder order : orders) {
                     if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
@@ -214,6 +217,7 @@ public class ProfitabilityAnalysis {
                 sellOrdersIterator.remove();
 
                 logger.info("Sell Trade Completed {}", poloniexTrade);
+                logger.info("Sell Trade Completed btc balance {}", currentBTCBalance);
             } else // orders are in price order, if last one is not executed, remainings will no be executed
                 break;
         }
