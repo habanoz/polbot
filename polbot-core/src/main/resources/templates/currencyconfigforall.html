@@ -78,10 +78,11 @@
                         <hr/>
 
 
-                        <form action="#" th:action="@{/orders/savePercentageForAllCurrencies}" th:object="${currencyConfig}" method="post">
+                        <form action="#" th:action="@{/orders/savePercentageForAllCurrencies}"
+                              th:object="${currencyConfig}" method="post">
 
                             <input id="userId" type="hidden"
-                                   th:field="*{userId}"/>
+                                   th:field="*{botUser}"/>
 
                             <input id="currencyConfigId" type="hidden"
                                    th:field="*{currencyConfigId}"/>
@@ -101,36 +102,35 @@
                                    th:field="*{buyable}"/>
 
 
+                            <div class="form-group">
+                                <label th:for="inputUsableBalancePercent"
+                                       th:text="#{currencyconfig.usableBalancePercent} "/>
 
-                                    <div class="form-group">
-                                        <label th:for="inputUsableBalancePercent"
-                                               th:text="#{currencyconfig.usableBalancePercent} "/>
-
-                                                <input id="inputUsableBalancePercent" type="text"        class="form-control"
-                                                       th:field="*{usableBalancePercent}"
-                                                       th:errorclass="fieldError"/><br/>
+                                <input id="inputUsableBalancePercent" type="text" class="form-control"
+                                       th:field="*{usableBalancePercent}"
+                                       th:errorclass="fieldError"/><br/>
 
 
-                                    </div>
+                            </div>
 
 
                             <div class="form-group">
-                                        <label th:for="inputBuyOnPercent" th:text="#{currencyconfig.buyOnPercent} "/>
+                                <label th:for="inputBuyOnPercent" th:text="#{currencyconfig.buyOnPercent} "/>
 
 
-                                                <input id="inputBuyOnPercent" type="text" th:field="*{buyOnPercent}"        class="form-control"
-                                                       th:errorclass="fieldError"/><br/>
+                                <input id="inputBuyOnPercent" type="text" th:field="*{buyOnPercent}"
+                                       class="form-control"
+                                       th:errorclass="fieldError"/><br/>
 
-                                </div>
+                            </div>
 
 
                             <div class="form-group">
-                                        <label th:for="inputSellOnPercent" th:text="#{currencyconfig.sellOnPercent} "/>
+                                <label th:for="inputSellOnPercent" th:text="#{currencyconfig.sellOnPercent} "/>
 
-                                                <input id="inputSellOnPercent" type="text" th:field="*{sellOnPercent}"        class="form-control"
-                                                       th:errorclass="fieldError"/><br/>
-
-
+                                <input id="inputSellOnPercent" type="text" th:field="*{sellOnPercent}"
+                                       class="form-control"
+                                       th:errorclass="fieldError"/><br/>
 
 
                             </div>
