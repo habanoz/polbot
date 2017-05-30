@@ -92,7 +92,7 @@ public class OrdersController {
             currencyConfigRepository.save(config);
         }
 
-        return "redirect:/orders/openorders"+ buid;
+        return "redirect:/orders/openorders";
     }
 
     @RequestMapping(value = "/orders/cancelopenorders/{buid}", method = RequestMethod.GET)
@@ -130,7 +130,7 @@ public class OrdersController {
         }
 
 
-        return "redirect:/orders/openorders"+ buid;
+        return "redirect:/orders/openorders";
     }
 
     @RequestMapping(value = "/orders/stopbuyordersforcurrencies/{buid}", method = RequestMethod.GET)
@@ -245,8 +245,9 @@ public class OrdersController {
         return "currencyconfigforall";
     }
 
-    @RequestMapping(value = "/orders/collectiveOrders", params = {"getorders"})
-    public String collectiveOrders(Principal principal, Map model) {
+    @RequestMapping(value = "/orders/collectiveOrders/{buid}", params = {"getorders"})
+    public String collectiveOrders(Principal principal, Map model, @PathVariable("buid") Integer buid) {
+
         CurrencyCollectiveOrder collectiveCurrencyOrder = new CurrencyCollectiveOrder();
 
         collectiveCurrencyOrder.setCurrencyPair("BTC_STR");
@@ -258,6 +259,7 @@ public class OrdersController {
         collectiveCurrencyOrder.setTotalBtcAmount(1);
 
         model.put("collectiveCurrencyOrder", collectiveCurrencyOrder);
+        model.put("buid", buid);
 
         return "collectiveorder";
     }
@@ -267,16 +269,11 @@ public class OrdersController {
         User user = userRepository.findByUserName(principal.getName());
         BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
-        Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(botUser);
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(botUser);
 
-        //let spring autowire marked attributes
-        applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
+        collectiveOrders(collectiveCurrencyOrder, tradingApi);
 
-
-      //  collectiveOrders(collectiveCurrencyOrder, tradingApi);
-     //   return "redirect:/orders/openorders";
-        return "redirect:/orders/openorders/" + botUser.getBuId();
+        return "redirect:/orders/openorders/" + buid;
     }
 
     private void collectiveOrders(CurrencyCollectiveOrder collectiveCurrencyOrder, PoloniexTradingApi tradingApi) {
