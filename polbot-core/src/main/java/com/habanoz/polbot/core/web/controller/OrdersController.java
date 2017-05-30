@@ -92,7 +92,7 @@ public class OrdersController {
             currencyConfigRepository.save(config);
         }
 
-        return "redirect:/orders/openorders";
+        return "redirect:/orders/openorders"+ buid;
     }
 
     @RequestMapping(value = "/orders/cancelopenorders/{buid}", method = RequestMethod.GET)
@@ -130,7 +130,7 @@ public class OrdersController {
         }
 
 
-        return "redirect:/orders/openorders";
+        return "redirect:/orders/openorders"+ buid;
     }
 
     @RequestMapping(value = "/orders/stopbuyordersforcurrencies/{buid}", method = RequestMethod.GET)
@@ -274,8 +274,9 @@ public class OrdersController {
         applicationContext.getAutowireCapableBeanFactory().autowireBean(tradingApi);
 
 
-        collectiveOrders(collectiveCurrencyOrder, tradingApi);
-        return "redirect:/orders/openorders";
+      //  collectiveOrders(collectiveCurrencyOrder, tradingApi);
+     //   return "redirect:/orders/openorders";
+        return "redirect:/orders/openorders/" + botUser.getBuId();
     }
 
     private void collectiveOrders(CurrencyCollectiveOrder collectiveCurrencyOrder, PoloniexTradingApi tradingApi) {
