@@ -20,6 +20,18 @@ public class CurrencyConfig {
     private BotUser botUser;
     private Integer buyOrderCancellationHour=0;
 
+    public CurrencyConfig() {
+    }
+
+    public CurrencyConfig(String currencyPair, float usableBalancePercent, float buyAtPrice, float buyOnPercent, float sellAtPrice, float sellOnPercent) {
+        this.currencyPair = currencyPair;
+        this.usableBalancePercent = usableBalancePercent;
+        this.buyAtPrice = buyAtPrice;
+        this.buyOnPercent = buyOnPercent;
+        this.sellAtPrice = sellAtPrice;
+        this.sellOnPercent = sellOnPercent;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Integer getCurrencyConfigId() {

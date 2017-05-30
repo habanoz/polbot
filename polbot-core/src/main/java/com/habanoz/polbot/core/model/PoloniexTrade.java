@@ -16,10 +16,16 @@ public class PoloniexTrade {
     private String category;
 
     public PoloniexTrade(BigDecimal rate, BigDecimal amount, String type) {
-        this.rate = rate.setScale(12,BigDecimal.ROUND_DOWN);
-        this.amount = amount.setScale(12,BigDecimal.ROUND_DOWN);
+        this.rate = rate.setScale(12, BigDecimal.ROUND_DOWN);
+        this.amount = amount.setScale(12, BigDecimal.ROUND_DOWN);
         this.type = type;
-        this.total = rate.multiply(amount).setScale(12,BigDecimal.ROUND_DOWN);
+        this.total = rate.multiply(amount).setScale(12, BigDecimal.ROUND_DOWN);
+    }
+
+    public PoloniexTrade(LocalDateTime date, BigDecimal rate, BigDecimal amount, BigDecimal fee, String type) {
+        this(rate, amount, type);
+        this.date = date;
+        this.fee = fee;
     }
 
     public PoloniexTrade() {

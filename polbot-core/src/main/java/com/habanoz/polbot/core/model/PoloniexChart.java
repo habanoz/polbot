@@ -22,6 +22,14 @@ public class PoloniexChart
     public PoloniexChart() {
     }
 
+    public PoloniexChart(BigDecimal high, BigDecimal low, BigDecimal open, BigDecimal close, BigDecimal volume) {
+        this.high = high;
+        this.low = low;
+        this.open = open;
+        this.close = close;
+        this.volume = volume;
+    }
+
     public BigDecimal getDate() {
         return date;
     }

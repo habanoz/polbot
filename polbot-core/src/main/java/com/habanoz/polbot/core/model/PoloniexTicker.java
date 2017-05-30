@@ -20,6 +20,14 @@ public class PoloniexTicker
     public PoloniexTicker() {
     }
 
+    public PoloniexTicker(BigDecimal last, BigDecimal lowestAsk, BigDecimal highestBid, BigDecimal percentChange, BigDecimal baseVolume) {
+        this.last = last;
+        this.lowestAsk = lowestAsk;
+        this.highestBid = highestBid;
+        this.percentChange = percentChange;
+        this.baseVolume = baseVolume;
+    }
+
     public BigDecimal getId() {
         return id;
     }
