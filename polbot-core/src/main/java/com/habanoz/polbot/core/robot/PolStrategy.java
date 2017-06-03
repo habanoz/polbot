@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Created by huseyina on 5/29/2017.
+ * Created by habanoz on 30.05.2017.
  */
 public interface PolStrategy {
     List<PoloniexOpenOrder> execute(CurrencyConfig currencyConfig, PoloniexTicker ticker, BigDecimal balance, BigDecimal budget);

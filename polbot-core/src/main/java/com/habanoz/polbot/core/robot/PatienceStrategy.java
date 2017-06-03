@@ -41,7 +41,7 @@ public class PatienceStrategy implements PolStrategy {
 
 
     @Override
-    public List<PoloniexOpenOrder> execute(CurrencyConfig currencyConfig, PoloniexTicker ticker, BigDecimal balance, BigDecimal budget) {
+    public List<PoloniexOpenOrder> execute(CurrencyConfig currencyConfig, PoloniexTicker ticker, BigDecimal btcBalance, BigDecimal coinBalance) {
         String currPair = currencyConfig.getCurrencyPair();
         final String[] currParts = currPair.split(CURR_PAIR_SEPARATOR);
         final String currName = currParts[1];
@@ -54,10 +54,10 @@ public class PatienceStrategy implements PolStrategy {
         if (ticker == null)
             return Collections.emptyList();
 
-        return runStrategy(currencyConfig, currPair, balance, openOrderListForCurr, ticker, budget);
+        return runStrategy(currencyConfig, currPair, btcBalance,coinBalance, openOrderListForCurr, ticker);
     }
 
-    private List<PoloniexOpenOrder> runStrategy(CurrencyConfig currencyConfig, String currPair, BigDecimal currBalance, List<PoloniexOpenOrder> openOrderListForCurr, PoloniexTicker ticker, BigDecimal buyBudget) {
+    private List<PoloniexOpenOrder> runStrategy(CurrencyConfig currencyConfig, String currPair, BigDecimal btcBalance,BigDecimal coinBalance, List<PoloniexOpenOrder> openOrderListForCurr, PoloniexTicker ticker) {
         List<PoloniexOpenOrder> poloniexOrders = new ArrayList<>();
 
         //current lowest market price
@@ -72,7 +72,7 @@ public class PatienceStrategy implements PolStrategy {
                 currencyConfig.getBuyable() &&
                 openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase(PolBot.BUY_ACTION))) {
 
-            PoloniexOpenOrder openOrder = createBuyOrder(currencyConfig, currPair, lowestBuyPrice, buyBudget);
+            PoloniexOpenOrder openOrder = createBuyOrder(currencyConfig, currPair, lowestBuyPrice, btcBalance);
 
             if (openOrder != null)
                 poloniexOrders.add(openOrder);
@@ -82,10 +82,10 @@ public class PatienceStrategy implements PolStrategy {
         //
         //
         // sell logic
-        if (currencyConfig.getSellable() && currBalance.doubleValue() > minAmount) {
+        if (currencyConfig.getSellable() && coinBalance.doubleValue() > minAmount) {
             List<PoloniexTrade> currHistoryList = historyMap.get(currPair);
 
-            PoloniexOpenOrder openOrder = createSellOrder(currencyConfig, currPair, currBalance, highestSellPrice, currHistoryList);
+            PoloniexOpenOrder openOrder = createSellOrder(currencyConfig, currPair, coinBalance, highestSellPrice, currHistoryList);
             if (openOrder != null)
                 poloniexOrders.add(openOrder);
         }
