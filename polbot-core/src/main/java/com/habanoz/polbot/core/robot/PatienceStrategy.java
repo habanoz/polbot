@@ -1,19 +1,10 @@
 package com.habanoz.polbot.core.robot;
 
-import com.habanoz.polbot.core.api.PoloniexPublicApi;
-import com.habanoz.polbot.core.api.PoloniexTradingApi;
-import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.entity.CurrencyOrder;
 import com.habanoz.polbot.core.model.*;
-import com.habanoz.polbot.core.repository.CurrencyConfigRepository;
-import com.habanoz.polbot.core.repository.CurrencyOrderRepository;
-import com.habanoz.polbot.core.repository.UserBotRepository;
-import com.habanoz.polbot.core.utils.DateUtil;
+import com.habanoz.polbot.core.utils.ExchangePrice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -31,38 +22,32 @@ public class PatienceStrategy implements PolStrategy {
 
     private static final double minAmount = 0.0001;
     private static final String CURR_PAIR_SEPARATOR = "_";
-    private Map<String, List<PoloniexOpenOrder>> openOrderMap;
-    private Map<String, List<PoloniexTrade>> historyMap;
+    private List<PoloniexOpenOrder> openOrderList;
+    private List<PoloniexTrade> historyList;
 
-    public PatienceStrategy(Map<String, List<PoloniexOpenOrder>> openOrderMap, Map<String, List<PoloniexTrade>> historyMap) {
-        this.openOrderMap = openOrderMap;
-        this.historyMap = historyMap;
+    public PatienceStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> historyList) {
+        this.openOrderList = openOrderList;
+        this.historyList = historyList;
     }
 
 
     @Override
-    public List<PoloniexOpenOrder> execute(CurrencyConfig currencyConfig, PoloniexTicker ticker, BigDecimal btcBalance, BigDecimal coinBalance) {
+    public List<PoloniexOpenOrder> execute(CurrencyConfig currencyConfig, ExchangePrice priceData, BigDecimal btcBalance, BigDecimal coinBalance, Date date) {
         String currPair = currencyConfig.getCurrencyPair();
-        final String[] currParts = currPair.split(CURR_PAIR_SEPARATOR);
-        final String currName = currParts[1];
-        final String marketName = currParts[0];
-
-
-        List<PoloniexOpenOrder> openOrderListForCurr = openOrderMap.get(currPair);
 
         // this may indicate invalid currency name
-        if (ticker == null)
+        if (priceData == null)
             return Collections.emptyList();
 
-        return runStrategy(currencyConfig, currPair, btcBalance,coinBalance, openOrderListForCurr, ticker);
+        return runStrategy(currencyConfig, currPair, btcBalance, coinBalance, openOrderList, priceData, date);
     }
 
-    private List<PoloniexOpenOrder> runStrategy(CurrencyConfig currencyConfig, String currPair, BigDecimal btcBalance,BigDecimal coinBalance, List<PoloniexOpenOrder> openOrderListForCurr, PoloniexTicker ticker) {
+    private List<PoloniexOpenOrder> runStrategy(CurrencyConfig currencyConfig, String currPair, BigDecimal btcBalance, BigDecimal coinBalance, List<PoloniexOpenOrder> openOrderListForCurr, ExchangePrice priceData, Date date) {
         List<PoloniexOpenOrder> poloniexOrders = new ArrayList<>();
 
         //current lowest market price
-        BigDecimal lowestBuyPrice = ticker.getLowestAsk();
-        BigDecimal highestSellPrice = ticker.getHighestBid();
+        BigDecimal lowestBuyPrice = priceData.getBuyPrice();
+        BigDecimal highestSellPrice = priceData.getSellPrice();
 
 
         //
@@ -72,7 +57,7 @@ public class PatienceStrategy implements PolStrategy {
                 currencyConfig.getBuyable() &&
                 openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase(PolBot.BUY_ACTION))) {
 
-            PoloniexOpenOrder openOrder = createBuyOrder(currencyConfig, currPair, lowestBuyPrice, btcBalance);
+            PoloniexOpenOrder openOrder = createBuyOrder(currencyConfig, currPair, lowestBuyPrice, btcBalance, date);
 
             if (openOrder != null)
                 poloniexOrders.add(openOrder);
@@ -83,9 +68,7 @@ public class PatienceStrategy implements PolStrategy {
         //
         // sell logic
         if (currencyConfig.getSellable() && coinBalance.doubleValue() > minAmount) {
-            List<PoloniexTrade> currHistoryList = historyMap.get(currPair);
-
-            PoloniexOpenOrder openOrder = createSellOrder(currencyConfig, currPair, coinBalance, highestSellPrice, currHistoryList);
+            PoloniexOpenOrder openOrder = createSellOrder(currencyConfig, currPair, coinBalance, highestSellPrice, historyList, date);
             if (openOrder != null)
                 poloniexOrders.add(openOrder);
         }
@@ -95,26 +78,27 @@ public class PatienceStrategy implements PolStrategy {
 
     private PoloniexOpenOrder createSellOrder(CurrencyConfig currencyConfig,
                                               String currPair,
-                                              BigDecimal currBalance,
+                                              BigDecimal currCoinAmount,
                                               BigDecimal highestSellPrice,
-                                              List<PoloniexTrade> currHistoryList) {
+                                              List<PoloniexTrade> currHistoryList, Date date) {
 
         // get last buying price to calculate selling price
         BigDecimal lastBuyPrice = getBuyPrice(highestSellPrice, currHistoryList);
 
         //selling price should be a little higher to make profit
         // if set, sell at price will be used, otherwise sell on percent will be used
-        BigDecimal sellPrice = currencyConfig.getSellAtPrice() == 0 ? new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getSellAtPrice());
+        BigDecimal sellPrice = currencyConfig.getSellAtPrice() == 0 ? lastBuyPrice.multiply(new BigDecimal(1).add(BigDecimal.valueOf(currencyConfig.getSellOnPercent() * 0.01))) : new BigDecimal(currencyConfig.getSellAtPrice());
 
-        return new PoloniexOpenOrder(currPair, "SELL", sellPrice, currBalance);
+        return new PoloniexOpenOrder(currPair, "SELL", sellPrice, currCoinAmount, date);
     }
 
     private BigDecimal getBuyPrice(BigDecimal highestSellPrice, List<PoloniexTrade> currHistoryList) {
         BigDecimal lastBuyPrice = highestSellPrice;
 
         if (currHistoryList != null && currHistoryList.size() > 0 && currHistoryList.get(0) != null) {
+            for (int i = currHistoryList.size() - 1; currHistoryList.size() >= 0; i--) {
+                PoloniexTrade history = currHistoryList.get(i);
 
-            for (PoloniexTrade history : currHistoryList) {
                 // if remaining history records are too old, dont use them for selling price base
                 if (history.getDate().plus(1, ChronoUnit.WEEKS).isBefore(LocalDateTime.now()))
                     break;
@@ -131,19 +115,35 @@ public class PatienceStrategy implements PolStrategy {
 
     private PoloniexOpenOrder createBuyOrder(CurrencyConfig currencyConfig,
                                              String currPair,
-                                             BigDecimal lowestBuyPrice, BigDecimal buyBudget) {
+                                             BigDecimal lowestBuyPrice, BigDecimal buyBudgetInBtc, Date date) {
         // not enough budget, return 0
-        if (buyBudget == null || buyBudget.doubleValue() < minAmount) {
+        if (buyBudgetInBtc == null || buyBudgetInBtc.doubleValue() < minAmount) {
             return null;
         }
 
         // buying price should be a little lower to make profit
         // if set, buy at price will be used, other wise buy on percent will be used
-        BigDecimal buyPrice = currencyConfig.getBuyAtPrice() == 0 ? new BigDecimal(lowestBuyPrice.doubleValue() * (100 - currencyConfig.getBuyOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getBuyAtPrice());
+        BigDecimal buyPrice = currencyConfig.getBuyAtPrice() == 0 ? lowestBuyPrice.multiply(new BigDecimal(1).subtract(BigDecimal.valueOf(currencyConfig.getBuyOnPercent() * 0.01))) : new BigDecimal(currencyConfig.getBuyAtPrice());
 
         // calculate amount that can be bought with buyBudget and buyPrice
-        BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
+        BigDecimal buyCoinAmount = buyBudgetInBtc.divide(buyPrice, RoundingMode.DOWN);
 
-        return new PoloniexOpenOrder(currPair, PoloniexPatienceBot.BUY_ACTION, buyPrice, buyAmount);
+        return new PoloniexOpenOrder(currPair, PoloniexPatienceBot.BUY_ACTION, buyPrice, buyCoinAmount, date);
+    }
+
+    @Override
+    public List<PoloniexOpenOrder> getOrdersToCancel(CurrencyConfig currencyConfig, Date date) {
+
+        Iterator<PoloniexOpenOrder> openOrderIterator = openOrderList.iterator();
+        List<PoloniexOpenOrder> openOrdersToCancel = new ArrayList<>();
+        while (openOrderIterator.hasNext()) {
+            PoloniexOpenOrder openOrder = openOrderIterator.next();
+            if (currencyConfig.getBuyOrderCancellationHour() > 0 &&
+                    (date.getTime() - openOrder.getDate().getTime()) > currencyConfig.getBuyOrderCancellationHour() * 1000 * 60 * 60) {
+                openOrdersToCancel.add(openOrder);
+            }
+        }
+
+        return openOrdersToCancel;
     }
 }

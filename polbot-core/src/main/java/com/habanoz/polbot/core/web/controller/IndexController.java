@@ -25,7 +25,7 @@ public class IndexController {
         Map<String, PoloniexTicker> map = tickerPack.getTickerMap().entrySet().stream().filter(e -> e.getKey().startsWith("BTC")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         model.put("poloniexTicker", new PoloniexTicker());
-        model.put("poloniexTickerPack", map);
+        model.put("poloniexTickerPack", new PublicPoloniexTickerRegistry.TickerPack(tickerPack.getLastTickerMapDate(),map));
         model.put("searchKey", "");
         return "index";
     }

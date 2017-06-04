@@ -1,6 +1,5 @@
 package com.habanoz.polbot.core.api;
 
-import com.cf.data.model.poloniex.PoloniexTradeHistory;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.PoloniexChart;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
@@ -8,16 +7,15 @@ import com.habanoz.polbot.core.model.PoloniexTicker;
 import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.robot.PatienceStrategy;
 import com.habanoz.polbot.core.robot.PolBot;
+import com.habanoz.polbot.core.utils.ExchangePrice;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.List;
 
@@ -42,34 +40,23 @@ public class ProfitabilityAnalysis {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MONTH, -1);
 
-        final String currPair = "BTC_DGB";
+        final String currPair = "BTC_ETC";
         List<PoloniexChart> chartData = publicApi.returnChart(currPair, 300L, calendar.getTimeInMillis() / 1000, System.currentTimeMillis() / 1000);
 
 
-        Queue<PoloniexOpenOrder> buyOrders = new PriorityQueue<>(new Comparator<PoloniexOpenOrder>() {
-            @Override
-            public int compare(PoloniexOpenOrder order, PoloniexOpenOrder order2) {
-                return -1 * (int) (order.getRate().doubleValue() - order2.getRate().doubleValue());
-            }
-        });
-
-        Queue<PoloniexOpenOrder> sellOrders = new PriorityQueue<>(new Comparator<PoloniexOpenOrder>() {
-            @Override
-            public int compare(PoloniexOpenOrder order, PoloniexOpenOrder order2) {
-                return (int) (order.getRate().doubleValue() - order2.getRate().doubleValue());
-            }
-        });
+        List<PoloniexOpenOrder> openOrders = new ArrayList<>();
 
         float initialBTCBalance = 0.2f;
         float initialCoinBalance = 0f;
         int balancePercent = 50;
-        float buyOnPercent = 4;
+        float buyOnPercent = 5;
         float sellOnPercent = 4;
+        int cancelHour = 96;
         float volumeRatio = 0.01f;
         int dumpResponseTime = 15;
 
-        float buyFeeRate = 0.015f;
-        float sellFeeRate = 0.025f;
+        float buyFeeRate = 0.0015f;
+        float sellFeeRate = 0.0025f;
 
         logger.info("Starting balance btc: {}", initialBTCBalance);
         logger.info("Starting balance coin: {}", initialCoinBalance);
@@ -79,13 +66,21 @@ public class ProfitabilityAnalysis {
 
 
         CurrencyConfig currencyConfig = new CurrencyConfig(currPair, balancePercent, 0f, buyOnPercent, 0, sellOnPercent);
+        currencyConfig.setBuyOrderCancellationHour(cancelHour);
         currencyConfig.setBuyable(true);
         currencyConfig.setSellable(true);
 
         BigDecimal currentBTCBalance = BigDecimal.valueOf(initialBTCBalance);
+        BigDecimal currentBTCOnOrder = BigDecimal.valueOf(0);
         BigDecimal currentCoinBalance = BigDecimal.valueOf(initialCoinBalance);
+        BigDecimal currentCoinOnOrder = BigDecimal.valueOf(0);
+
+        BigDecimal lastSellPrice = new BigDecimal(0);
 
         for (PoloniexChart chart : chartData) {
+            Date date = new Date(chart.getDate().longValue() * 1000);
+
+            //logger.info("Day {}", date);
 
             List<BigDecimal> priceIndex = getPriceIndex(chart);
 
@@ -94,43 +89,137 @@ public class ProfitabilityAnalysis {
 
                 BigDecimal buyPrice = priceIndex.get(idx);
                 BigDecimal sellPrice = priceIndex.get(idx);
+                lastSellPrice = sellPrice;
 
-                currentCoinBalance = executeBuyOrders(currPair, buyOrders, buyFeeRate, historyMap, currentCoinBalance, buyPrice);
-                currentBTCBalance = executeSellOrders(currPair, sellOrders, sellFeeRate, historyMap, currentBTCBalance, sellPrice);
+                //logger.info("Buy price {} Sell price {}", buyPrice.doubleValue(), sellPrice.doubleValue());
+
+
+                BigDecimal[] buyResults = executeBuyOrders(currPair, openOrders, buyFeeRate, historyMap, buyPrice, date);
+                BigDecimal[] sellResults = executeSellOrders(currPair, openOrders, sellFeeRate, historyMap, sellPrice, date);
+
+                if (buyResults[0].doubleValue() != 0 || buyResults[1].doubleValue() != 0 || sellResults[0].doubleValue() != 0 || sellResults[1].doubleValue() != 0) {
+                    logger.info("Buy Price {}, Sell Price", buyPrice, sellPrice);
+                    logger.info("-Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
+                }
+
+                currentCoinBalance = currentCoinBalance.add(buyResults[0]);
+                currentBTCBalance = currentBTCBalance.add(sellResults[0]);
+
+                currentCoinOnOrder = currentCoinOnOrder.subtract(sellResults[1]);
+                currentBTCOnOrder = currentBTCOnOrder.subtract(buyResults[1]);
+                if (buyResults[0].doubleValue() != 0 || buyResults[1].doubleValue() != 0 || sellResults[0].doubleValue() != 0 || sellResults[1].doubleValue() != 0) {
+                    logger.info("--Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
+                }
 
                 Map<String, List<PoloniexOpenOrder>> openOrderMap = new HashMap<>();
-                openOrderMap.put(currPair, new ArrayList<>(buyOrders));
-                openOrderMap.get(currPair).addAll(sellOrders);
+                openOrderMap.put(currPair, openOrders);
 
-                PatienceStrategy patienceStrategy = new PatienceStrategy(openOrderMap, historyMap);
+                PatienceStrategy patienceStrategy = new PatienceStrategy(openOrderMap.get(currPair), historyMap.get(currPair));
 
-                PoloniexTicker poloniexTicker = new PoloniexTicker(chart.getOpen(), chart.getOpen(), chart.getOpen(), new BigDecimal(0), chart.getVolume());
+                ExchangePrice exchangePrice = new ExchangePrice(buyPrice, sellPrice, date, chart.getVolume());
 
-                List<PoloniexOpenOrder> orders = patienceStrategy.execute(currencyConfig, poloniexTicker, currentBTCBalance.multiply(BigDecimal.valueOf(balancePercent / 100f)), currentCoinBalance);
+                List<PoloniexOpenOrder> orders = patienceStrategy.execute(currencyConfig, exchangePrice, currentBTCBalance.multiply(BigDecimal.valueOf(balancePercent / 100f)), currentCoinBalance, date);
 
+                // fulfill orders
                 for (PoloniexOpenOrder order : orders) {
                     if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
                         currentBTCBalance = currentBTCBalance.subtract(order.getTotal());
-                        buyOrders.add(order);
+                        currentBTCOnOrder = currentBTCOnOrder.add(order.getTotal());
 
+                        openOrders.add(order);
+
+                        logger.info("Buy Price {}", buyPrice);
                         logger.info("Buy Order Given {}", order);
+                        logger.info("Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
                     }
 
                     if (order.getType().equalsIgnoreCase(PolBot.SELL_ACTION)) {
                         currentCoinBalance = currentCoinBalance.subtract(order.getAmount());
-                        sellOrders.add(order);
+                        currentCoinOnOrder = currentCoinOnOrder.add(order.getAmount());
 
+                        openOrders.add(order);
+
+                        logger.info("Sell Price {}", sellPrice);
                         logger.info("Sell Order Given {}", order);
+                        logger.info("Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
+                    }
+                }
+
+                //cancel old open orders
+                Iterator<PoloniexOpenOrder> openOrderIterator = patienceStrategy.getOrdersToCancel(currencyConfig, date).iterator();
+                while (openOrderIterator.hasNext()) {
+                    PoloniexOpenOrder openOrder = openOrderIterator.next();
+
+                    if (openOrder.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
+                        BigDecimal order = cancelBuyOrder(openOrders, openOrder);
+                        currentBTCBalance = currentBTCBalance.add(order);
+                        currentBTCOnOrder = currentBTCOnOrder.subtract(order);
+
+                        logger.info("Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
+                    } else {
+                        BigDecimal order = cancelSellOrder(openOrders, openOrder);
+
+                        currentCoinBalance = currentCoinBalance.add(order);
+                        currentCoinOnOrder = currentCoinOnOrder.subtract(order);
+
+                        logger.info("Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
                     }
                 }
             }
 
         }
 
-        System.out.println();
-        System.out.println("ration=" + (currentBTCBalance.divide(new BigDecimal(initialBTCBalance), BigDecimal.ROUND_CEILING)));
-        System.out.println("coind balance=" + currentCoinBalance);
+        Iterator<PoloniexOpenOrder> openOrderIterator = openOrders.iterator();
+        while (openOrderIterator.hasNext()) {
+            PoloniexOpenOrder openOrder = openOrderIterator.next();
 
+            if (openOrder.getType().equalsIgnoreCase(PolBot.BUY_ACTION))
+                currentBTCBalance = currentBTCBalance.add(cancelBuyOrder(openOrderIterator, openOrder));
+            else currentCoinBalance = currentCoinBalance.add(cancelSellOrder(openOrderIterator, openOrder));
+        }
+
+
+        System.out.println("coin balance=" + currentCoinBalance);
+        System.out.println("btc balance=" + currentBTCBalance);
+        System.out.println("Selling coins");
+
+        currentBTCBalance = currentBTCBalance.add(sell(lastSellPrice, currentCoinBalance, sellFeeRate));
+
+        System.out.println("ratio=" + (currentBTCBalance.divide(new BigDecimal(initialBTCBalance), BigDecimal.ROUND_CEILING)));
+
+        System.out.println("Trades");
+        for (PoloniexTrade trade : historyMap.get(currPair)) {
+            System.out.println(trade);
+        }
+
+    }
+
+    private BigDecimal total(BigDecimal currentCoinBalance, BigDecimal currentBTCBalance, BigDecimal currentCoinOnOrder, BigDecimal currentBTCOnOrder, BigDecimal sellPrice) {
+        return currentCoinBalance.add(currentCoinOnOrder).multiply(sellPrice).add(currentBTCBalance).add(currentBTCOnOrder);
+    }
+
+    private BigDecimal cancelSellOrder(List<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel) {
+        logger.info("Sell Order Cancelled {}", openOrderToCancel);
+        openOrders.remove(openOrderToCancel);
+        return openOrderToCancel.getAmount();
+    }
+
+    private BigDecimal cancelBuyOrder(List<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel) {
+        logger.info("Buy Order Cancelled {}", openOrderToCancel);
+        openOrders.remove(openOrderToCancel);
+        return openOrderToCancel.getTotal();
+    }
+
+    private BigDecimal cancelSellOrder(Iterator<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel) {
+        logger.info("Sell Order Cancelled {}", openOrderToCancel);
+        openOrders.remove();
+        return openOrderToCancel.getAmount();
+    }
+
+    private BigDecimal cancelBuyOrder(Iterator<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel) {
+        logger.info("Buy Order Cancelled {}", openOrderToCancel);
+        openOrders.remove();
+        return openOrderToCancel.getTotal();
     }
 
     @Test
@@ -149,7 +238,7 @@ public class ProfitabilityAnalysis {
         final List<BigDecimal> priceIndex = new ArrayList<>();
 
         //dumping
-        if (chart.getOpen().doubleValue() > chart.getClose().doubleValue()) {
+        if (open.doubleValue() > close.doubleValue()) {
             final BigDecimal totalRange = high.subtract(open).add(high.subtract(low).add(close.subtract(low)));
 
             if (totalRange.doubleValue() == 0) {
@@ -200,52 +289,64 @@ public class ProfitabilityAnalysis {
         return priceIndex;
     }
 
-    private BigDecimal executeSellOrders(String currPair, Queue<PoloniexOpenOrder> sellOrders, float sellFeeRate, Map<String, List<PoloniexTrade>> historyMap, BigDecimal currentBTCBalance, BigDecimal sellPrice) {
-        Iterator<PoloniexOpenOrder> sellOrdersIterator = sellOrders.iterator();
-        while (sellOrdersIterator.hasNext()) {
-            PoloniexOpenOrder sellOrder = sellOrdersIterator.next();
-            if (sellOrder.getRate().doubleValue() <= sellPrice.doubleValue()) {
+    private BigDecimal[] executeSellOrders(String currPair, List<PoloniexOpenOrder> openOrders, float sellFeeRate, Map<String, List<PoloniexTrade>> historyMap, BigDecimal sellPrice, Date date) {
+        BigDecimal gained = new BigDecimal(0);
+        BigDecimal ordersCompleted = new BigDecimal(0);
+        Iterator<PoloniexOpenOrder> openOrdersIterator = openOrders.iterator();
+        while (openOrdersIterator.hasNext()) {
+            PoloniexOpenOrder openOrder = openOrdersIterator.next();
+            if (openOrder.getType().equalsIgnoreCase(PolBot.SELL_ACTION)) {
+                if (openOrder.getRate().doubleValue() <= sellPrice.doubleValue()) {
 
-                //TODO consider volume
-                PoloniexTrade poloniexTrade = new PoloniexTrade(LocalDateTime.now(), sellPrice, sellOrder.getAmount(), new BigDecimal(sellFeeRate), PolBot.SELL_ACTION);
+                    //TODO consider volume
+                    PoloniexTrade poloniexTrade = new PoloniexTrade(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()), sellPrice, openOrder.getAmount(), new BigDecimal(sellFeeRate), PolBot.SELL_ACTION);
 
-                historyMap.get(currPair).add(poloniexTrade);
+                    historyMap.get(currPair).add(poloniexTrade);
 
-                // apply fees and update btc balance
-                currentBTCBalance = currentBTCBalance.add(new BigDecimal(sellOrder.getTotal().doubleValue() * (1 - sellFeeRate)));
+                    // apply fees and update btc balance
+                    gained = gained.add(openOrder.getTotal().multiply(new BigDecimal(1 - sellFeeRate)));
+                    ordersCompleted = ordersCompleted.add(openOrder.getAmount());
 
-                sellOrdersIterator.remove();
+                    openOrdersIterator.remove();
 
-                logger.info("Sell Trade Completed {}", poloniexTrade);
-                logger.info("Sell Trade Completed btc balance {}", currentBTCBalance);
-            } else // orders are in price order, if last one is not executed, remainings will no be executed
-                break;
+                    logger.info("Sell Trade Completed {}", poloniexTrade);
+                    logger.info("Sell Trade Completed at price {}", sellPrice.doubleValue());
+                }
+            }
         }
 
-        return currentBTCBalance;
+        return new BigDecimal[]{gained, ordersCompleted};
     }
 
-    private BigDecimal executeBuyOrders(String currPair, Queue<PoloniexOpenOrder> buyOrders, float buyFeeRate, Map<String, List<PoloniexTrade>> historyMap, BigDecimal currentCoinBalance, BigDecimal buyPrice) {
-        Iterator<PoloniexOpenOrder> buyOrdersIterator = buyOrders.iterator();
-        while (buyOrdersIterator.hasNext()) {
-            PoloniexOpenOrder buyOrder = buyOrdersIterator.next();
-            if (buyOrder.getRate().floatValue() >= buyPrice.floatValue()) {
+    public BigDecimal sell(BigDecimal sellPrice, BigDecimal amount, float sellFeeRate) {
+        return amount.multiply(sellPrice).multiply(new BigDecimal(1 - sellFeeRate));
+    }
 
-                //TODO consider volume
-                PoloniexTrade poloniexTrade = new PoloniexTrade(LocalDateTime.now(), buyPrice, buyOrder.getAmount(), new BigDecimal(buyFeeRate), PolBot.BUY_ACTION);
+    private BigDecimal[] executeBuyOrders(String currPair, List<PoloniexOpenOrder> openOrders, float buyFeeRate, Map<String, List<PoloniexTrade>> historyMap, BigDecimal buyPrice, Date date) {
+        BigDecimal gained = new BigDecimal(0);
+        BigDecimal ordersCompleted = new BigDecimal(0);
+        Iterator<PoloniexOpenOrder> openOrdersIterator = openOrders.iterator();
+        while (openOrdersIterator.hasNext()) {
+            PoloniexOpenOrder openOrder = openOrdersIterator.next();
+            if (openOrder.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
+                if (openOrder.getRate().floatValue() >= buyPrice.floatValue()) {
 
-                historyMap.get(currPair).add(poloniexTrade);
+                    //TODO consider volume
+                    PoloniexTrade poloniexTrade = new PoloniexTrade(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()), buyPrice, openOrder.getAmount(), new BigDecimal(buyFeeRate), PolBot.BUY_ACTION);
 
-                // apply fees and update coin balance
-                currentCoinBalance = currentCoinBalance.add(new BigDecimal(buyOrder.getAmount().doubleValue() * (1 - buyFeeRate)));
+                    historyMap.get(currPair).add(poloniexTrade);
 
-                buyOrdersIterator.remove();
+                    // apply fees and update coin balance
+                    gained = gained.add(openOrder.getAmount().multiply(new BigDecimal(1 - buyFeeRate)));
+                    ordersCompleted = ordersCompleted.add(openOrder.getTotal());
 
-                logger.info("Buy Trade Completed {}", poloniexTrade);
+                    openOrdersIterator.remove();
 
-            } else // orders are in price order, if last one is not executed, remainings will no be executed
-                break;
+                    logger.info("Buy Trade Completed {}", poloniexTrade);
+                    logger.info("Buy Trade Completed at price {}", buyPrice.doubleValue());
+                }
+            }
         }
-        return currentCoinBalance;
+        return new BigDecimal[]{gained, ordersCompleted};
     }
 }
