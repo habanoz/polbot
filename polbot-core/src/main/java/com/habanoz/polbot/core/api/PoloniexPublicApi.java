@@ -14,7 +14,7 @@ import java.util.Map;
 public interface PoloniexPublicApi {
     Map<String, PoloniexTicker> returnTicker();
 
-    Map<String, List<PoloniexTrade>> returnTradeHistory(String currencyPair, long start, long end);
+    List<PoloniexTrade> returnTradeHistory(String currencyPair, long start, long end);
 
     List<PoloniexChart> returnChart(String currencyPair, Long periodInSeconds, Long startTime, Long endTime);
 }
