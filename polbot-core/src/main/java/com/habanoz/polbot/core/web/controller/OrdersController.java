@@ -95,7 +95,7 @@ public class OrdersController {
             currencyConfigRepository.save(config);
         }
 
-        return "redirect:/orders/openorders/"+buid;
+        return "redirect:/orders/openorders/" + buid;
     }
 
     @RequestMapping(value = "/orders/cancelopenorders/{buid}", method = RequestMethod.GET)
@@ -133,7 +133,7 @@ public class OrdersController {
         }
 
 
-        return "redirect:/orders/openorders/"+buid;
+        return "redirect:/orders/openorders/" + buid;
     }
 
     @RequestMapping(value = "/orders/stopbuyordersforcurrencies/{buid}", method = RequestMethod.GET)
@@ -316,8 +316,8 @@ public class OrdersController {
                             logger.info("Buy Result:{}", result);
 
                         } else if (collectiveCurrencyOrder.getOrderType().equalsIgnoreCase("SELL")) {
-                            BigDecimal sellAmount = new BigDecimal(btcAmountForEachIteration);
                             BigDecimal sellPrice = priceForEachIteration;
+                            BigDecimal sellAmount = new BigDecimal(btcAmountForEachIteration).divide(sellPrice);
 
                             PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, sellPrice, sellAmount);
                             logger.info("Attempted to {}", openOrder);
