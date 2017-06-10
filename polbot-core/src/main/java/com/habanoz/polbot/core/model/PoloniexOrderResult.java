@@ -55,4 +55,14 @@ public class PoloniexOrderResult {
     public void setError(String error) {
         this.error = error;
     }
+
+    @Override
+    public String toString() {
+        return "PoloniexOrderResult{" +
+                "order=" + order +
+                ", tradeResult=" + tradeResult +
+                ", success=" + success +
+                ", error='" + error + '\'' +
+                '}';
+    }
 }

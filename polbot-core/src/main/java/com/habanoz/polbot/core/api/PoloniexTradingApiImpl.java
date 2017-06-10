@@ -49,7 +49,6 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
         module.addDeserializer(LocalDateTime.class, localDateTimeDeserializer);
 
 
-
         objectMapper = Jackson2ObjectMapperBuilder.json()
                 .modules(module)
                 .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
@@ -83,7 +82,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             String str = tradingAPIClient.buy(order.getCurrencyPair(), order.getRate(), order.getAmount(), false, false, false);
 
-            if (str.contains("error")) {
+            if (str == null || str.contains("error")) {
                 operationlogger.error("Failed order " + order.toString());
                 return new PoloniexOrderResult(order, str);
             }
@@ -108,7 +107,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             String str = tradingAPIClient.sell(order.getCurrencyPair(), order.getRate(), order.getAmount(), false, false, false);
 
-            if (str.contains("error")) {
+            if (str == null || str.contains("error")) {
                 operationlogger.error("Failed order " + order.toString());
                 return new PoloniexOrderResult(order, str);
             }

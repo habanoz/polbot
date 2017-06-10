@@ -134,7 +134,7 @@
             </a>
         </div>
         <div class="col-md-4">
-            <a class="btn btn-info" th:href="@{/orders/collectiveOrders/{buid}(buid=${buid},getorders='')}">
+            <a class="btn btn-info" th:href="@{/orders/collectiveOrders/{buid}/{currencyPair}(buid=${buid},currencyPair='BTC_ETC',getorders='')}">
                 Bulk Orders
             </a>
         </div>
