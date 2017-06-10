@@ -1,6 +1,7 @@
 package com.habanoz.polbot.core.model;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 public class PoloniexOpenOrder {
     private String orderNumber;
@@ -9,6 +10,7 @@ public class PoloniexOpenOrder {
     private BigDecimal rate;
     private BigDecimal amount;
     private BigDecimal total;
+    private Date date;
 
     public PoloniexOpenOrder(String currencyPair, String type, BigDecimal rate, BigDecimal amount) {
         this.currencyPair = currencyPair;
@@ -17,6 +19,13 @@ public class PoloniexOpenOrder {
         this.amount = amount.setScale(12,BigDecimal.ROUND_DOWN);
         this.total = rate.multiply(amount).setScale(12,BigDecimal.ROUND_DOWN);
     }
+
+    public PoloniexOpenOrder(String currencyPair, String type, BigDecimal rate, BigDecimal amount,Date date) {
+        this(currencyPair,type,rate,amount);
+        this.date = date;
+    }
+
+
 
     public PoloniexOpenOrder() {
     }
@@ -69,10 +78,47 @@ public class PoloniexOpenOrder {
         this.currencyPair = currencyPair;
     }
 
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PoloniexOpenOrder openOrder = (PoloniexOpenOrder) o;
+
+        if (orderNumber != null ? !orderNumber.equals(openOrder.orderNumber) : openOrder.orderNumber != null)
+            return false;
+        if (currencyPair != null ? !currencyPair.equals(openOrder.currencyPair) : openOrder.currencyPair != null)
+            return false;
+        if (type != null ? !type.equals(openOrder.type) : openOrder.type != null) return false;
+        if (rate != null ? !rate.equals(openOrder.rate) : openOrder.rate != null) return false;
+        if (amount != null ? !amount.equals(openOrder.amount) : openOrder.amount != null) return false;
+        if (total != null ? !total.equals(openOrder.total) : openOrder.total != null) return false;
+        return date != null ? date.equals(openOrder.date) : openOrder.date == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = orderNumber != null ? orderNumber.hashCode() : 0;
+        result = 31 * result + (currencyPair != null ? currencyPair.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (rate != null ? rate.hashCode() : 0);
+        result = 31 * result + (amount != null ? amount.hashCode() : 0);
+        result = 31 * result + (total != null ? total.hashCode() : 0);
+        result = 31 * result + (date != null ? date.hashCode() : 0);
+        return result;
+    }
+
     @Override
     public String toString() {
         return "PoloniexOpenOrder{" +
-                "orderNumber='" + orderNumber + '\'' +
                 ", currencyPair='" + currencyPair + '\'' +
                 ", type='" + type + '\'' +
                 ", rate=" + rate +

@@ -134,7 +134,7 @@
             </a>
         </div>
         <div class="col-md-4">
-            <a class="btn btn-info" th:href="@{/orders/collectiveOrders/{buid}(buid=${buid},getorders='')}">
+            <a class="btn btn-info" th:href="@{/orders/collectiveOrders/{buid}/{currencyPair}(buid=${buid},currencyPair='BTC_ETC',getorders='')}">
                 Bulk Orders
             </a>
         </div>
@@ -180,6 +180,7 @@
                 <td th:text="${poloniexOpenOrder.rate}"></td>
                 <td th:text="${poloniexOpenOrder.amount}"></td>
                 <td th:text="${poloniexOpenOrder.total}"></td>
+                <td th:text="${poloniexOpenOrder.date}"></td>
                 <td></td>
                 <td><span class="btn btn-link"
                           th:attr="data-open-order-cancel=${poloniexOpenOrder.orderNumber}">Cancel</span></td>

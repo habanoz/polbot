@@ -72,44 +72,39 @@
 
 
         <div class="form-group">
-            <label for="inputcurrencyPair"> currencyPair:</label>
+            <label for="inputcurrencyPair"> Currency Pair:</label>
             <input id="inputcurrencyPair" class="form-control" type="text" th:field="*{currencyPair}"
                    th:errorclass="fieldError"/>
 
         </div>
         <div class="form-group">
-            <label for="inputorderType"> orderType:</label>
+            <label for="inputorderType"> Order Type:</label>
             <input id="inputorderType" class="form-control" type="text" th:field="*{orderType}"
                    th:errorclass="fieldError"/>
 
         </div>
         <div class="form-group">
-            <label for="inputtopPrice"> topPrice:</label>
-            <input id="inputtopPrice" class="form-control" type="text" th:field="*{topPrice}"
+            <label for="inputtopPrice"> Top Price:</label>
+            <input id="inputtopPrice" class="form-control" type="text" th:field="*{topPriceStr}"
                    th:errorclass="fieldError"/>
 
         </div>
 
         <div class="form-group">
-            <label for="inputbottomPrice"> bottomPrice:</label>
-            <input id="inputbottomPrice" class="form-control" type="text" th:field="*{bottomPrice}"
+            <label for="inputbottomPrice"> Bottom Price:</label>
+            <input id="inputbottomPrice" class="form-control" type="text" th:field="*{bottomPriceStr}"
                    th:errorclass="fieldError"/>
 
         </div>
         <div class="form-group">
-            <label for="inputpriceSplitter"> priceSplitter:</label>
+            <label for="inputpriceSplitter"> Price Splitter:</label>
             <input id="inputpriceSplitter" class="form-control" type="text" th:field="*{priceSplitter}"
                    th:errorclass="fieldError"/>
 
         </div>
-        <div class="form-group">
-            <label for="inputpricePercentSplitter"> pricePercentSplitter:</label>
-            <input id="inputpricePercentSplitter" class="form-control" type="text" th:field="*{pricePercentSplitter}"
-                   th:errorclass="fieldError"/>
 
-        </div>
         <div class="form-group">
-            <label for="inputtotalBtcAmount"> totalBtcAmount:</label>
+            <label for="inputtotalBtcAmount"> Btc Amount:</label>
             <input id="inputtotalBtcAmount" class="form-control" type="text" th:field="*{totalBtcAmount}"
                    th:errorclass="fieldError"/>
 

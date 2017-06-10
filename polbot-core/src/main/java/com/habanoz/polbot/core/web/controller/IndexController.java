@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by huseyina on 4/9/2017.
@@ -20,9 +21,11 @@ public class IndexController {
     @RequestMapping({"/", "/index"})
     public String welcome(Map<String, Object> model) {
         //int userId = authenticationFacade.GetUserId();  //Authenticated User
+        PublicPoloniexTickerRegistry.TickerPack tickerPack = publicRegistry.getTickerMap();
+        Map<String, PoloniexTicker> map = tickerPack.getTickerMap().entrySet().stream().filter(e -> e.getKey().startsWith("BTC")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         model.put("poloniexTicker", new PoloniexTicker());
-        model.put("poloniexTickerPack",publicRegistry.getTickerMap() );
+        model.put("poloniexTickerPack", new PublicPoloniexTickerRegistry.TickerPack(tickerPack.getLastTickerMapDate(),map));
         model.put("searchKey", "");
         return "index";
     }
