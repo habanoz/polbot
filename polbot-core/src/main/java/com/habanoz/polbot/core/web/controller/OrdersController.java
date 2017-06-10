@@ -317,7 +317,7 @@ public class OrdersController {
 
                         } else if (collectiveCurrencyOrder.getOrderType().equalsIgnoreCase("SELL")) {
                             BigDecimal sellPrice = priceForEachIteration;
-                            BigDecimal sellAmount = new BigDecimal(btcAmountForEachIteration).divide(sellPrice);
+                            BigDecimal sellAmount = new BigDecimal(btcAmountForEachIteration).divide(sellPrice,BigDecimal.ROUND_HALF_DOWN);
 
                             PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, sellPrice, sellAmount);
                             logger.info("Attempted to {}", openOrder);
