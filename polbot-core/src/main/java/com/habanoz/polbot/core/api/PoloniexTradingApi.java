@@ -1,7 +1,6 @@
 package com.habanoz.polbot.core.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.model.*;
 import org.apache.http.NameValuePair;
 
@@ -13,9 +12,9 @@ import java.util.Map;
  * Created by habanoz on 02.04.2017.
  */
 public interface PoloniexTradingApi {
-    PoloniexOrderResult buy(PoloniexOpenOrder order);
+    PoloniexOrderResult buy(Order order);
 
-    PoloniexOrderResult sell(PoloniexOpenOrder order);
+    PoloniexOrderResult sell(Order order);
 
     Map runCommand(String commandName, TypeReference typeReference);
 

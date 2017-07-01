@@ -4,6 +4,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.math.BigDecimal;
 
 /**
  * Created by huseyina on 6/10/2017.
@@ -15,13 +16,30 @@ public class TradeHistoryRecord {
     private Long start;
     private Double buy;
     private Double sell;
+    private BigDecimal open;
+    private BigDecimal close;
+    private BigDecimal high;
+    private BigDecimal low;
 
+    public TradeHistoryRecord() {
+    }
 
     public TradeHistoryRecord(String currencyPair, Long start, Double buy, Double sell) {
         this.currencyPair = currencyPair;
         this.start = start;
         this.buy = buy;
         this.sell = sell;
+    }
+
+    public TradeHistoryRecord(String currencyPair, Long start, Double buy, Double sell, BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low) {
+        this.currencyPair = currencyPair;
+        this.start = start;
+        this.buy = buy;
+        this.sell = sell;
+        this.open = open;
+        this.close = close;
+        this.high = high;
+        this.low = low;
     }
 
     @Id
@@ -66,30 +84,39 @@ public class TradeHistoryRecord {
         this.sell = sell;
     }
 
-    @Override
-    public boolean equals(Object o) {
-
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        TradeHistoryRecord that = (TradeHistoryRecord) o;
-
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (currencyPair != null ? !currencyPair.equals(that.currencyPair) : that.currencyPair != null) return false;
-        if (start != null ? !start.equals(that.start) : that.start != null) return false;
-        if (buy != null ? !buy.equals(that.buy) : that.buy != null) return false;
-        return sell != null ? sell.equals(that.sell) : that.sell == null;
+    public BigDecimal getOpen() {
+        return open;
     }
 
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (currencyPair != null ? currencyPair.hashCode() : 0);
-        result = 31 * result + (start != null ? start.hashCode() : 0);
-        result = 31 * result + (buy != null ? buy.hashCode() : 0);
-        result = 31 * result + (sell != null ? sell.hashCode() : 0);
-        return result;
+    public void setOpen(BigDecimal open) {
+        this.open = open;
     }
+
+    public BigDecimal getClose() {
+        return close;
+    }
+
+    public void setClose(BigDecimal close) {
+        this.close = close;
+    }
+
+    public BigDecimal getHigh() {
+        return high;
+    }
+
+    public void setHigh(BigDecimal high) {
+        this.high = high;
+    }
+
+    public BigDecimal getLow() {
+        return low;
+    }
+
+    public void setLow(BigDecimal low) {
+        this.low = low;
+    }
+
+
 
     @Override
     public String toString() {

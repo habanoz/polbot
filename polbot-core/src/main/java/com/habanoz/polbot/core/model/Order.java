@@ -3,7 +3,12 @@ package com.habanoz.polbot.core.model;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class PoloniexOpenOrder {
+public class Order {
+    public static final int DEFAULT = 0;
+    public static final int FILL_OR_KILL = 1;
+    public static final int IMMEDIATE_OR_CANCEL = 2;
+    public static final int POST_ONLY = 3;
+
     private String orderNumber;
     private String currencyPair;
     private String type;
@@ -11,25 +16,28 @@ public class PoloniexOpenOrder {
     private BigDecimal amount;
     private BigDecimal total;
     private Date date;
+    private int mode = 0;
 
-    public PoloniexOpenOrder(String currencyPair, String type, BigDecimal rate, BigDecimal amount) {
+    public Order(String currencyPair, String type, BigDecimal rate, BigDecimal amount) {
         this.currencyPair = currencyPair;
         this.type = type;
-        this.rate = rate.setScale(12,BigDecimal.ROUND_DOWN);
-        this.amount = amount.setScale(12,BigDecimal.ROUND_DOWN);
-        this.total = rate.multiply(amount).setScale(12,BigDecimal.ROUND_DOWN);
+        this.rate = rate.setScale(12, BigDecimal.ROUND_DOWN);
+        this.amount = amount.setScale(12, BigDecimal.ROUND_DOWN);
+        this.total = rate.multiply(amount).setScale(12, BigDecimal.ROUND_DOWN);
     }
 
-    public PoloniexOpenOrder(String currencyPair, String type, BigDecimal rate, BigDecimal amount,Date date) {
-        this(currencyPair,type,rate,amount);
+    public Order(String currencyPair, String type, BigDecimal rate, BigDecimal amount, Date date) {
+        this(currencyPair, type, rate, amount);
         this.date = date;
     }
 
-    public PoloniexOpenOrder(Order order) {
-        this(order.getCurrencyPair(),order.getType(),order.getRate(),order.getAmount(),order.getDate());
+    public Order(String currencyPair, String type, BigDecimal rate, BigDecimal amount, Date date, int mode) {
+        this(currencyPair, type, rate, amount, date);
+        this.mode = mode;
     }
 
-    public PoloniexOpenOrder() {
+
+    public Order() {
     }
 
     public String getOrderNumber() {
@@ -93,7 +101,7 @@ public class PoloniexOpenOrder {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        PoloniexOpenOrder openOrder = (PoloniexOpenOrder) o;
+        Order openOrder = (Order) o;
 
         if (orderNumber != null ? !orderNumber.equals(openOrder.orderNumber) : openOrder.orderNumber != null)
             return false;

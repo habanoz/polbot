@@ -1,10 +1,7 @@
 package com.habanoz.polbot.core.api;
 
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.model.PoloniexChart;
-import com.habanoz.polbot.core.model.PoloniexOpenOrder;
-import com.habanoz.polbot.core.model.PoloniexTicker;
-import com.habanoz.polbot.core.model.PoloniexTrade;
+import com.habanoz.polbot.core.model.*;
 import com.habanoz.polbot.core.robot.PatienceStrategy;
 import com.habanoz.polbot.core.robot.PolBot;
 import com.habanoz.polbot.core.utils.ExchangePrice;
@@ -118,15 +115,15 @@ public class ProfitabilityAnalysis {
 
                 ExchangePrice exchangePrice = new ExchangePrice(buyPrice, sellPrice, date, chart.getVolume());
 
-                List<PoloniexOpenOrder> orders = patienceStrategy.execute(currencyConfig, exchangePrice, currentBTCBalance.multiply(BigDecimal.valueOf(balancePercent / 100f)), currentCoinBalance, date);
+                List<Order> orders = patienceStrategy.execute(currencyConfig, exchangePrice, currentBTCBalance.multiply(BigDecimal.valueOf(balancePercent / 100f)), currentCoinBalance, date);
 
                 // fulfill orders
-                for (PoloniexOpenOrder order : orders) {
+                for (Order order : orders) {
                     if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
                         currentBTCBalance = currentBTCBalance.subtract(order.getTotal());
                         currentBTCOnOrder = currentBTCOnOrder.add(order.getTotal());
 
-                        openOrders.add(order);
+                        openOrders.add(new PoloniexOpenOrder(order));
 
                         logger.info("Buy Price {}", buyPrice);
                         logger.info("Buy Order Given {}", order);
@@ -137,7 +134,7 @@ public class ProfitabilityAnalysis {
                         currentCoinBalance = currentCoinBalance.subtract(order.getAmount());
                         currentCoinOnOrder = currentCoinOnOrder.add(order.getAmount());
 
-                        openOrders.add(order);
+                        openOrders.add(new PoloniexOpenOrder(order));
 
                         logger.info("Sell Price {}", sellPrice);
                         logger.info("Sell Order Given {}", order);

@@ -1,6 +1,7 @@
 package com.habanoz.polbot.core.utils;
 
 import com.habanoz.polbot.core.entity.CurrencyConfig;
+import com.habanoz.polbot.core.model.Order;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.robot.PatienceStrategy;
@@ -42,7 +43,7 @@ public class ExchangeMediator {
             ExchangePrice priceData = exchange.proceed();
 
             // get next orders from strategy
-            List<PoloniexOpenOrder> orders = patienceStrategy.execute(currencyConfig, priceData, exchange.getCurrentBTCBalance(), exchange.getCurrentCoinBalance(), priceData.getDate());
+            List<Order> orders = patienceStrategy.execute(currencyConfig, priceData, exchange.getCurrentBTCBalance(), exchange.getCurrentCoinBalance(), priceData.getDate());
 
             // fulfill orders
             exchange.addOrders(orders);

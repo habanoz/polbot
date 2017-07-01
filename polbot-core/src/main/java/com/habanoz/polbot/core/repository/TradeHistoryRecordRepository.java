@@ -11,4 +11,6 @@ import java.util.List;
 public interface TradeHistoryRecordRepository
         extends JpaRepository<TradeHistoryRecord, Integer> {
 
+    List<TradeHistoryRecord> findByCurrencyPair(String currencyPair);
+
 }
