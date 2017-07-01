@@ -246,7 +246,7 @@ public class PoloniexPatienceBot implements PolBot {
         // if set, sell at price will be used, otherwise sell on percent will be used
         BigDecimal sellPrice = currencyConfig.getSellAtPrice() == 0 ? new BigDecimal(lastBuyPrice.doubleValue() * (100 + currencyConfig.getSellOnPercent()) * 0.01) : new BigDecimal(currencyConfig.getSellAtPrice());
 
-        PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, "SELL", sellPrice, sellAmount);
+        Order openOrder = new Order(currPair, "SELL", sellPrice, sellAmount);
         PoloniexOrderResult result = tradingApi.sell(openOrder);
 
         SaveCurrencyTransaction(user, sellPrice.multiply(sellAmount), openOrder, result);
@@ -284,7 +284,7 @@ public class PoloniexPatienceBot implements PolBot {
         // calculate amount that can be bought with buyBudget and buyPrice
         BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.DOWN);
         String orderType = "BUY";
-        PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, buyPrice, buyAmount);
+        Order openOrder = new Order(currPair, orderType, buyPrice, buyAmount);
         PoloniexOrderResult result = tradingApi.buy(openOrder);
 
         SaveCurrencyTransaction(user, buyBudget, openOrder, result);
@@ -294,7 +294,7 @@ public class PoloniexPatienceBot implements PolBot {
         return new BigDecimal(buyBudget.doubleValue());
     }
 
-    private void SaveCurrencyTransaction(BotUser user, BigDecimal budget, PoloniexOpenOrder openOrder, PoloniexOrderResult result) {
+    private void SaveCurrencyTransaction(BotUser user, BigDecimal budget, Order openOrder, PoloniexOrderResult result) {
         try {
             if (result.getSuccess()) {
 

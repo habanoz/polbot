@@ -2,13 +2,17 @@
 //sticks 4h
 poloneixChartApi = "https://poloniex.com/public?command=returnChartData&currencyPair=%CURR_HOLDER%&start=1262304000&end=9999999999&period=14400"
 
-
+datalength=0
 function postProcess(data, options) {
     for (index = 0; index < data.length; ++index) {
         data[index].date = new Date(data[index].date * 1000);
     }
+    datalength=data.length
+
     return data;
 }
+
+
 
 
 function periodChanged(event) {

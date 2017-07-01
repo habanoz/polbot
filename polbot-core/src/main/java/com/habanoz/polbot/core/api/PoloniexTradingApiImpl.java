@@ -6,7 +6,6 @@ import com.cf.client.poloniex.PoloniexTradingAPIClient;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.ser.std.DateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.habanoz.polbot.core.entity.BotUser;
@@ -76,7 +75,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
     }
 
     @Override
-    public PoloniexOrderResult buy(PoloniexOpenOrder order) {
+    public PoloniexOrderResult buy(Order order) {
         try {
             operationlogger.info("Attempting to order {}", order);
 
@@ -84,23 +83,23 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             if (str == null || str.contains("error")) {
                 operationlogger.error("Failed order " + order.toString());
-                return new PoloniexOrderResult(order, str);
+                return new PoloniexOrderResult(new PoloniexOpenOrder(order), str);
             }
 
             PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
 
             operationlogger.info("Buy resulted: {}", result.toString());
-            return new PoloniexOrderResult(order, result);
+            return new PoloniexOrderResult(new PoloniexOpenOrder(order), result);
 
         } catch (IOException e) {
             logger.error("Error at order {}", order, e);
-            return new PoloniexOrderResult(order, e.getMessage());
+            return new PoloniexOrderResult(new PoloniexOpenOrder(order), e.getMessage());
         }
     }
 
 
     @Override
-    public PoloniexOrderResult sell(PoloniexOpenOrder order) {
+    public PoloniexOrderResult sell(Order order) {
 
         try {
             operationlogger.info("Attempting to order {}", order);
@@ -109,7 +108,7 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
 
             if (str == null || str.contains("error")) {
                 operationlogger.error("Failed order " + order.toString());
-                return new PoloniexOrderResult(order, str);
+                return new PoloniexOrderResult(new PoloniexOpenOrder(order), str);
             }
 
             PoloniexTradeResult result = objectMapper.readValue(str, PoloniexTradeResult.class);
@@ -117,11 +116,11 @@ public class PoloniexTradingApiImpl implements PoloniexTradingApi {
             operationlogger.info("Sell resulted: {}", result.toString());
 
 
-            return new PoloniexOrderResult(order, result);
+            return new PoloniexOrderResult(new PoloniexOpenOrder(order), result);
 
         } catch (IOException e) {
             logger.error("Error at order {}", order, e);
-            return new PoloniexOrderResult(order, e.getMessage());
+            return new PoloniexOrderResult(new PoloniexOpenOrder(order), e.getMessage());
         }
     }
 

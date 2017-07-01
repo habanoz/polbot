@@ -1,7 +1,9 @@
 package com.habanoz.polbot.core.robot;
 
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.model.*;
+import com.habanoz.polbot.core.model.Order;
+import com.habanoz.polbot.core.model.PoloniexOpenOrder;
+import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.utils.ExchangePrice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +19,7 @@ import java.util.*;
  * <p>
  * Created by habanoz on 05.04.2017.
  */
-public class PatienceStrategy implements PolStrategy {
+public class SpreadAndSweepStrategy implements PolStrategy {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
 
     private static final double minAmount = 0.0001;
@@ -25,7 +27,7 @@ public class PatienceStrategy implements PolStrategy {
     private List<PoloniexOpenOrder> openOrderList;
     private List<PoloniexTrade> historyList;
 
-    public PatienceStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> historyList) {
+    public SpreadAndSweepStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> historyList) {
         this.openOrderList = openOrderList;
         this.historyList = historyList;
     }
@@ -57,10 +59,10 @@ public class PatienceStrategy implements PolStrategy {
                 currencyConfig.getBuyable() &&
                 openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase(PolBot.BUY_ACTION))) {
 
-            Order openOrder = createBuyOrder(currencyConfig, currPair, lowestBuyPrice, btcBalance, date);
+            Order order = createBuyOrder(currencyConfig, currPair, lowestBuyPrice, btcBalance, date);
 
-            if (openOrder != null)
-                poloniexOrders.add(openOrder);
+            if (order != null)
+                poloniexOrders.add(order);
 
         }
 
@@ -110,6 +112,7 @@ public class PatienceStrategy implements PolStrategy {
                 }
             }
         }
+
         return lastBuyPrice;
     }
 
@@ -123,10 +126,12 @@ public class PatienceStrategy implements PolStrategy {
 
         // buying price should be a little lower to make profit
         // if set, buy at price will be used, other wise buy on percent will be used
-        BigDecimal buyPrice = currencyConfig.getBuyAtPrice() == 0 ? lowestBuyPrice.multiply(new BigDecimal(1).subtract(BigDecimal.valueOf(currencyConfig.getBuyOnPercent() * 0.01))) : new BigDecimal(currencyConfig.getBuyAtPrice());
+        BigDecimal buyPrice = lowestBuyPrice.multiply(new BigDecimal(1).subtract(BigDecimal.valueOf(currencyConfig.getBuyOnPercent() * 0.01)));
+
+        BigDecimal splitCount = BigDecimal.valueOf(currencyConfig.getBuyAtPrice());
 
         // calculate amount that can be bought with buyBudget and buyPrice
-        BigDecimal buyCoinAmount = buyBudgetInBtc.divide(buyPrice, RoundingMode.DOWN);
+        BigDecimal buyCoinAmount = buyBudgetInBtc.divide(splitCount, RoundingMode.DOWN).divide(buyPrice, RoundingMode.DOWN);
 
         return new Order(currPair, PoloniexPatienceBot.BUY_ACTION, buyPrice, buyCoinAmount, date);
     }

@@ -3,6 +3,7 @@ package com.habanoz.polbot.core.utils;
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
 import com.habanoz.polbot.core.api.PoloniexPublicApiImpl;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
+import com.habanoz.polbot.core.model.Order;
 import com.habanoz.polbot.core.model.PoloniexChart;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexTrade;
@@ -103,9 +104,10 @@ public class Exchange {
         return priceData;
     }
 
-    public void addOrders(List<PoloniexOpenOrder> orders) {
+    public void addOrders(List<Order> orders) {
 
-        for (PoloniexOpenOrder order : orders) {
+        for (Order order_ : orders) {
+            PoloniexOpenOrder order=new PoloniexOpenOrder(order_);
             if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
                 currentBTCBalance = currentBTCBalance.subtract(order.getTotal());
                 currentBTCOnOrder = currentBTCOnOrder.add(order.getTotal());

@@ -7,6 +7,7 @@ import com.habanoz.polbot.core.entity.BotUser;
 import com.habanoz.polbot.core.entity.CurrencyCollectiveOrder;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.entity.User;
+import com.habanoz.polbot.core.model.Order;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexOrderResult;
 import com.habanoz.polbot.core.model.PoloniexTicker;
@@ -310,7 +311,7 @@ public class OrdersController {
                             BigDecimal buyPrice = priceForEachIteration;
                             // calculate amount that can be bought with buyBudget and buyPrice
                             BigDecimal buyAmount = buyBudget.divide(buyPrice, RoundingMode.HALF_UP);
-                            PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, buyPrice, buyAmount);
+                            Order openOrder = new Order(currPair, orderType, buyPrice, buyAmount);
                             logger.info("Attempted to {}", openOrder);
                             PoloniexOrderResult result = tradingApi.buy(openOrder);
                             logger.info("Buy Result:{}", result);
@@ -319,7 +320,7 @@ public class OrdersController {
                             BigDecimal sellPrice = priceForEachIteration;
                             BigDecimal sellAmount = new BigDecimal(btcAmountForEachIteration).divide(sellPrice,BigDecimal.ROUND_HALF_DOWN);
 
-                            PoloniexOpenOrder openOrder = new PoloniexOpenOrder(currPair, orderType, sellPrice, sellAmount);
+                            Order openOrder = new Order(currPair, orderType, sellPrice, sellAmount);
                             logger.info("Attempted to {}", openOrder);
 
                             PoloniexOrderResult result = tradingApi.sell(openOrder);
