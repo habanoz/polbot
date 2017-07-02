@@ -18,12 +18,13 @@
         <div class="collapse navbar-collapse" id="myNavbar">
             <ul class="nav navbar-nav">
                 <li class="active"><a href="#" th:href="@{/}">Home</a></li>
-                <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/mybalances/1}">My Balances</a></li>
-                <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/mycurrencies/1}">My Currencies</a></li>
-                <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/orders/openorders/1}">Open Orders</a></li>
-                <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/edituserinfo/?show=}">Edit User</a></li>
-                <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/editbotuserinfo/1?show=}">Edit Bot User</a></li>
-                <li><a href="#" th:if="${#authorization?.expression('isAuthenticated()')}" th:href="@{/editbotinfo/1?show=}">Edit Bot Info</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/mybalances/1}">My Balances</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/mycurrencies/1}">My Currencies</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/orders/openorders/1}">Open Orders</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/edituserinfo/?show=}">Edit User</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/editbotuserinfo/1?show=}">Edit Bot User</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/editbotinfo/1?show=}">Edit Bot Info</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''ANALYSIS'')')}" th:href="@{/tradehistory/BTC_ETC/1w}">Analiz</a></li>
             </ul>
 
             <ul class="nav navbar-nav navbar-right">

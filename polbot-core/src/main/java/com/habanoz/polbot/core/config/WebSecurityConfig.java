@@ -16,7 +16,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .antMatchers("/allusers", "/currencyconfig").hasRole("USER")
+                .antMatchers("/allusers","/collectiveorder/*","/currencyconfig/*","/edituserinfo","/editbotinfo","/editbotuserinfo/*","/mybalances/*","/mycurrencies/*","/orders/*").hasRole("BOT")
+                .antMatchers("/tradehistory/*").hasRole("ANALYSIS")
                 .antMatchers("/", "/home", "/DataTables/**","/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .anyRequest().authenticated()
                 .and()

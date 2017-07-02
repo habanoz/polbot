@@ -153,3 +153,23 @@ function addStockChart(currency) {
 
 }
 
+function legendHandler(evt) {
+    var state = evt.dataItem.hidden;
+    if (evt.dataItem.id == "all") {
+        for (var i1 in evt.chart.graphs) {
+            if (evt.chart.graphs[i1].id != "all") {
+                evt.chart[evt.dataItem.hidden ? "hideGraph" : "showGraph"](evt.chart.graphs[i1]);
+            }
+        }
+    }
+}
+function legendHandler(evt) {
+    var state = evt.dataItem.hidden;
+    if (evt.dataItem.id == "all") {
+        for (var i1 in evt.chart.graphs) {
+            if (evt.chart.graphs[i1].id != "all") {
+                evt.chart[evt.dataItem.hidden ? "hideGraph" : "showGraph"](evt.chart.graphs[i1]);
+            }
+        }
+    }
+}
