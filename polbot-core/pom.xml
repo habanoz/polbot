@@ -64,7 +64,6 @@
             <artifactId>thymeleaf-extras-springsecurity4</artifactId>
         </dependency>
 
-
         <!-- Optional, for bootstrap -->
         <dependency>
             <groupId>org.webjars</groupId>
