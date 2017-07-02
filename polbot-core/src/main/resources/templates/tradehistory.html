@@ -52,6 +52,10 @@
 
     <script th:src="@{/js/stockChart.js}" src="../../js/dataSource.js"
             type="text/javascript"></script>
+    <!-- Chart code -->
+    <script th:inline="javascript">
+        var url = "/gettradehistory/BTC_ETC/" + [[${period}]];
+    </script>
 
     <!-- Chart code -->
     <script>
@@ -140,8 +144,9 @@
                 "useLineColorForBulletBorder": true,
                 "valueField": "buy",
                 "balloonText": "buy - [[buy]]-[[start]]"
+                , "hidden": true
             }, {
-                "id": "g2",
+                "id": "g4",
                 "balloon": {
                     "drop": true,
                     "adjustBorderColor": false,
@@ -158,6 +163,7 @@
                 "useLineColorForBulletBorder": true,
                 "valueField": "sell",
                 "balloonText": "sell - [[sell]]-[[start]]"
+                , "hidden": true
             }],
 
             "chartScrollbar": {
@@ -186,7 +192,7 @@
                 "enabled": true
             },
             "dataLoader": {
-                "url": "tradehistory/BTC_ETC", "postProcess": postProcess
+                "url": url, "postProcess": postProcess
             }
 
         });
@@ -233,17 +239,24 @@
 <!-- HTML -->
 <div id="chartdiv"></div>
 
+<div class="btn-group" role="group" aria-label="Basic example">
+    <a href="/tradehistory/BTC_ETC/15mm" type="button" class="btn btn-secondary">15m</a>
+    <a href="/tradehistory/BTC_ETC/30mm" type="button" class="btn btn-secondary">30m</a>
+    <a href="/tradehistory/BTC_ETC/hh" type="button" class="btn btn-secondary">1h</a>
+    <a href="/tradehistory/BTC_ETC/1d" type="button" class="btn btn-secondary">1d</a>
+    <a href="/tradehistory/BTC_ETC/1w" type="button" class="btn btn-secondary">1w</a>
+    <a href="/tradehistory/BTC_ETC/1m" type="button" class="btn btn-secondary">1m</a>
+</div>
+
+<br/>
+<hr/>
 
 <div class="container">
     <div th:replace="footer :: footer">&copy; 2016 The Static Templates</div>
+
+
 </div>
 
 </body>
 
 </html>
-
-
-
-
-
-

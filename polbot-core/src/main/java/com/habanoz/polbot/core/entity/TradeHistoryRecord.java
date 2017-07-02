@@ -1,9 +1,6 @@
 package com.habanoz.polbot.core.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 /**
@@ -22,6 +19,17 @@ public class TradeHistoryRecord {
     private BigDecimal low;
 
     public TradeHistoryRecord() {
+    }
+
+    public TradeHistoryRecord(TradeHistoryRecord tradeHistoryRecord) {
+        this.currencyPair = tradeHistoryRecord.getCurrencyPair();
+        this.buy = tradeHistoryRecord.buy;
+        this.sell = tradeHistoryRecord.sell;
+        this.start = tradeHistoryRecord.start;
+        this.open = tradeHistoryRecord.open;
+        this.close = tradeHistoryRecord.close;
+        this.high = tradeHistoryRecord.high;
+        this.low = tradeHistoryRecord.low;
     }
 
     public TradeHistoryRecord(String currencyPair, Long start, Double buy, Double sell) {
@@ -84,6 +92,7 @@ public class TradeHistoryRecord {
         this.sell = sell;
     }
 
+    @Column(precision = 12, scale = 9)
     public BigDecimal getOpen() {
         return open;
     }
@@ -115,7 +124,6 @@ public class TradeHistoryRecord {
     public void setLow(BigDecimal low) {
         this.low = low;
     }
-
 
 
     @Override
