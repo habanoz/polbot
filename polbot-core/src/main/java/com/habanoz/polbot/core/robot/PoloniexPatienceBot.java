@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * Created by habanoz on 05.04.2017.
  */
 @Component
-public class PoloniexPatienceBot implements PolBot {
+public class PoloniexPatienceBot {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
 
     @Autowired
@@ -74,7 +74,6 @@ public class PoloniexPatienceBot implements PolBot {
     }
 
     @Scheduled(fixedDelay = 300000)
-    @Override
     public void execute() {
         Map<String, PoloniexTicker> tickerMap = publicApi.returnTicker();
 

@@ -20,10 +20,10 @@ import java.util.*;
 public class PatienceStrategy implements PolStrategy {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
 
-    private static final double minAmount = 0.0001;
-    private static final String CURR_PAIR_SEPARATOR = "_";
-    private List<PoloniexOpenOrder> openOrderList;
-    private List<PoloniexTrade> historyList;
+    protected static final double minAmount = 0.0001;
+    protected static final String CURR_PAIR_SEPARATOR = "_";
+    protected List<PoloniexOpenOrder> openOrderList;
+    protected List<PoloniexTrade> historyList;
 
     public PatienceStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> historyList) {
         this.openOrderList = openOrderList;
@@ -92,7 +92,7 @@ public class PatienceStrategy implements PolStrategy {
         return new Order(currPair, "SELL", sellPrice, currCoinAmount, date);
     }
 
-    private BigDecimal getBuyPrice(BigDecimal highestSellPrice, List<PoloniexTrade> currHistoryList) {
+    protected BigDecimal getBuyPrice(BigDecimal highestSellPrice, List<PoloniexTrade> currHistoryList) {
         BigDecimal lastBuyPrice = highestSellPrice;
 
         if (currHistoryList != null && currHistoryList.size() > 0 && currHistoryList.get(0) != null) {
@@ -128,7 +128,7 @@ public class PatienceStrategy implements PolStrategy {
         // calculate amount that can be bought with buyBudget and buyPrice
         BigDecimal buyCoinAmount = buyBudgetInBtc.divide(buyPrice, RoundingMode.DOWN);
 
-        return new Order(currPair, PoloniexPatienceBot.BUY_ACTION, buyPrice, buyCoinAmount, date);
+        return new Order(currPair, PolBot.BUY_ACTION, buyPrice, buyCoinAmount, date);
     }
 
     @Override

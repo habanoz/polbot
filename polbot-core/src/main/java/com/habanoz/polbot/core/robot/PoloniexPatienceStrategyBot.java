@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * Created by habanoz on 05.04.2017.
  */
 @Component
-public class PoloniexPatiencStrategyeBot implements PolBot {
+public class PoloniexPatienceStrategyBot implements PolBot {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
 
     @Autowired
@@ -63,7 +63,7 @@ public class PoloniexPatiencStrategyeBot implements PolBot {
     private static final String CURR_PAIR_SEPARATOR = "_";
 
 
-    public PoloniexPatiencStrategyeBot() {
+    public PoloniexPatienceStrategyBot() {
     }
 
     @PostConstruct
@@ -81,14 +81,12 @@ public class PoloniexPatiencStrategyeBot implements PolBot {
         }
     }
 
-    private void startTradingForEachUser(BotUser user, Map<String, PoloniexTicker> tickerMap) {
+    @Override
+    public void startTradingForEachUser(BotUser user, Map<String, PoloniexTicker> tickerMap) {
         logger.info("Started for user {}", user);
 
-        //User specific currency config list
-        List<CurrencyConfig> currencyConfigs = currencyConfigRepository.findByBotUser(user)
-                .stream().filter(r -> r.getBuyable() || r.getSellable())
-                .sorted((f1, f2) -> Float.compare(f1.getUsableBalancePercent(), f2.getUsableBalancePercent()))
-                .collect(Collectors.toList());
+        List<CurrencyConfig> currencyConfigs = getCurrencyConfigs(user);
+
 
         if (currencyConfigs.isEmpty()) {
             logger.info("No currency config for user {}, returning ...", user);
@@ -117,7 +115,8 @@ public class PoloniexPatiencStrategyeBot implements PolBot {
         for (CurrencyConfig currencyConfig : currencyConfigs) {
 
             String currPair = currencyConfig.getCurrencyPair();
-            PatienceStrategy patienceStrategy = new PatienceStrategy(openOrderMap.get(currPair), historyMap.get(currPair));
+
+            PolStrategy patienceStrategy = getPolStrategy(openOrderMap.get(currPair), historyMap.get(currPair), recentHistoryMap.get(currPair));
 
             String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
 
@@ -145,40 +144,70 @@ public class PoloniexPatiencStrategyeBot implements PolBot {
                     tradingBTCMap.get(currName), currBalance, now
             );
 
-            //fulfill orders
-            for (Order order : orders) {
-                if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
+            btcBalance = createOrders(user, tradingApi, btcBalance, orderResults, orders);
 
-                    PoloniexOrderResult result = createBuyOrder(user, tradingApi, order);
-                    orderResults.add(result);
-
-                    if (result.getSuccess())
-                        // subtract spent(order given) amount from btc balance
-                        btcBalance = btcBalance.subtract(order.getTotal());
-                } else {
-                    PoloniexOrderResult result = createSellOrder(user, tradingApi, order);
-                    orderResults.add(result);
-                }
-            }
-
-            List<PoloniexOpenOrder> orders2Cancel = patienceStrategy.getOrdersToCancel(currencyConfig, now);
-
-            for (PoloniexOpenOrder order2Cancel : orders2Cancel) {
-                tradingApi.cancelOrder(order2Cancel.getOrderNumber());
-            }
+            cancelOrders(tradingApi, currencyConfig, patienceStrategy, now);
 
         }
 
-        if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty()) {// if any of them is not empty send mail
-            mailService.sendMail(user, "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, completeBalanceMap), true);
-        }
+        sendNotificationMail(user, completeBalanceMap, recentHistoryMap, orderResults);
 
 
         logger.info("Completed for user {}", user);
     }
 
+    @Override
+    public List<CurrencyConfig> getCurrencyConfigs(BotUser user) {
+        //User specific currency config list
+        return currencyConfigRepository.findByBotUser(user)
+                .stream().filter(r -> r.getBuyable() || r.getSellable())
+                .sorted((f1, f2) -> Float.compare(f1.getUsableBalancePercent(), f2.getUsableBalancePercent()))
+                .collect(Collectors.toList());
+    }
 
-    private PoloniexOrderResult createSellOrder(BotUser user, PoloniexTradingApi tradingApi, Order order) {
+    @Override
+    public void sendNotificationMail(BotUser user, Map<String, PoloniexCompleteBalance> completeBalanceMap, Map<String, List<PoloniexTrade>> recentHistoryMap, List<PoloniexOrderResult> orderResults) {
+        if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty()) {// if any of them is not empty send mail
+            mailService.sendMail(user, "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, completeBalanceMap), true);
+        }
+    }
+
+    @Override
+    public void cancelOrders(PoloniexTradingApi tradingApi, CurrencyConfig currencyConfig, PolStrategy patienceStrategy, Date now) {
+        List<PoloniexOpenOrder> orders2Cancel = patienceStrategy.getOrdersToCancel(currencyConfig, now);
+
+        for (PoloniexOpenOrder order2Cancel : orders2Cancel) {
+            tradingApi.cancelOrder(order2Cancel.getOrderNumber());
+        }
+    }
+
+    @Override
+    public BigDecimal createOrders(BotUser user, PoloniexTradingApi tradingApi, BigDecimal btcBalance, List<PoloniexOrderResult> orderResults, List<Order> orders) {
+        //fulfill orders
+        for (Order order : orders) {
+            if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
+
+                PoloniexOrderResult result = createBuyOrder(user, tradingApi, order);
+                orderResults.add(result);
+
+                if (result.getSuccess())
+                    // subtract spent(order given) amount from btc balance
+                    btcBalance = btcBalance.subtract(order.getTotal());
+            } else {
+                PoloniexOrderResult result = createSellOrder(user, tradingApi, order);
+                orderResults.add(result);
+            }
+        }
+        return btcBalance;
+    }
+
+    @Override
+    public PolStrategy getPolStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> tradeList, List<PoloniexTrade> historyList) {
+        return new PatienceStrategy(openOrderList, historyList);
+    }
+
+
+    public PoloniexOrderResult createSellOrder(BotUser user, PoloniexTradingApi tradingApi, Order order) {
 
         PoloniexOrderResult result = tradingApi.sell(order);
 
@@ -187,7 +216,7 @@ public class PoloniexPatiencStrategyeBot implements PolBot {
         return result;
     }
 
-    private PoloniexOrderResult createBuyOrder(BotUser user, PoloniexTradingApi tradingApi, Order order) {
+    public PoloniexOrderResult createBuyOrder(BotUser user, PoloniexTradingApi tradingApi, Order order) {
 
         PoloniexOrderResult result = tradingApi.buy(order);
 

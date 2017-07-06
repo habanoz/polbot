@@ -2,8 +2,10 @@ package com.habanoz.polbot.core.api;
 
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.*;
+import com.habanoz.polbot.core.robot.CascadedPatienceStrategy;
 import com.habanoz.polbot.core.robot.PatienceStrategy;
 import com.habanoz.polbot.core.robot.PolBot;
+import com.habanoz.polbot.core.robot.PolStrategy;
 import com.habanoz.polbot.core.utils.ExchangePrice;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -46,8 +48,8 @@ public class ProfitabilityAnalysis {
         float initialBTCBalance = 0.2f;
         float initialCoinBalance = 0f;
         int balancePercent = 50;
-        float buyOnPercent = 5;
-        float sellOnPercent = 4;
+        float buyOnPercent = 4;
+        float sellOnPercent = 5;
         int cancelHour = 96;
         float volumeRatio = 0.01f;
         int dumpResponseTime = 15;
@@ -62,7 +64,7 @@ public class ProfitabilityAnalysis {
         historyMap.put(currPair, new ArrayList<>());
 
 
-        CurrencyConfig currencyConfig = new CurrencyConfig(currPair, balancePercent, 0f, buyOnPercent, 0, sellOnPercent);
+        CurrencyConfig currencyConfig = new CurrencyConfig(currPair, balancePercent, 50f, buyOnPercent, 0, sellOnPercent);
         currencyConfig.setBuyOrderCancellationHour(cancelHour);
         currencyConfig.setBuyable(true);
         currencyConfig.setSellable(true);
@@ -91,27 +93,30 @@ public class ProfitabilityAnalysis {
                 //logger.info("Buy price {} Sell price {}", buyPrice.doubleValue(), sellPrice.doubleValue());
 
 
-                BigDecimal[] buyResults = executeBuyOrders(currPair, openOrders, buyFeeRate, historyMap, buyPrice, date);
-                BigDecimal[] sellResults = executeSellOrders(currPair, openOrders, sellFeeRate, historyMap, sellPrice, date);
+                OrderResult buyResultObjects = executeBuyOrders(currPair, openOrders, buyFeeRate, historyMap, buyPrice, date);
+                OrderResult sellResultObjects = executeSellOrders(currPair, openOrders, sellFeeRate, historyMap, sellPrice, date);
+                List<PoloniexTrade> recentTrades = new ArrayList<>();
+                recentTrades.addAll(buyResultObjects.getTrades());
+                recentTrades.addAll(sellResultObjects.getTrades());
 
-                if (buyResults[0].doubleValue() != 0 || buyResults[1].doubleValue() != 0 || sellResults[0].doubleValue() != 0 || sellResults[1].doubleValue() != 0) {
+                if (buyResultObjects.getResults()[0].doubleValue() != 0 || buyResultObjects.getResults()[1].doubleValue() != 0 || sellResultObjects.getResults()[0].doubleValue() != 0 || sellResultObjects.getResults()[1].doubleValue() != 0) {
                     logger.info("Buy Price {}, Sell Price", buyPrice, sellPrice);
                     logger.info("-Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
                 }
 
-                currentCoinBalance = currentCoinBalance.add(buyResults[0]);
-                currentBTCBalance = currentBTCBalance.add(sellResults[0]);
+                currentCoinBalance = currentCoinBalance.add(buyResultObjects.getResults()[0]);
+                currentBTCBalance = currentBTCBalance.add(sellResultObjects.getResults()[0]);
 
-                currentCoinOnOrder = currentCoinOnOrder.subtract(sellResults[1]);
-                currentBTCOnOrder = currentBTCOnOrder.subtract(buyResults[1]);
-                if (buyResults[0].doubleValue() != 0 || buyResults[1].doubleValue() != 0 || sellResults[0].doubleValue() != 0 || sellResults[1].doubleValue() != 0) {
+                currentCoinOnOrder = currentCoinOnOrder.subtract(sellResultObjects.getResults()[1]);
+                currentBTCOnOrder = currentBTCOnOrder.subtract(buyResultObjects.getResults()[1]);
+                if (buyResultObjects.getResults()[0].doubleValue() != 0 || buyResultObjects.getResults()[1].doubleValue() != 0 || sellResultObjects.getResults()[0].doubleValue() != 0 || sellResultObjects.getResults()[1].doubleValue() != 0) {
                     logger.info("--Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
                 }
 
                 Map<String, List<PoloniexOpenOrder>> openOrderMap = new HashMap<>();
                 openOrderMap.put(currPair, openOrders);
 
-                PatienceStrategy patienceStrategy = new PatienceStrategy(openOrderMap.get(currPair), historyMap.get(currPair));
+                PolStrategy patienceStrategy = getCascadedPatienceStrategy(historyMap.get(currPair), recentTrades, openOrderMap.get(currPair));
 
                 ExchangePrice exchangePrice = new ExchangePrice(buyPrice, sellPrice, date, chart.getVolume());
 
@@ -189,6 +194,14 @@ public class ProfitabilityAnalysis {
             System.out.println(trade);
         }
 
+    }
+
+    private PatienceStrategy getPatienceStrategy(List<PoloniexTrade> historyList, List<PoloniexTrade> recentTradesList, List<PoloniexOpenOrder> openOrderList) {
+        return new PatienceStrategy(openOrderList, historyList);
+    }
+
+    private PatienceStrategy getCascadedPatienceStrategy(List<PoloniexTrade> historyList, List<PoloniexTrade> recentTradesList, List<PoloniexOpenOrder> openOrderList) {
+        return new CascadedPatienceStrategy(openOrderList, recentTradesList, historyList);
     }
 
     private BigDecimal total(BigDecimal currentCoinBalance, BigDecimal currentBTCBalance, BigDecimal currentCoinOnOrder, BigDecimal currentBTCOnOrder, BigDecimal sellPrice) {
@@ -286,9 +299,11 @@ public class ProfitabilityAnalysis {
         return priceIndex;
     }
 
-    private BigDecimal[] executeSellOrders(String currPair, List<PoloniexOpenOrder> openOrders, float sellFeeRate, Map<String, List<PoloniexTrade>> historyMap, BigDecimal sellPrice, Date date) {
+    private OrderResult executeSellOrders(String currPair, List<PoloniexOpenOrder> openOrders, float sellFeeRate, Map<String, List<PoloniexTrade>> historyMap, BigDecimal sellPrice, Date date) {
         BigDecimal gained = new BigDecimal(0);
         BigDecimal ordersCompleted = new BigDecimal(0);
+        List<PoloniexTrade> trades = new ArrayList<>();
+
         Iterator<PoloniexOpenOrder> openOrdersIterator = openOrders.iterator();
         while (openOrdersIterator.hasNext()) {
             PoloniexOpenOrder openOrder = openOrdersIterator.next();
@@ -303,6 +318,7 @@ public class ProfitabilityAnalysis {
                     // apply fees and update btc balance
                     gained = gained.add(openOrder.getTotal().multiply(new BigDecimal(1 - sellFeeRate)));
                     ordersCompleted = ordersCompleted.add(openOrder.getAmount());
+                    trades.add(new PoloniexTrade(sellPrice, openOrder.getAmount(), PolBot.BUY_ACTION));
 
                     openOrdersIterator.remove();
 
@@ -312,16 +328,18 @@ public class ProfitabilityAnalysis {
             }
         }
 
-        return new BigDecimal[]{gained, ordersCompleted};
+        return new OrderResult(trades, new BigDecimal[]{gained, ordersCompleted});
     }
 
     public BigDecimal sell(BigDecimal sellPrice, BigDecimal amount, float sellFeeRate) {
         return amount.multiply(sellPrice).multiply(new BigDecimal(1 - sellFeeRate));
     }
 
-    private BigDecimal[] executeBuyOrders(String currPair, List<PoloniexOpenOrder> openOrders, float buyFeeRate, Map<String, List<PoloniexTrade>> historyMap, BigDecimal buyPrice, Date date) {
+    private OrderResult executeBuyOrders(String currPair, List<PoloniexOpenOrder> openOrders, float buyFeeRate, Map<String, List<PoloniexTrade>> historyMap, BigDecimal buyPrice, Date date) {
         BigDecimal gained = new BigDecimal(0);
         BigDecimal ordersCompleted = new BigDecimal(0);
+        List<PoloniexTrade> trades = new ArrayList<>();
+
         Iterator<PoloniexOpenOrder> openOrdersIterator = openOrders.iterator();
         while (openOrdersIterator.hasNext()) {
             PoloniexOpenOrder openOrder = openOrdersIterator.next();
@@ -335,6 +353,7 @@ public class ProfitabilityAnalysis {
 
                     // apply fees and update coin balance
                     gained = gained.add(openOrder.getAmount().multiply(new BigDecimal(1 - buyFeeRate)));
+                    trades.add(new PoloniexTrade(buyPrice, openOrder.getAmount(), PolBot.BUY_ACTION));
                     ordersCompleted = ordersCompleted.add(openOrder.getTotal());
 
                     openOrdersIterator.remove();
@@ -344,6 +363,24 @@ public class ProfitabilityAnalysis {
                 }
             }
         }
-        return new BigDecimal[]{gained, ordersCompleted};
+        return new OrderResult(trades, new BigDecimal[]{gained, ordersCompleted});
+    }
+
+    class OrderResult {
+        private List<PoloniexTrade> trades;
+        private BigDecimal[] results;
+
+        public OrderResult(List<PoloniexTrade> trades, BigDecimal[] results) {
+            this.trades = trades;
+            this.results = results;
+        }
+
+        public List<PoloniexTrade> getTrades() {
+            return trades;
+        }
+
+        public BigDecimal[] getResults() {
+            return results;
+        }
     }
 }
