@@ -11,8 +11,10 @@ public class TradeHistoryRecord {
     private Integer id;
     private String currencyPair;
     private Long start;
-    private Double buy;
-    private Double sell;
+    private Double buyVol;
+    private Double sellVol;
+    private Double buyQVol;
+    private Double sellQVol;
     private BigDecimal open;
     private BigDecimal close;
     private BigDecimal high;
@@ -23,8 +25,10 @@ public class TradeHistoryRecord {
 
     public TradeHistoryRecord(TradeHistoryRecord tradeHistoryRecord) {
         this.currencyPair = tradeHistoryRecord.getCurrencyPair();
-        this.buy = tradeHistoryRecord.buy;
-        this.sell = tradeHistoryRecord.sell;
+        this.buyVol = tradeHistoryRecord.buyVol;
+        this.buyQVol = tradeHistoryRecord.buyQVol;
+        this.sellVol = tradeHistoryRecord.sellVol;
+        this.sellQVol = tradeHistoryRecord.sellQVol;
         this.start = tradeHistoryRecord.start;
         this.open = tradeHistoryRecord.open;
         this.close = tradeHistoryRecord.close;
@@ -32,18 +36,22 @@ public class TradeHistoryRecord {
         this.low = tradeHistoryRecord.low;
     }
 
-    public TradeHistoryRecord(String currencyPair, Long start, Double buy, Double sell) {
+    public TradeHistoryRecord(String currencyPair, Long start, Double buyVol, Double sellVol,Double buyQVol, Double sellQVol) {
         this.currencyPair = currencyPair;
         this.start = start;
-        this.buy = buy;
-        this.sell = sell;
+        this.buyVol = buyVol;
+        this.sellVol = sellVol;
+        this.buyQVol = buyQVol;
+        this.sellQVol = sellQVol;
     }
 
-    public TradeHistoryRecord(String currencyPair, Long start, Double buy, Double sell, BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low) {
+    public TradeHistoryRecord(String currencyPair, Long start, Double buyVol, Double sellVol,Double buyQVol, Double sellQVol, BigDecimal open, BigDecimal close, BigDecimal high, BigDecimal low) {
         this.currencyPair = currencyPair;
         this.start = start;
-        this.buy = buy;
-        this.sell = sell;
+        this.buyVol = buyVol;
+        this.sellVol = sellVol;
+        this.buyQVol = buyQVol;
+        this.sellQVol = sellQVol;
         this.open = open;
         this.close = close;
         this.high = high;
@@ -76,20 +84,36 @@ public class TradeHistoryRecord {
         this.start = start;
     }
 
-    public Double getBuy() {
-        return buy;
+    public Double getBuyVol() {
+        return buyVol;
     }
 
-    public void setBuy(Double buy) {
-        this.buy = buy;
+    public void setBuyVol(Double buyVol) {
+        this.buyVol = buyVol;
     }
 
-    public Double getSell() {
-        return sell;
+    public Double getSellVol() {
+        return sellVol;
     }
 
-    public void setSell(Double sell) {
-        this.sell = sell;
+    public void setSellVol(Double sellVol) {
+        this.sellVol = sellVol;
+    }
+
+    public Double getBuyQVol() {
+        return buyQVol;
+    }
+
+    public void setBuyQVol(Double buyQVol) {
+        this.buyQVol = buyQVol;
+    }
+
+    public Double getSellQVol() {
+        return sellQVol;
+    }
+
+    public void setSellQVol(Double sellQVol) {
+        this.sellQVol = sellQVol;
     }
 
     @Column(precision = 12, scale = 9)
@@ -132,8 +156,8 @@ public class TradeHistoryRecord {
                 "id=" + id +
                 ", currencyPair='" + currencyPair + '\'' +
                 ", start=" + start +
-                ", buy=" + buy +
-                ", sell=" + sell +
+                ", buy vol=" + buyVol +
+                ", sell vol=" + sellVol +
                 '}';
     }
 }
