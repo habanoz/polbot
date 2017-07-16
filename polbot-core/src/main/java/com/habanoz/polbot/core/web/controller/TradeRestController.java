@@ -55,8 +55,11 @@ public class TradeRestController {
                 tradeHistoryAggregate.setClose(tradeHistoryRecords.get(tradeHistoryRecords.size() - 1).getClose());
                 for (int bubIdx = 1; bubIdx < multiplier && idx + bubIdx < tradeHistoryRecords.size(); bubIdx++) {
                     TradeHistoryRecord tradeHistoryRecord = tradeHistoryRecords.get(idx + bubIdx);
-                    tradeHistoryAggregate.setBuy(tradeHistoryAggregate.getBuy() + tradeHistoryRecord.getBuy());
-                    tradeHistoryAggregate.setSell(tradeHistoryAggregate.getSell() + tradeHistoryRecord.getSell());
+                    tradeHistoryAggregate.setBuyVol(tradeHistoryAggregate.getBuyVol() + tradeHistoryRecord.getBuyVol());
+                    tradeHistoryAggregate.setSellVol(tradeHistoryAggregate.getSellVol() + tradeHistoryRecord.getSellVol());
+
+                    tradeHistoryAggregate.setBuyQVol(tradeHistoryAggregate.getBuyQVol() + tradeHistoryRecord.getBuyQVol());
+                    tradeHistoryAggregate.setSellQVol(tradeHistoryAggregate.getSellQVol() + tradeHistoryRecord.getSellQVol());
 
                     if (tradeHistoryRecord.getHigh().doubleValue() > tradeHistoryAggregate.getHigh().doubleValue())
                         tradeHistoryAggregate.setHigh(tradeHistoryRecord.getHigh());

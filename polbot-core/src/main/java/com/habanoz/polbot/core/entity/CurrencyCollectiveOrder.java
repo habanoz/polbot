@@ -1,7 +1,5 @@
 package com.habanoz.polbot.core.entity;
 
-import java.math.BigDecimal;
-
 /**
  * Created by Yuce on 5/12/2017.
  */
