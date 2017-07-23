@@ -30,6 +30,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.lang.Integer.parseInt;
+
 /**
  * Trading bot with Buy when cheap sell when high logic
  * <p>
@@ -197,7 +199,7 @@ public class PoloniexPatienceBot {
                     if (currencyOrder != null) {
 
                         Date localDate = DateUtil.fromLdt(LocalDateTime.now());
-                        Date cancellationDate = DateUtil.addMinutesToDate(60 * currencyConfig.getBuyOrderCancellationHour(), currencyOrder.getOrderDate());
+                        Date cancellationDate = DateUtil.addMinutesToDate((int) (60 * currencyConfig.getBuyOrderCancellationHour()), currencyOrder.getOrderDate());
                         logger.debug("Cancellation Date:" + cancellationDate);
                         logger.debug("Currency order Date: " + currencyOrder.getOrderDate() + " Currency Pair:" + currencyConfig.getCurrencyPair() + "  Cancellation Hour: " + currencyConfig.getBuyOrderCancellationHour());
                         logger.debug("LocalDate: " + localDate);

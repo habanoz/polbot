@@ -18,7 +18,7 @@ public class CurrencyConfig {
     private boolean buyable;
     private boolean sellable;
     private BotUser botUser;
-    private Integer buyOrderCancellationHour=0;
+    private float buyOrderCancellationHour=0;
 
     public CurrencyConfig() {
     }
@@ -118,11 +118,11 @@ public class CurrencyConfig {
         this.sellAtPrice = sellAtPrice;
     }
 
-    public Integer getBuyOrderCancellationHour() {
+    public float getBuyOrderCancellationHour() {
         return buyOrderCancellationHour;
     }
 
-    public void setBuyOrderCancellationHour(Integer buyOrderCancellationHour) {
+    public void setBuyOrderCancellationHour(float buyOrderCancellationHour) {
         this.buyOrderCancellationHour = buyOrderCancellationHour;
     }
 
@@ -144,7 +144,7 @@ public class CurrencyConfig {
             return false;
         if (currencyPair != null ? !currencyPair.equals(that.currencyPair) : that.currencyPair != null) return false;
         if (botUser != null ? !botUser.equals(that.botUser) : that.botUser != null) return false;
-        return buyOrderCancellationHour != null ? buyOrderCancellationHour.equals(that.buyOrderCancellationHour) : that.buyOrderCancellationHour == null;
+        return Float.compare(that.buyOrderCancellationHour, buyOrderCancellationHour) != 0;
     }
 
     @Override
@@ -159,7 +159,7 @@ public class CurrencyConfig {
         result = 31 * result + (buyable ? 1 : 0);
         result = 31 * result + (sellable ? 1 : 0);
         result = 31 * result + (botUser != null ? botUser.hashCode() : 0);
-        result = 31 * result + (buyOrderCancellationHour != null ? buyOrderCancellationHour.hashCode() : 0);
+        result = 31 * result + (buyOrderCancellationHour !=  +0.0f ? Float.floatToIntBits(buyOrderCancellationHour) : 0);
         return result;
     }
 }
