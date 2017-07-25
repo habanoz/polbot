@@ -1,44 +1,44 @@
-package com.habanoz.polbot.core.api;
+package com.habanoz.polbot.core.web.controller;
 
+import com.habanoz.polbot.core.api.PoloniexPublicApi;
+import com.habanoz.polbot.core.api.PoloniexPublicApiImpl;
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.model.*;
+import com.habanoz.polbot.core.model.Order;
+import com.habanoz.polbot.core.model.PoloniexChart;
+import com.habanoz.polbot.core.model.PoloniexOpenOrder;
+import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.robot.CascadedPatienceStrategy;
 import com.habanoz.polbot.core.robot.PatienceStrategy;
 import com.habanoz.polbot.core.robot.PolBot;
 import com.habanoz.polbot.core.robot.PolStrategy;
 import com.habanoz.polbot.core.utils.ExchangePrice;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.List;
 
 /**
  * Created by huseyina on 5/29/2017.
  */
+@Controller
 public class ProfitabilityAnalysis {
     private static final Logger logger = LoggerFactory.getLogger(ProfitabilityAnalysis.class);
 
     private PoloniexPublicApi publicApi = new PoloniexPublicApiImpl();
 
-    @Test
-    public void runAnalysis() {
-        try {
-            analyse();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
 
-    public void analyse() {
+    @RequestMapping(value = "/analyse", params = {"show"})
+    public String analyse(CurrencyConfig currencyConfig) {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MONTH, -1);
 
-        final String currPair = "BTC_ETC";
+        String currPair = currencyConfig.getCurrencyPair();
+
         List<PoloniexChart> chartData = publicApi.returnChart(currPair, 300L, calendar.getTimeInMillis() / 1000, System.currentTimeMillis() / 1000);
 
 
@@ -46,9 +46,7 @@ public class ProfitabilityAnalysis {
 
         float initialBTCBalance = 0.2f;
         float initialCoinBalance = 0f;
-        int balancePercent = 50;
-        float buyOnPercent = 50;
-        float sellOnPercent = 5;
+
         int cancelHour = 5;
         float volumeRatio = 0.01f;
         int dumpResponseTime = 15;
@@ -62,8 +60,6 @@ public class ProfitabilityAnalysis {
         Map<String, List<PoloniexTrade>> historyMap = new HashMap<>();
         historyMap.put(currPair, new ArrayList<>());
 
-
-        CurrencyConfig currencyConfig = new CurrencyConfig(currPair, balancePercent, 50f, buyOnPercent, 0, sellOnPercent);
         currencyConfig.setOrderTimeoutInHour(cancelHour);
         currencyConfig.setBuyable(true);
         currencyConfig.setSellable(true);
@@ -119,7 +115,7 @@ public class ProfitabilityAnalysis {
 
                 ExchangePrice exchangePrice = new ExchangePrice(buyPrice, sellPrice, date, chart.getVolume());
 
-                List<Order> orders = patienceStrategy.execute(currencyConfig, exchangePrice, currentBTCBalance.multiply(BigDecimal.valueOf(balancePercent / 100f)), currentCoinBalance, date);
+                List<Order> orders = patienceStrategy.execute(currencyConfig, exchangePrice, currentBTCBalance.multiply(BigDecimal.valueOf(currencyConfig.getUsableBalancePercent() / 100f)), currentCoinBalance, date);
 
                 // fulfill orders
                 for (Order order : orders) {
@@ -152,13 +148,13 @@ public class ProfitabilityAnalysis {
                     PoloniexOpenOrder openOrder = openOrderIterator.next();
 
                     if (openOrder.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
-                        BigDecimal order = cancelBuyOrder(openOrders, openOrder,date);
+                        BigDecimal order = cancelBuyOrder(openOrders, openOrder, date);
                         currentBTCBalance = currentBTCBalance.add(order);
                         currentBTCOnOrder = currentBTCOnOrder.subtract(order);
 
                         logger.info("Coin balance {} btc balance {} Coin Order {} BTC Order {}, SUM={}", currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, total(currentCoinBalance, currentBTCBalance, currentCoinOnOrder, currentBTCOnOrder, sellPrice));
                     } else {
-                        BigDecimal order = cancelSellOrder(openOrders, openOrder,date);
+                        BigDecimal order = cancelSellOrder(openOrders, openOrder, date);
 
                         currentCoinBalance = currentCoinBalance.add(order);
                         currentCoinOnOrder = currentCoinOnOrder.subtract(order);
@@ -175,8 +171,8 @@ public class ProfitabilityAnalysis {
             PoloniexOpenOrder openOrder = openOrderIterator.next();
 
             if (openOrder.getType().equalsIgnoreCase(PolBot.BUY_ACTION))
-                currentBTCBalance = currentBTCBalance.add(cancelBuyOrder(openOrderIterator, openOrder,new Date()));
-            else currentCoinBalance = currentCoinBalance.add(cancelSellOrder(openOrderIterator, openOrder,new Date()));
+                currentBTCBalance = currentBTCBalance.add(cancelBuyOrder(openOrderIterator, openOrder, new Date()));
+            else currentCoinBalance = currentCoinBalance.add(cancelSellOrder(openOrderIterator, openOrder, new Date()));
         }
 
 
@@ -193,6 +189,8 @@ public class ProfitabilityAnalysis {
             System.out.println(trade);
         }
 
+        return "/analyse";
+
     }
 
     private PatienceStrategy getPatienceStrategy(List<PoloniexTrade> historyList, List<PoloniexTrade> recentTradesList, List<PoloniexOpenOrder> openOrderList) {
@@ -207,35 +205,30 @@ public class ProfitabilityAnalysis {
         return currentCoinBalance.add(currentCoinOnOrder).multiply(sellPrice).add(currentBTCBalance).add(currentBTCOnOrder);
     }
 
-    private BigDecimal cancelSellOrder(List<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel,Date date) {
-        logger.info("Sell Order Cancelled {} at '{}'", openOrderToCancel,date );
+    private BigDecimal cancelSellOrder(List<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel, Date date) {
+        logger.info("Sell Order Cancelled {} at '{}'", openOrderToCancel, date);
         openOrders.remove(openOrderToCancel);
         return openOrderToCancel.getAmount();
     }
 
-    private BigDecimal cancelBuyOrder(List<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel,Date date) {
-        logger.info("Buy Order Cancelled {} at '{}'", openOrderToCancel,date);
+    private BigDecimal cancelBuyOrder(List<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel, Date date) {
+        logger.info("Buy Order Cancelled {} at '{}'", openOrderToCancel, date);
         openOrders.remove(openOrderToCancel);
         return openOrderToCancel.getTotal();
     }
 
-    private BigDecimal cancelSellOrder(Iterator<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel,Date date) {
-        logger.info("Sell Order Cancelled {} at '{}'", openOrderToCancel,date);
+    private BigDecimal cancelSellOrder(Iterator<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel, Date date) {
+        logger.info("Sell Order Cancelled {} at '{}'", openOrderToCancel, date);
         openOrders.remove();
         return openOrderToCancel.getAmount();
     }
 
-    private BigDecimal cancelBuyOrder(Iterator<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel,Date date) {
-        logger.info("Buy Order Cancelled {} at '{}'", openOrderToCancel,date);
+    private BigDecimal cancelBuyOrder(Iterator<PoloniexOpenOrder> openOrders, PoloniexOpenOrder openOrderToCancel, Date date) {
+        logger.info("Buy Order Cancelled {} at '{}'", openOrderToCancel, date);
         openOrders.remove();
         return openOrderToCancel.getTotal();
     }
 
-    @Test
-    public void testGetPriceIndex() {
-        PoloniexChart poloniexChart = new PoloniexChart(new BigDecimal(0.72), new BigDecimal(0.65), new BigDecimal(0.70), new BigDecimal(0.64), new BigDecimal(123));
-        System.out.println(getPriceIndex(poloniexChart));
-    }
 
     private List<BigDecimal> getPriceIndex(PoloniexChart chart) {
         final BigDecimal open = chart.getOpen();
