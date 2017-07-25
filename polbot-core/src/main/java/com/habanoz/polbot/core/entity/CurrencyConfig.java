@@ -18,7 +18,7 @@ public class CurrencyConfig {
     private boolean buyable;
     private boolean sellable;
     private BotUser botUser;
-    private float buyOrderCancellationHour=0;
+    private float orderTimeoutInHour = 0;
 
     public CurrencyConfig() {
     }
@@ -118,12 +118,12 @@ public class CurrencyConfig {
         this.sellAtPrice = sellAtPrice;
     }
 
-    public float getBuyOrderCancellationHour() {
-        return buyOrderCancellationHour;
+    public float getOrderTimeoutInHour() {
+        return orderTimeoutInHour;
     }
 
-    public void setBuyOrderCancellationHour(float buyOrderCancellationHour) {
-        this.buyOrderCancellationHour = buyOrderCancellationHour;
+    public void setOrderTimeoutInHour(float orderTimeoutInHour) {
+        this.orderTimeoutInHour = orderTimeoutInHour;
     }
 
     @Override
@@ -144,7 +144,7 @@ public class CurrencyConfig {
             return false;
         if (currencyPair != null ? !currencyPair.equals(that.currencyPair) : that.currencyPair != null) return false;
         if (botUser != null ? !botUser.equals(that.botUser) : that.botUser != null) return false;
-        return Float.compare(that.buyOrderCancellationHour, buyOrderCancellationHour) != 0;
+        return Float.compare(that.orderTimeoutInHour, orderTimeoutInHour) != 0;
     }
 
     @Override
@@ -159,7 +159,7 @@ public class CurrencyConfig {
         result = 31 * result + (buyable ? 1 : 0);
         result = 31 * result + (sellable ? 1 : 0);
         result = 31 * result + (botUser != null ? botUser.hashCode() : 0);
-        result = 31 * result + (buyOrderCancellationHour !=  +0.0f ? Float.floatToIntBits(buyOrderCancellationHour) : 0);
+        result = 31 * result + (orderTimeoutInHour != +0.0f ? Float.floatToIntBits(orderTimeoutInHour) : 0);
         return result;
     }
 }

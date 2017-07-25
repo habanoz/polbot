@@ -71,20 +71,22 @@ public class EditUserInfoController {
         BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
         List<UserBot> userBots = userBotRepository.findByUser(botUser);
 
+        model.put("buid", buid);
         model.put("bots", botRepository.findAll());
-        model.put("userBot", userBots.get(0));
+        model.put("userBot", userBots.isEmpty() ? new UserBot() : userBots.get(0));
 
         return "editbotinfo";
     }
 
-    @RequestMapping(value = "/editbotinfo", params = {"save"})
-    public String showEditBotInfo(Principal principal, final UserBot userBot, Map model) {
-        // User user = userRepository.findByUserName(principal.getName());
-        //BotUser botUser = botUserRepository.findByUserAndBuId(user, index);
+    @RequestMapping(value = "/editbotinfo/{buid}", params = {"save"})
+    public String showEditBotInfo(Principal principal, final UserBot userBot, Map model, @PathVariable("buid") Integer buid) {
+        User user = userRepository.findByUserName(principal.getName());
+        BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
+        userBot.setUser(botUser);
         userBotRepository.save(userBot);
 
-        return "redirect:/editbotinfo/" + userBot.getUser().getBuId() + "?show=";
+        return "redirect:/editbotinfo/" + buid + "?show=";
     }
 
     @RequestMapping(value = "/edituserinfo", params = {"show"})

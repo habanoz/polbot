@@ -12,5 +12,5 @@ import java.util.List;
 
 public interface BotRepository
         extends JpaRepository<Bot, Integer> {
-
+    Bot findByName(String name);
 }

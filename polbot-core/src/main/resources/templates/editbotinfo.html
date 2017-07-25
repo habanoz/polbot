@@ -69,7 +69,7 @@
 <div class="container">
 
 
-    <form action="#" th:action="@{/editbotinfo}" th:object="${userBot}" method="post">
+    <form action="#" th:action="@{/editbotinfo/{buid}(buid=${buid})}" th:object="${userBot}" method="post">
 
         <input id="id" type="hidden"
                th:field="*{id}"/>

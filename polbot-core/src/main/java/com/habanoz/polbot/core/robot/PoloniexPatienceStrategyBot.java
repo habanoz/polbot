@@ -178,6 +178,8 @@ public class PoloniexPatienceStrategyBot implements PolBot {
 
         for (PoloniexOpenOrder order2Cancel : orders2Cancel) {
             tradingApi.cancelOrder(order2Cancel.getOrderNumber());
+
+            logger.debug("Order {} cancelled", order2Cancel);
         }
     }
 
@@ -190,12 +192,16 @@ public class PoloniexPatienceStrategyBot implements PolBot {
                 PoloniexOrderResult result = createBuyOrder(user, tradingApi, order);
                 orderResults.add(result);
 
+                logger.debug("BUY Order {} created", order);
+
                 if (result.getSuccess())
                     // subtract spent(order given) amount from btc balance
                     btcBalance = btcBalance.subtract(order.getTotal());
             } else {
                 PoloniexOrderResult result = createSellOrder(user, tradingApi, order);
                 orderResults.add(result);
+
+                logger.debug("SELL Order {} created", order);
             }
         }
         return btcBalance;

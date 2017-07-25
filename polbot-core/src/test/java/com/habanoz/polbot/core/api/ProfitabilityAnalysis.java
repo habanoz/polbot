@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -65,7 +64,7 @@ public class ProfitabilityAnalysis {
 
 
         CurrencyConfig currencyConfig = new CurrencyConfig(currPair, balancePercent, 50f, buyOnPercent, 0, sellOnPercent);
-        currencyConfig.setBuyOrderCancellationHour(cancelHour);
+        currencyConfig.setOrderTimeoutInHour(cancelHour);
         currencyConfig.setBuyable(true);
         currencyConfig.setSellable(true);
 

@@ -17,4 +17,6 @@ public interface PolStrategy {
     List<Order> execute(CurrencyConfig currencyConfig, ExchangePrice priceData, BigDecimal btcBalance, BigDecimal coinBalance, Date date);
 
     List<PoloniexOpenOrder> getOrdersToCancel(CurrencyConfig currencyConfig, Date date);
+
+    List<PoloniexOpenOrder> getOrdersToCancel(CurrencyConfig currencyConfig);
 }

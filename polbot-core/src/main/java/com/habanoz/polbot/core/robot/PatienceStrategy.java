@@ -77,10 +77,10 @@ public class PatienceStrategy implements PolStrategy {
     }
 
     private Order createSellOrder(CurrencyConfig currencyConfig,
-                                              String currPair,
-                                              BigDecimal currCoinAmount,
-                                              BigDecimal highestSellPrice,
-                                              List<PoloniexTrade> currHistoryList, Date date) {
+                                  String currPair,
+                                  BigDecimal currCoinAmount,
+                                  BigDecimal highestSellPrice,
+                                  List<PoloniexTrade> currHistoryList, Date date) {
 
         // get last buying price to calculate selling price
         BigDecimal lastBuyPrice = getBuyPrice(highestSellPrice, currHistoryList);
@@ -114,8 +114,8 @@ public class PatienceStrategy implements PolStrategy {
     }
 
     private Order createBuyOrder(CurrencyConfig currencyConfig,
-                                             String currPair,
-                                             BigDecimal lowestBuyPrice, BigDecimal buyBudgetInBtc, Date date) {
+                                 String currPair,
+                                 BigDecimal lowestBuyPrice, BigDecimal buyBudgetInBtc, Date date) {
         // not enough budget, return 0
         if (buyBudgetInBtc == null || buyBudgetInBtc.doubleValue() < minAmount) {
             return null;
@@ -132,14 +132,19 @@ public class PatienceStrategy implements PolStrategy {
     }
 
     @Override
+    public List<PoloniexOpenOrder> getOrdersToCancel(CurrencyConfig currencyConfig) {
+        return getOrdersToCancel(currencyConfig, new Date());
+    }
+
+    @Override
     public List<PoloniexOpenOrder> getOrdersToCancel(CurrencyConfig currencyConfig, Date date) {
 
         Iterator<PoloniexOpenOrder> openOrderIterator = openOrderList.iterator();
         List<PoloniexOpenOrder> openOrdersToCancel = new ArrayList<>();
         while (openOrderIterator.hasNext()) {
             PoloniexOpenOrder openOrder = openOrderIterator.next();
-            if (currencyConfig.getBuyOrderCancellationHour() > 0 &&
-                    (date.getTime() - openOrder.getDate().getTime()) > currencyConfig.getBuyOrderCancellationHour() * 1000 * 60 * 60) {
+            if (currencyConfig.getOrderTimeoutInHour() > 0 &&
+                    (date.getTime() - openOrder.getDate().getTime()) > currencyConfig.getOrderTimeoutInHour() * 1000 * 60 * 60) {
                 openOrdersToCancel.add(openOrder);
             }
         }
