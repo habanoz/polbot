@@ -20,7 +20,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
                 .antMatchers("/allusers", "/collectiveorder/*", "/currencyconfig/*", "/edituserinfo", "/editbotinfo", "/editbotuserinfo/*", "/mybalances/*", "/mycurrencies/*", "/orders/*").hasRole("BOT")
-                .antMatchers("/tradehistory/*").hasRole("ANALYSIS")
+                .antMatchers("/tradehistory/*","/analyse").hasRole("ANALYSIS")
                 .antMatchers("/", "/home", "/DataTables/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .anyRequest().authenticated()
                 .and()

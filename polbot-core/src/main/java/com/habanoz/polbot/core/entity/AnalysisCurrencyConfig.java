@@ -4,6 +4,8 @@ import javax.persistence.*;
 
 /**
  * Created by habanoz on 05.04.2017.
+ * <p>
+ * Used for collecting volume history for analysis. ıf not enabled history data is not collected.
  */
 @Entity
 public class AnalysisCurrencyConfig {

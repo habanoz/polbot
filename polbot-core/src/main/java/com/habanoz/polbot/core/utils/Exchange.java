@@ -199,7 +199,7 @@ public class Exchange {
     }
 
 
-    private BigDecimal[] executeSellOrders(List<PoloniexOpenOrder> openOrders, float sellFeeRate, List<PoloniexTrade> historyMap, BigDecimal sellPrice, Date date) {
+    private BigDecimal[] executeSellOrders(List<PoloniexOpenOrder> openOrders, float sellFeeRate, List<PoloniexTrade> historyList, BigDecimal sellPrice, Date date) {
         BigDecimal gained = new BigDecimal(0);
         BigDecimal ordersCompleted = new BigDecimal(0);
         Iterator<PoloniexOpenOrder> openOrdersIterator = openOrders.iterator();
@@ -211,7 +211,7 @@ public class Exchange {
                     //TODO consider volume
                     PoloniexTrade poloniexTrade = new PoloniexTrade(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()), sellPrice, openOrder.getAmount(), new BigDecimal(sellFeeRate), PolBot.SELL_ACTION);
 
-                    historyMap.add(poloniexTrade);
+                    historyList.add(poloniexTrade);
 
                     // apply fees and update btc balance
                     gained = gained.add(openOrder.getTotal().multiply(new BigDecimal(1 - sellFeeRate)));
@@ -295,17 +295,15 @@ public class Exchange {
             if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
 
                 openOrders.remove(order);
-                BigDecimal orderAmount = order.getTotal();
 
-                currentBTCBalance = currentBTCBalance.add(orderAmount);
-                currentBTCOnOrder = currentBTCOnOrder.subtract(orderAmount);
+                currentBTCBalance = currentBTCBalance.add(order.getTotal());
+                currentBTCOnOrder = currentBTCOnOrder.subtract(order.getTotal());
 
             } else {
                 openOrders.remove(order);
-                BigDecimal orderAmount = order.getAmount();
 
-                currentCoinBalance = currentCoinBalance.add(orderAmount);
-                currentCoinOnOrder = currentCoinOnOrder.subtract(orderAmount);
+                currentCoinBalance = currentCoinBalance.add(order.getAmount());
+                currentCoinOnOrder = currentCoinOnOrder.subtract(order.getAmount());
 
             }
         }
