@@ -1,6 +1,7 @@
 package com.habanoz.polbot.core.robot;
 
 import com.habanoz.polbot.core.api.PoloniexPublicApi;
+import com.habanoz.polbot.core.api.PoloniexPublicApiImpl;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
@@ -96,6 +97,7 @@ public class PoloniexPatienceStrategyBot implements PolBot {
         //create tradingApi instance for current user
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
 
+        PoloniexPublicApi publicApi = new PoloniexPublicApiImpl();
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
@@ -116,7 +118,12 @@ public class PoloniexPatienceStrategyBot implements PolBot {
 
             String currPair = currencyConfig.getCurrencyPair();
 
-            PolStrategy patienceStrategy = getPolStrategy(openOrderMap.get(currPair), historyMap.get(currPair), recentHistoryMap.get(currPair));
+            final int emaTimeFrame = 12;
+            final long periodInSec = 300L;
+            long startTime = System.currentTimeMillis() - (emaTimeFrame * 2) * periodInSec * 1000;
+            List<PoloniexChart> chartData = publicApi.returnChart(currPair, periodInSec, startTime, Long.MAX_VALUE);
+
+            PolStrategy patienceStrategy = new PatienceStrategy(currencyConfig, chartData, emaTimeFrame);
 
             String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
 
@@ -139,14 +146,13 @@ public class PoloniexPatienceStrategyBot implements PolBot {
             Date now = new Date();
 
             List<Order> orders = patienceStrategy.execute(
-                    currencyConfig,
-                    new ExchangePrice(lowestBuyPrice, highestSellPrice, now, ticker.getBaseVolume()),
-                    tradingBTCMap.get(currName), currBalance, now
+                    new PoloniexChart(new BigDecimal(now.getTime()), lowestBuyPrice, lowestBuyPrice, lowestBuyPrice, lowestBuyPrice, ticker.getBaseVolume()),
+                    tradingBTCMap.get(currName), currBalance, openOrderMap.get(currPair), historyMap.get(currPair), recentHistoryMap.get(currPair)
             );
 
             btcBalance = createOrders(user, tradingApi, btcBalance, orderResults, orders);
 
-            cancelOrders(tradingApi, currencyConfig, patienceStrategy, now);
+            cancelOrders(tradingApi, openOrderMap.get(currPair), patienceStrategy, now);
 
         }
 
@@ -173,8 +179,8 @@ public class PoloniexPatienceStrategyBot implements PolBot {
     }
 
     @Override
-    public void cancelOrders(PoloniexTradingApi tradingApi, CurrencyConfig currencyConfig, PolStrategy patienceStrategy, Date now) {
-        List<PoloniexOpenOrder> orders2Cancel = patienceStrategy.getOrdersToCancel(currencyConfig, now);
+    public void cancelOrders(PoloniexTradingApi tradingApi, List<PoloniexOpenOrder> openOrderList, PolStrategy patienceStrategy, Date now) {
+        List<PoloniexOpenOrder> orders2Cancel = patienceStrategy.getOrdersToCancel(openOrderList, now);
 
         for (PoloniexOpenOrder order2Cancel : orders2Cancel) {
             tradingApi.cancelOrder(order2Cancel.getOrderNumber());
@@ -205,11 +211,6 @@ public class PoloniexPatienceStrategyBot implements PolBot {
             }
         }
         return btcBalance;
-    }
-
-    @Override
-    public PolStrategy getPolStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> tradeList, List<PoloniexTrade> historyList) {
-        return new PatienceStrategy(openOrderList, historyList);
     }
 
 

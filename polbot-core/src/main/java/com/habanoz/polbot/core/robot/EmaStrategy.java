@@ -1,8 +1,16 @@
 package com.habanoz.polbot.core.robot;
 
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.model.*;
-import com.habanoz.polbot.core.utils.ExchangePrice;
+import com.habanoz.polbot.core.model.Order;
+import com.habanoz.polbot.core.model.PoloniexChart;
+import com.habanoz.polbot.core.model.PoloniexOpenOrder;
+import com.habanoz.polbot.core.model.PoloniexTrade;
+import eu.verdelhan.ta4j.Strategy;
+import eu.verdelhan.ta4j.Tick;
+import eu.verdelhan.ta4j.TimeSeries;
+import eu.verdelhan.ta4j.indicators.simple.ClosePriceIndicator;
+import eu.verdelhan.ta4j.indicators.trackers.EMAIndicator;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,41 +18,64 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Trading bot with Buy when cheap sell when high logic
+ * Trading bot with EMA Buy when cheap sell when high logic
  * <p>
  * Created by habanoz on 05.04.2017.
  */
-public class PatienceStrategy extends AbstractPolBotStrategy {
+public class EmaStrategy extends AbstractPolBotStrategy {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
     public static final int WEEK_IN_MILLIS = 7 * 24 * 60 * 60 * 1000;
+    TimeSeries timeSeries;
 
-    public PatienceStrategy(CurrencyConfig currencyConfig, List<PoloniexChart> chartData, int timeFrame) {
+    public EmaStrategy(CurrencyConfig currencyConfig, List<PoloniexChart> chartData, int timeFrame) {
         super(currencyConfig, chartData, timeFrame);
+
+        List<Tick> ticks = chartData.stream().map(e -> new Tick(new DateTime(e.getDate().longValue()), e.getOpen().doubleValue(), e.getHigh().doubleValue(), e.getLow().doubleValue(), e.getClose().doubleValue(), e.getVolume().doubleValue())).collect(Collectors.toList());
+        timeSeries = new TimeSeries("price series", ticks);
     }
 
     @Override
     public List<Order> execute(PoloniexChart chart, BigDecimal btcBalance, BigDecimal coinBalance, List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> tradeHistory, List<PoloniexTrade> recentTradeHistory) {
+
         String currPair = currencyConfig.getCurrencyPair();
         Date date = new Date(chart.getDate().longValue());
 
+
         List<Order> poloniexOrders = new ArrayList<>();
 
-        //current lowest market price
-        BigDecimal lowestBuyPrice = chart.getClose();
-        BigDecimal highestSellPrice = chart.getClose();
+        timeSeries.addTick(new Tick(new DateTime(chart.getDate().longValue()), chart.getOpen().doubleValue(), chart.getHigh().doubleValue(), chart.getLow().doubleValue(), chart.getClose().doubleValue(), chart.getVolume().doubleValue()));
 
+        ClosePriceIndicator closePriceIndicator = new ClosePriceIndicator(timeSeries);
+
+        EMAIndicator emaIndicator = new EMAIndicator(closePriceIndicator, timeFrame);
+
+
+        PercentOverIndicatorRule overIndicatorRule = new PercentOverIndicatorRule(emaIndicator, closePriceIndicator, currencyConfig.getBuyOnPercent());
+        PercentBelowIndicatorRule belowIndicatorRule = new PercentBelowIndicatorRule(emaIndicator, closePriceIndicator, currencyConfig.getSellOnPercent());
+
+        Strategy buySellSignals = new Strategy(
+                overIndicatorRule,
+                belowIndicatorRule
+        );
+
+        int endIndex = timeSeries.getEnd();
 
         //
         //
         // buy logic
         if (currencyConfig.getUsableBalancePercent() > 0 &&
                 currencyConfig.getBuyable() &&
-                openOrderList.stream().noneMatch(r -> r.getType().equalsIgnoreCase(PolBot.BUY_ACTION))) {
+                openOrderList.stream().noneMatch(r -> r.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) &&
+                buySellSignals.shouldEnter(endIndex)) {
 
-            Order openOrder = createBuyOrder(currencyConfig, currPair, lowestBuyPrice, btcBalance, date);
+            BigDecimal price = new BigDecimal(emaIndicator.getValue(endIndex).toDouble());
+            Order openOrder = createBuyOrder(currencyConfig, currPair, price, btcBalance, date);
 
             if (openOrder != null)
                 poloniexOrders.add(openOrder);
@@ -55,7 +86,9 @@ public class PatienceStrategy extends AbstractPolBotStrategy {
         //
         // sell logic
         if (currencyConfig.getSellable() && coinBalance.doubleValue() > minAmount) {
-            Order openOrder = createSellOrder(currencyConfig, currPair, coinBalance, highestSellPrice, recentTradeHistory, date);
+            BigDecimal price = new BigDecimal(closePriceIndicator.getValue(endIndex).toDouble());
+
+            Order openOrder = createSellOrder(currencyConfig, currPair, coinBalance, price, recentTradeHistory, date);
             if (openOrder != null)
                 poloniexOrders.add(openOrder);
         }
@@ -87,7 +120,7 @@ public class PatienceStrategy extends AbstractPolBotStrategy {
                 PoloniexTrade history = currHistoryList.get(i);
 
                 // if remaining history records are too old, dont use them for selling price base
-                if (System.currentTimeMillis() - history.getDate().getTime() > WEEK_IN_MILLIS)
+                if (System.currentTimeMillis()-history.getDate().getTime()> WEEK_IN_MILLIS)
                     break;
 
                 // use most recent buy action as sell base
@@ -110,12 +143,13 @@ public class PatienceStrategy extends AbstractPolBotStrategy {
 
         // buying price should be a little lower to make profit
         // if set, buy at price will be used, other wise buy on percent will be used
-        BigDecimal buyPrice = currencyConfig.getBuyAtPrice() == 0 ? lowestBuyPrice.multiply(new BigDecimal(1).subtract(BigDecimal.valueOf(currencyConfig.getBuyOnPercent() * 0.01))) : new BigDecimal(currencyConfig.getBuyAtPrice());
+        BigDecimal buyPrice = lowestBuyPrice;//currencyConfig.getBuyAtPrice() == 0 ? lowestBuyPrice.multiply(new BigDecimal(1).subtract(BigDecimal.valueOf(currencyConfig.getBuyOnPercent() * 0.01))) : new BigDecimal(currencyConfig.getBuyAtPrice());
 
         // calculate amount that can be bought with buyBudget and buyPrice
         BigDecimal buyCoinAmount = buyBudgetInBtc.divide(buyPrice, RoundingMode.DOWN);
 
         return new Order(currPair, PolBot.BUY_ACTION, buyPrice, buyCoinAmount, date);
     }
+
 
 }

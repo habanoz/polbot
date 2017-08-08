@@ -21,10 +21,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Trading bot with Buy when cheap sell when high logic
@@ -32,7 +29,7 @@ import java.util.Map;
  * Created by habanoz on 05.04.2017.
  */
 @Component
-public class CascadedPatienceStrategyBot extends PoloniexPatienceStrategyBot {
+public class EmaStrategyBot extends PoloniexPatienceStrategyBot {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
 
     @Autowired
@@ -47,11 +44,12 @@ public class CascadedPatienceStrategyBot extends PoloniexPatienceStrategyBot {
     @Autowired
     private TradeHistoryTrackRepository tradeHistoryTrackRepository;
 
+
     private static final String BASE_CURR = "BTC";
     private static final String CURR_PAIR_SEPARATOR = "_";
 
 
-    public CascadedPatienceStrategyBot() {
+    public EmaStrategyBot() {
     }
 
     @PostConstruct
@@ -80,13 +78,10 @@ public class CascadedPatienceStrategyBot extends PoloniexPatienceStrategyBot {
 
         PoloniexPublicApi publicApi = new PoloniexPublicApiImpl();
 
+
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
         Map<String, PoloniexCompleteBalance> completeBalanceMap = tradingApi.returnCompleteBalances();
-
-        final int emaTimeFrame = 12;
-        final long periodInSec = 300L;
-        long startTime = System.currentTimeMillis() - (emaTimeFrame * 2) * periodInSec * 1000;
 
 
         Map<String, List<PoloniexTrade>> historyMap = tradingApi.returnTradeHistory();
@@ -101,9 +96,13 @@ public class CascadedPatienceStrategyBot extends PoloniexPatienceStrategyBot {
 
             String currPair = currencyConfig.getCurrencyPair();
 
+            final int emaTimeFrame = 12;
+            final long periodInSec = 300L;
+            long startTime = System.currentTimeMillis() - (emaTimeFrame * 2) * periodInSec * 1000;
             List<PoloniexChart> chartData = publicApi.returnChart(currPair, periodInSec, startTime, Long.MAX_VALUE);
 
-            PolStrategy patienceStrategy = new CascadedPatienceStrategy(currencyConfig,chartData, emaTimeFrame );
+
+            PolStrategy patienceStrategy = new EmaStrategy(currencyConfig, chartData, emaTimeFrame);
 
             String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
 

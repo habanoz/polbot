@@ -1,13 +1,11 @@
 package com.habanoz.polbot.core.service;
 
 import com.habanoz.polbot.core.entity.CurrencyConfig;
-import com.habanoz.polbot.core.model.AnalysisConfig;
-import com.habanoz.polbot.core.model.Order;
-import com.habanoz.polbot.core.model.PoloniexOpenOrder;
-import com.habanoz.polbot.core.model.PoloniexTrade;
-import com.habanoz.polbot.core.robot.PatienceStrategy;
+import com.habanoz.polbot.core.model.*;
+import com.habanoz.polbot.core.robot.PolStrategy;
 import com.habanoz.polbot.core.utils.Exchange;
-import com.habanoz.polbot.core.utils.ExchangePrice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -19,6 +17,7 @@ import java.util.*;
  */
 @Service
 public class ProfitAnalysisService {
+    private static final Logger logger = LoggerFactory.getLogger(ProfitAnalysisService.class);
 
     public static final float SELL_FEE_RATE = 0.0025f;
     public static final float BUY_FEE_RATE = 0.0015f;
@@ -37,25 +36,36 @@ public class ProfitAnalysisService {
         Exchange exchange = new Exchange(initialBtcBalance, BUY_FEE_RATE, SELL_FEE_RATE);
         exchange.init(currencyConfig, startDateCalendar.getTime(), ac.getPeriodInSec());
 
+        Date lastExecutionDate = new Date(0L);
+
         //initialize strategy
-        PatienceStrategy patienceStrategy = new PatienceStrategy(exchange.getOpenOrders(), exchange.getHistoryData());
+        PolStrategy patienceStrategy = null;
+        try {
+            patienceStrategy = (PolStrategy) Class.forName("com.habanoz.polbot.core.robot." + ac.getBotName()).getConstructors()[0].newInstance(currencyConfig, exchange.getChartData(), 0);
+        } catch (Exception e) {
+            logger.error("Error at bot creation", e);
+            return null;
+        }
 
         //run exchange loop
         while (exchange.hasMore()) {
             // proceed the exchange
-            ExchangePrice priceData = exchange.proceed();
+            PoloniexChart priceData = exchange.proceed();
+            Date date = new Date(priceData.getDate().longValue());
 
             // get next orders from strategy
-            List<Order> orders = patienceStrategy.execute(currencyConfig, priceData, exchange.getCurrentBTCBalance(), exchange.getCurrentCoinBalance(), priceData.getDate());
+            List<Order> orders = patienceStrategy.execute(priceData, exchange.getCurrentBTCBalance(), exchange.getCurrentCoinBalance(), exchange.getOpenOrders(), exchange.getHistoryData(), exchange.getHistoryData(lastExecutionDate));
 
             // fulfill orders
             exchange.addOrders(orders);
 
             // get orders to cancel
-            List<PoloniexOpenOrder> orders2Cancel = patienceStrategy.getOrdersToCancel(currencyConfig, priceData.getDate());
+            List<PoloniexOpenOrder> orders2Cancel = patienceStrategy.getOrdersToCancel(exchange.getOpenOrders(), date);
 
             // cancel orders
             exchange.cancelOrders(orders2Cancel);
+
+            lastExecutionDate = date;
         }
 
         exchange.cancelAllOrders();

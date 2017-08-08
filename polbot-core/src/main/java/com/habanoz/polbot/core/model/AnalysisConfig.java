@@ -16,11 +16,12 @@ public class AnalysisConfig {
     private float orderTimeoutInHour = 0;
     private int startDaysAgo;
     private long periodInSec;
+    private String botName;
 
     public AnalysisConfig() {
     }
 
-    public AnalysisConfig(String currencyPair, float buyAtPrice, float buyOnPercent, float sellAtPrice, float sellOnPercent, int startDaysAgo, long periodInSec) {
+    public AnalysisConfig(String currencyPair, float buyAtPrice, float buyOnPercent, float sellAtPrice, float sellOnPercent, int startDaysAgo, long periodInSec,String botName) {
         this.currencyPair = currencyPair;
         this.buyAtPrice = buyAtPrice;
         this.buyOnPercent = buyOnPercent;
@@ -28,6 +29,7 @@ public class AnalysisConfig {
         this.sellOnPercent = sellOnPercent;
         this.startDaysAgo = startDaysAgo;
         this.periodInSec = periodInSec;
+        this.botName = botName;
     }
 
     public String getCurrencyPair() {
@@ -92,5 +94,13 @@ public class AnalysisConfig {
 
     public void setPeriodInSec(long periodInSec) {
         this.periodInSec = periodInSec;
+    }
+
+    public String getBotName() {
+        return botName;
+    }
+
+    public void setBotName(String botName) {
+        this.botName = botName;
     }
 }
