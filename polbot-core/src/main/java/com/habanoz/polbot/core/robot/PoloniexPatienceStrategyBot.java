@@ -173,7 +173,7 @@ public class PoloniexPatienceStrategyBot implements PolBot {
 
     @Override
     public void sendNotificationMail(BotUser user, Map<String, PoloniexCompleteBalance> completeBalanceMap, Map<String, List<PoloniexTrade>> recentHistoryMap, List<PoloniexOrderResult> orderResults) {
-        if (!orderResults.isEmpty() || !recentHistoryMap.isEmpty()) {// if any of them is not empty send mail
+        if ((!orderResults.isEmpty() || !recentHistoryMap.isEmpty()) && user.isEmailNotification()) {// if any of them is not empty send mail
             mailService.sendMail(user, "Orders Given", htmlHelper.getSummaryHTML(orderResults, recentHistoryMap, completeBalanceMap), true);
         }
     }
