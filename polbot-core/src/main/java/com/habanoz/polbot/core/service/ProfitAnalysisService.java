@@ -51,7 +51,7 @@ public class ProfitAnalysisService {
         while (exchange.hasMore()) {
             // proceed the exchange
             PoloniexChart priceData = exchange.proceed();
-            Date date = new Date(priceData.getDate().longValue());
+            Date date = new Date(priceData.getDate().longValue()*1000);
 
             // get next orders from strategy
             List<Order> orders = patienceStrategy.execute(priceData, exchange.getCurrentBTCBalance(), exchange.getCurrentCoinBalance(), exchange.getOpenOrders(), exchange.getHistoryData(), exchange.getHistoryData(lastExecutionDate));

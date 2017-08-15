@@ -55,7 +55,7 @@ public class CascadedPatienceStrategy extends AbstractPolBotStrategy {
         // sell logic
         if (currencyConfig.getSellable() && coinBalance.doubleValue() > minAmount) {
             for (PoloniexTrade order : recentTradeHistory) {
-                Order openOrder = createSellOrder(currencyConfig, currPair, order, date);
+                Order openOrder = createSellOrder(currencyConfig, coinBalance, currPair, order, date);
                 if (openOrder != null)
                     poloniexOrders.add(openOrder);
             }
@@ -64,11 +64,12 @@ public class CascadedPatienceStrategy extends AbstractPolBotStrategy {
         return poloniexOrders;
     }
 
-    private Order createSellOrder(CurrencyConfig currencyConfig, String currPair, PoloniexTrade order, Date date) {
+    private Order createSellOrder(CurrencyConfig currencyConfig, BigDecimal coinBalance, String currPair, PoloniexTrade order, Date date) {
 
         //selling price should be a little higher to make profit
         BigDecimal sellPrice = order.getRate().multiply(new BigDecimal(1).add(BigDecimal.valueOf(currencyConfig.getSellOnPercent() * 0.01 + 0.0015)));
 
+        //return new Order(currPair, "SELL", sellPrice, coinBalance.min(order.getAmount()), date);
         return new Order(currPair, "SELL", sellPrice, order.getAmount(), date);
     }
 
