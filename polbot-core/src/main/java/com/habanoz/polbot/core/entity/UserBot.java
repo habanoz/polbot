@@ -13,6 +13,15 @@ public class UserBot implements Serializable {
     private Bot bot;
     private boolean active;
 
+    public UserBot() {
+    }
+
+    public UserBot(BotUser user, Bot bot) {
+        this.user = user;
+        this.bot = bot;
+        this.active = true;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     public Integer getId() {

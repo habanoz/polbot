@@ -2,11 +2,12 @@ package com.habanoz.polbot.core.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 public class PoloniexTrade {
     private Long globalTradeID;
     private String tradeID;
-    private LocalDateTime date;
+    private Date date;
     private BigDecimal rate;
     private BigDecimal amount;
     private BigDecimal total;
@@ -22,7 +23,7 @@ public class PoloniexTrade {
         this.total = rate.multiply(amount).setScale(12, BigDecimal.ROUND_DOWN);
     }
 
-    public PoloniexTrade(LocalDateTime date, BigDecimal rate, BigDecimal amount, BigDecimal fee, String type) {
+    public PoloniexTrade(Date date, BigDecimal rate, BigDecimal amount, BigDecimal fee, String type) {
         this(rate, amount, type);
         this.date = date;
         this.fee = fee;
@@ -47,11 +48,11 @@ public class PoloniexTrade {
         this.tradeID = tradeID;
     }
 
-    public LocalDateTime getDate() {
+    public Date getDate() {
         return date;
     }
 
-    public void setDate(LocalDateTime date) {
+    public void setDate(Date date) {
         this.date = date;
     }
 

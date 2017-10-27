@@ -17,37 +17,24 @@ import java.util.*;
  * <p>
  * Created by habanoz on 05.04.2017.
  */
-public class PatienceStrategy implements PolStrategy {
+public class PatienceStrategy extends AbstractPolBotStrategy {
     private static final Logger logger = LoggerFactory.getLogger(PoloniexTrade.class);
+    public static final int WEEK_IN_MILLIS = 7 * 24 * 60 * 60 * 1000;
 
-    protected static final double minAmount = 0.0001;
-    protected static final String CURR_PAIR_SEPARATOR = "_";
-    protected List<PoloniexOpenOrder> openOrderList;
-    protected List<PoloniexTrade> historyList;
-
-    public PatienceStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> historyList) {
-        this.openOrderList = openOrderList;
-        this.historyList = historyList;
+    public PatienceStrategy(CurrencyConfig currencyConfig, List<PoloniexChart> chartData, int timeFrame) {
+        super(currencyConfig, chartData, timeFrame);
     }
-
 
     @Override
-    public List<Order> execute(CurrencyConfig currencyConfig, ExchangePrice priceData, BigDecimal btcBalance, BigDecimal coinBalance, Date date) {
+    public List<Order> execute(PoloniexChart chart, BigDecimal btcBalance, BigDecimal coinBalance, List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> tradeHistory, List<PoloniexTrade> recentTradeHistory) {
         String currPair = currencyConfig.getCurrencyPair();
+        Date date = new Date(chart.getDate().longValue());
 
-        // this may indicate invalid currency name
-        if (priceData == null)
-            return Collections.emptyList();
-
-        return runStrategy(currencyConfig, currPair, btcBalance, coinBalance, openOrderList, priceData, date);
-    }
-
-    private List<Order> runStrategy(CurrencyConfig currencyConfig, String currPair, BigDecimal btcBalance, BigDecimal coinBalance, List<PoloniexOpenOrder> openOrderListForCurr, ExchangePrice priceData, Date date) {
         List<Order> poloniexOrders = new ArrayList<>();
 
         //current lowest market price
-        BigDecimal lowestBuyPrice = priceData.getBuyPrice();
-        BigDecimal highestSellPrice = priceData.getSellPrice();
+        BigDecimal lowestBuyPrice = chart.getClose();
+        BigDecimal highestSellPrice = chart.getClose();
 
 
         //
@@ -55,7 +42,7 @@ public class PatienceStrategy implements PolStrategy {
         // buy logic
         if (currencyConfig.getUsableBalancePercent() > 0 &&
                 currencyConfig.getBuyable() &&
-                openOrderListForCurr.stream().noneMatch(r -> r.getType().equalsIgnoreCase(PolBot.BUY_ACTION))) {
+                openOrderList.stream().noneMatch(r -> r.getType().equalsIgnoreCase(PolBot.BUY_ACTION))) {
 
             Order openOrder = createBuyOrder(currencyConfig, currPair, lowestBuyPrice, btcBalance, date);
 
@@ -68,7 +55,7 @@ public class PatienceStrategy implements PolStrategy {
         //
         // sell logic
         if (currencyConfig.getSellable() && coinBalance.doubleValue() > minAmount) {
-            Order openOrder = createSellOrder(currencyConfig, currPair, coinBalance, highestSellPrice, historyList, date);
+            Order openOrder = createSellOrder(currencyConfig, currPair, coinBalance, highestSellPrice, recentTradeHistory, date);
             if (openOrder != null)
                 poloniexOrders.add(openOrder);
         }
@@ -77,10 +64,10 @@ public class PatienceStrategy implements PolStrategy {
     }
 
     private Order createSellOrder(CurrencyConfig currencyConfig,
-                                              String currPair,
-                                              BigDecimal currCoinAmount,
-                                              BigDecimal highestSellPrice,
-                                              List<PoloniexTrade> currHistoryList, Date date) {
+                                  String currPair,
+                                  BigDecimal currCoinAmount,
+                                  BigDecimal highestSellPrice,
+                                  List<PoloniexTrade> currHistoryList, Date date) {
 
         // get last buying price to calculate selling price
         BigDecimal lastBuyPrice = getBuyPrice(highestSellPrice, currHistoryList);
@@ -100,7 +87,7 @@ public class PatienceStrategy implements PolStrategy {
                 PoloniexTrade history = currHistoryList.get(i);
 
                 // if remaining history records are too old, dont use them for selling price base
-                if (history.getDate().plus(1, ChronoUnit.WEEKS).isBefore(LocalDateTime.now()))
+                if (System.currentTimeMillis() - history.getDate().getTime() > WEEK_IN_MILLIS)
                     break;
 
                 // use most recent buy action as sell base
@@ -114,8 +101,8 @@ public class PatienceStrategy implements PolStrategy {
     }
 
     private Order createBuyOrder(CurrencyConfig currencyConfig,
-                                             String currPair,
-                                             BigDecimal lowestBuyPrice, BigDecimal buyBudgetInBtc, Date date) {
+                                 String currPair,
+                                 BigDecimal lowestBuyPrice, BigDecimal buyBudgetInBtc, Date date) {
         // not enough budget, return 0
         if (buyBudgetInBtc == null || buyBudgetInBtc.doubleValue() < minAmount) {
             return null;
@@ -131,19 +118,4 @@ public class PatienceStrategy implements PolStrategy {
         return new Order(currPair, PolBot.BUY_ACTION, buyPrice, buyCoinAmount, date);
     }
 
-    @Override
-    public List<PoloniexOpenOrder> getOrdersToCancel(CurrencyConfig currencyConfig, Date date) {
-
-        Iterator<PoloniexOpenOrder> openOrderIterator = openOrderList.iterator();
-        List<PoloniexOpenOrder> openOrdersToCancel = new ArrayList<>();
-        while (openOrderIterator.hasNext()) {
-            PoloniexOpenOrder openOrder = openOrderIterator.next();
-            if (currencyConfig.getBuyOrderCancellationHour() > 0 &&
-                    (date.getTime() - openOrder.getDate().getTime()) > currencyConfig.getBuyOrderCancellationHour() * 1000 * 60 * 60) {
-                openOrdersToCancel.add(openOrder);
-            }
-        }
-
-        return openOrdersToCancel;
-    }
 }

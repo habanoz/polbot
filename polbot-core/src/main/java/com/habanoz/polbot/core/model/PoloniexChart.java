@@ -30,6 +30,15 @@ public class PoloniexChart
         this.volume = volume;
     }
 
+    public PoloniexChart(BigDecimal date, BigDecimal high, BigDecimal low, BigDecimal open, BigDecimal close, BigDecimal volume) {
+        this.date = date;
+        this.high = high;
+        this.low = low;
+        this.open = open;
+        this.close = close;
+        this.volume = volume;
+    }
+
     public BigDecimal getDate() {
         return date;
     }

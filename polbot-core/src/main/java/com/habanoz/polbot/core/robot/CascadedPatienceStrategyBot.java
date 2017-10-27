@@ -1,5 +1,7 @@
 package com.habanoz.polbot.core.robot;
 
+import com.habanoz.polbot.core.api.PoloniexPublicApi;
+import com.habanoz.polbot.core.api.PoloniexPublicApiImpl;
 import com.habanoz.polbot.core.api.PoloniexTradingApi;
 import com.habanoz.polbot.core.api.PoloniexTradingApiImpl;
 import com.habanoz.polbot.core.entity.BotUser;
@@ -23,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Trading bot with Buy when cheap sell when high logic
@@ -77,10 +78,15 @@ public class CascadedPatienceStrategyBot extends PoloniexPatienceStrategyBot {
         //create tradingApi instance for current user
         PoloniexTradingApi tradingApi = new PoloniexTradingApiImpl(user);
 
+        PoloniexPublicApi publicApi = new PoloniexPublicApiImpl();
 
         Map<String, List<PoloniexOpenOrder>> openOrderMap = tradingApi.returnOpenOrders();
         Map<String, BigDecimal> balanceMap = tradingApi.returnBalances();
         Map<String, PoloniexCompleteBalance> completeBalanceMap = tradingApi.returnCompleteBalances();
+
+        final int emaTimeFrame = 12;
+        final long periodInSec = 300L;
+        long startTime = System.currentTimeMillis() - (emaTimeFrame * 2) * periodInSec * 1000;
 
 
         Map<String, List<PoloniexTrade>> historyMap = tradingApi.returnTradeHistory();
@@ -95,7 +101,9 @@ public class CascadedPatienceStrategyBot extends PoloniexPatienceStrategyBot {
 
             String currPair = currencyConfig.getCurrencyPair();
 
-            PolStrategy patienceStrategy = getPolStrategy(openOrderMap.get(currPair), historyMap.get(currPair), recentHistoryMap.get(currPair));
+            List<PoloniexChart> chartData = publicApi.returnChart(currPair, periodInSec, startTime, Long.MAX_VALUE);
+
+            PolStrategy patienceStrategy = new CascadedPatienceStrategy(currencyConfig,chartData, emaTimeFrame );
 
             String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
 
@@ -118,14 +126,13 @@ public class CascadedPatienceStrategyBot extends PoloniexPatienceStrategyBot {
             Date now = new Date();
 
             List<Order> orders = patienceStrategy.execute(
-                    currencyConfig,
-                    new ExchangePrice(lowestBuyPrice, highestSellPrice, now, ticker.getBaseVolume()),
-                    btcBalance, currBalance, now
+                    new PoloniexChart(new BigDecimal(now.getTime()), lowestBuyPrice, lowestBuyPrice, lowestBuyPrice, lowestBuyPrice, ticker.getBaseVolume()),
+                    btcBalance, currBalance, openOrderMap.get(currPair), historyMap.get(currPair), recentHistoryMap.get(currPair)
             );
 
             btcBalance = createOrders(user, tradingApi, btcBalance, orderResults, orders);
 
-            cancelOrders(tradingApi, currencyConfig, patienceStrategy, now);
+            cancelOrders(tradingApi, openOrderMap.get(currPair), patienceStrategy, now);
 
         }
 
@@ -134,9 +141,4 @@ public class CascadedPatienceStrategyBot extends PoloniexPatienceStrategyBot {
         logger.info("Completed for user {}", user);
     }
 
-
-    @Override
-    public PolStrategy getPolStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> tradeList, List<PoloniexTrade> historyList) {
-        return new CascadedPatienceStrategy(openOrderList, tradeList, historyList);
-    }
 }

@@ -54,7 +54,7 @@
             type="text/javascript"></script>
     <!-- Chart code -->
     <script th:inline="javascript">
-        var url = "/gettradehistory/BTC_ETC/" + [[${period}]];
+        var url = "/gettradehistory/"+[[${currPair}]]+"/" + [[${period}]];
     </script>
 
     <!-- Chart code -->
@@ -106,8 +106,8 @@
                 "lineThickness": 2,
                 "title": "Buy Volume",
                 "useLineColorForBulletBorder": true,
-                "valueField": "buy", "type": "column",
-                "balloonText": "buy - [[buy]]-[[start]]"
+                "valueField": "buyVol",
+                "balloonText": "buy - [[buyVol]]-[[start]]"
             }, {
                 "id": "g2",
                 "balloon": {
@@ -124,8 +124,8 @@
                 "title": "Sell Volume",
 
                 "useLineColorForBulletBorder": true,
-                "valueField": "sell", "type": "column",
-                "balloonText": "sell - [[sell]]-[[start]]"
+                "valueField": "sellVol",
+                "balloonText": "sell - [[sellVol]]-[[start]]"
             }, {
                 "id": "g3",
                 "balloon": {
@@ -139,11 +139,11 @@
                 "bulletSize": 5,
                 "hideBulletsCount": 50,
                 "lineThickness": 2,
-                "title": "Buy Volume Line",
+                "title": "Buy Quote Volume",
 
                 "useLineColorForBulletBorder": true,
-                "valueField": "buy",
-                "balloonText": "buy - [[buy]]-[[start]]"
+                "valueField": "buyQVol",
+                "balloonText": "buy - [[buyQVol]]-[[start]]"
                 , "hidden": true
             }, {
                 "id": "g4",
@@ -158,11 +158,11 @@
                 "bulletSize": 5,
                 "hideBulletsCount": 50,
                 "lineThickness": 2,
-                "title": "Sell Volume Line",
+                "title": "Sell Quote Volume",
 
                 "useLineColorForBulletBorder": true,
-                "valueField": "sell",
-                "balloonText": "sell - [[sell]]-[[start]]"
+                "valueField": "sellQVol",
+                "balloonText": "sell - [[sellQVol]]-[[start]]"
                 , "hidden": true
             }],
 
@@ -240,12 +240,12 @@
 <div id="chartdiv"></div>
 
 <div class="btn-group" role="group" aria-label="Basic example">
-    <a href="/tradehistory/BTC_ETC/15mm" type="button" class="btn btn-secondary">15m</a>
-    <a href="/tradehistory/BTC_ETC/30mm" type="button" class="btn btn-secondary">30m</a>
-    <a href="/tradehistory/BTC_ETC/hh" type="button" class="btn btn-secondary">1h</a>
-    <a href="/tradehistory/BTC_ETC/1d" type="button" class="btn btn-secondary">1d</a>
-    <a href="/tradehistory/BTC_ETC/1w" type="button" class="btn btn-secondary">1w</a>
-    <a href="/tradehistory/BTC_ETC/1m" type="button" class="btn btn-secondary">1m</a>
+    <a th:href="@{/tradehistory/{currPair}/15mm(currPair=${currPair})}" type="button" class="btn btn-secondary">15m</a>
+    <a th:href="@{/tradehistory/{currPair}/30mm(currPair=${currPair})}" type="button" class="btn btn-secondary">30m</a>
+    <a th:href="@{/tradehistory/{currPair}/hh(currPair=${currPair})}" type="button" class="btn btn-secondary">1h</a>
+    <a th:href="@{/tradehistory/{currPair}/1d(currPair=${currPair})}" type="button" class="btn btn-secondary">1d</a>
+    <a th:href="@{/tradehistory/{currPair}/1w(currPair=${currPair})}" type="button" class="btn btn-secondary">1w</a>
+    <a th:href="@{/tradehistory/{currPair}/1m(currPair=${currPair})}" type="button" class="btn btn-secondary">1m</a>
 </div>
 
 <br/>

@@ -17,6 +17,9 @@ import java.time.ZoneId;
 import java.util.*;
 
 /**
+ * simulates behaviour of an exchange
+ * Maps chartdata to exchangeprice
+ * <p>
  * Created by huseyina on 6/3/2017.
  */
 public class Exchange {
@@ -24,6 +27,7 @@ public class Exchange {
     private BigDecimal initialBtcBalance;
     private List<PoloniexTrade> historyData;
     private List<PoloniexOpenOrder> openOrders;
+    private List<PoloniexChart> chartData;
 
 
     //internal
@@ -36,7 +40,6 @@ public class Exchange {
     private Long periodInSec;
     private int currentIndex;
     private CurrencyConfig currencyConfig;
-    private List<ExchangePrice> exchangeData;
     private PoloniexPublicApi publicApi = new PoloniexPublicApiImpl();
     public static final int TICKS = 10;
 
@@ -50,11 +53,11 @@ public class Exchange {
         this.currencyConfig = currencyConfig;
         this.periodInSec = periodInSec;
 
-        List<PoloniexChart> chartData = publicApi.returnChart(currencyConfig.getCurrencyPair(), periodInSec, from.getTime() / 1000, System.currentTimeMillis() / 1000);
-        exchangeData = generateExchangeData(chartData);
+        chartData = publicApi.returnChart(currencyConfig.getCurrencyPair(), periodInSec, from.getTime() / 1000, System.currentTimeMillis() / 1000);
 
         historyData = new ArrayList<>();
         openOrders = new ArrayList<>();
+
 
         this.currentBTCBalance = this.initialBtcBalance;
         this.currentBTCOnOrder = BigDecimal.valueOf(0);
@@ -64,33 +67,21 @@ public class Exchange {
         currentIndex = -1;
     }
 
-    private List<ExchangePrice> generateExchangeData(List<PoloniexChart> chartData) {
-        List<ExchangePrice> priceData = new ArrayList<>();
-
-        for (PoloniexChart poloniexChart : chartData) {
-            priceData.addAll(getPriceIndex(poloniexChart));
-        }
-
-        return priceData;
-    }
-
     public boolean hasMore() {
-        return currentIndex + 1 < exchangeData.size();
+        return currentIndex + 1 < chartData.size();
     }
 
-    public ExchangePrice proceed() {
+    public PoloniexChart proceed() {
         currentIndex++;
 
-        if (currentIndex >= exchangeData.size())
+        if (currentIndex >= chartData.size())
             throw new RuntimeException("Data not available, call hasMore before proceed");
 
-        ExchangePrice priceData = exchangeData.get(currentIndex);
+        PoloniexChart priceData = chartData.get(currentIndex);
+        Date date = new Date(priceData.getDate().longValue() * 1000);
 
-        Date date = priceData.getDate();
-
-
-        BigDecimal buyPrice = priceData.getBuyPrice();
-        BigDecimal sellPrice = priceData.getSellPrice();
+        BigDecimal buyPrice = priceData.getClose();
+        BigDecimal sellPrice = priceData.getClose();
 
         BigDecimal[] buyResults = executeBuyOrders(openOrders, buyFeeRate, historyData, buyPrice, date);
         BigDecimal[] sellResults = executeSellOrders(openOrders, sellFeeRate, historyData, sellPrice, date);
@@ -107,24 +98,45 @@ public class Exchange {
     public void addOrders(List<Order> orders) {
 
         for (Order order_ : orders) {
-            PoloniexOpenOrder order=new PoloniexOpenOrder(order_);
-            if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
-                currentBTCBalance = currentBTCBalance.subtract(order.getTotal());
-                currentBTCOnOrder = currentBTCOnOrder.add(order.getTotal());
+            PoloniexOpenOrder order = new PoloniexOpenOrder(order_);
 
-                openOrders.add(order);
+            if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
+
+                if (currentBTCBalance.compareTo(order.getTotal()) < 0) {
+                    logger.info("BUY Order NOT added {}, insufficient funds", order);
+
+                } else {
+                    currentBTCBalance = currentBTCBalance.subtract(order.getTotal());
+                    currentBTCOnOrder = currentBTCOnOrder.add(order.getTotal());
+
+                    logger.info("BUY Order added {}", order);
+                    openOrders.add(order);
+                }
             }
 
             if (order.getType().equalsIgnoreCase(PolBot.SELL_ACTION)) {
-                currentCoinBalance = currentCoinBalance.subtract(order.getAmount());
-                currentCoinOnOrder = currentCoinOnOrder.add(order.getAmount());
+                if (currentCoinBalance.compareTo(order.getAmount()) < 0) {
+                    logger.info("SELL Order NOT added {}, insufficient funds", order);
 
-                openOrders.add(order);
+                } else {
+                    currentCoinBalance = currentCoinBalance.subtract(order.getAmount());
+                    currentCoinOnOrder = currentCoinOnOrder.add(order.getAmount());
+
+                    logger.info("SELL Order added {}", order);
+                    openOrders.add(order);
+                }
             }
         }
     }
 
-    private List<ExchangePrice> getPriceIndex(PoloniexChart chart) {
+    /**
+     * interpolate candle data and generate continuous price index
+     *
+     * @param chart
+     * @return
+     * @deprecated do not use, no proven benefit
+     */
+    private List<ExchangePrice> getContinuousPriceIndex(PoloniexChart chart) {
         final BigDecimal open = chart.getOpen();
         final BigDecimal close = chart.getClose();
         final BigDecimal high = chart.getHigh();
@@ -199,7 +211,7 @@ public class Exchange {
     }
 
 
-    private BigDecimal[] executeSellOrders(List<PoloniexOpenOrder> openOrders, float sellFeeRate, List<PoloniexTrade> historyMap, BigDecimal sellPrice, Date date) {
+    private BigDecimal[] executeSellOrders(List<PoloniexOpenOrder> openOrders, float sellFeeRate, List<PoloniexTrade> historyList, BigDecimal sellPrice, Date date) {
         BigDecimal gained = new BigDecimal(0);
         BigDecimal ordersCompleted = new BigDecimal(0);
         Iterator<PoloniexOpenOrder> openOrdersIterator = openOrders.iterator();
@@ -208,14 +220,16 @@ public class Exchange {
             if (openOrder.getType().equalsIgnoreCase(PolBot.SELL_ACTION)) {
                 if (openOrder.getRate().doubleValue() <= sellPrice.doubleValue()) {
 
-                    //TODO consider volume
-                    PoloniexTrade poloniexTrade = new PoloniexTrade(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()), sellPrice, openOrder.getAmount(), new BigDecimal(sellFeeRate), PolBot.SELL_ACTION);
-
-                    historyMap.add(poloniexTrade);
-
                     // apply fees and update btc balance
-                    gained = gained.add(openOrder.getTotal().multiply(new BigDecimal(1 - sellFeeRate)));
+                    BigDecimal btcAmount=openOrder.getTotal().multiply(new BigDecimal(1 - sellFeeRate));
+                    gained = gained.add(btcAmount);
                     ordersCompleted = ordersCompleted.add(openOrder.getAmount());
+
+
+                    //TODO consider volume
+                    PoloniexTrade poloniexTrade = new PoloniexTrade(date, sellPrice, openOrder.getAmount(), new BigDecimal(sellFeeRate), PolBot.SELL_ACTION);
+
+                    historyList.add(poloniexTrade);
 
                     openOrdersIterator.remove();
 
@@ -232,31 +246,37 @@ public class Exchange {
         return amount.multiply(sellPrice).multiply(new BigDecimal(1 - sellFeeRate));
     }
 
+    //TODO assign id s to orders and trades to track them
+    //TODO handle fee s
     private BigDecimal[] executeBuyOrders(List<PoloniexOpenOrder> openOrders, float buyFeeRate, List<PoloniexTrade> historyData, BigDecimal buyPrice, Date date) {
         BigDecimal gained = new BigDecimal(0);
         BigDecimal ordersCompleted = new BigDecimal(0);
         Iterator<PoloniexOpenOrder> openOrdersIterator = openOrders.iterator();
+
         while (openOrdersIterator.hasNext()) {
             PoloniexOpenOrder openOrder = openOrdersIterator.next();
             if (openOrder.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
                 if (openOrder.getRate().floatValue() >= buyPrice.floatValue()) {
 
-                    //TODO consider volume
-                    PoloniexTrade poloniexTrade = new PoloniexTrade(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()), buyPrice, openOrder.getAmount(), new BigDecimal(buyFeeRate), PolBot.BUY_ACTION);
-
-                    historyData.add(poloniexTrade);
-
                     // apply fees and update coin balance
-                    gained = gained.add(openOrder.getAmount().multiply(new BigDecimal(1 - buyFeeRate)));
+                    BigDecimal coinAmount=openOrder.getAmount().multiply(new BigDecimal(1 - buyFeeRate));
+                    gained = gained.add(coinAmount);
                     ordersCompleted = ordersCompleted.add(openOrder.getTotal());
 
                     openOrdersIterator.remove();
+
+                    PoloniexTrade poloniexTrade = new PoloniexTrade(date, buyPrice, coinAmount, new BigDecimal(buyFeeRate), PolBot.BUY_ACTION);
+
+                    historyData.add(poloniexTrade);
+
+
 
                     logger.info("Buy Trade Completed {}", poloniexTrade);
                     logger.info("Buy Trade Completed at price {}", buyPrice.doubleValue());
                 }
             }
         }
+
         return new BigDecimal[]{gained, ordersCompleted};
     }
 
@@ -264,8 +284,35 @@ public class Exchange {
         return currentBTCBalance;
     }
 
+    /**
+     * return all trade history
+     *
+     * @return
+     */
     public List<PoloniexTrade> getHistoryData() {
         return historyData;
+    }
+
+    /**
+     * Return trades happening after given date
+     *
+     * @param since
+     * @return
+     */
+    public List<PoloniexTrade> getHistoryData(Date since) {
+
+        int lastSeenIndex = historyData.size() - 1;
+        for (; lastSeenIndex >= 0; lastSeenIndex--)
+            if (since.getTime() > historyData.get(lastSeenIndex).getDate().getTime())
+                break;
+
+        if (lastSeenIndex < 0)
+            return historyData;
+
+        if (lastSeenIndex >= historyData.size() - 1)
+            return Collections.EMPTY_LIST;
+
+        return historyData.subList(lastSeenIndex + 1, historyData.size());
     }
 
     public List<PoloniexOpenOrder> getOpenOrders() {
@@ -295,24 +342,35 @@ public class Exchange {
             if (order.getType().equalsIgnoreCase(PolBot.BUY_ACTION)) {
 
                 openOrders.remove(order);
-                BigDecimal orderAmount = order.getTotal();
 
-                currentBTCBalance = currentBTCBalance.add(orderAmount);
-                currentBTCOnOrder = currentBTCOnOrder.subtract(orderAmount);
+                currentBTCBalance = currentBTCBalance.add(order.getTotal());
+                currentBTCOnOrder = currentBTCOnOrder.subtract(order.getTotal());
+
+                logger.info("BUY Order cancelled {}", order);
 
             } else {
                 openOrders.remove(order);
-                BigDecimal orderAmount = order.getAmount();
 
-                currentCoinBalance = currentCoinBalance.add(orderAmount);
-                currentCoinOnOrder = currentCoinOnOrder.subtract(orderAmount);
+                currentCoinBalance = currentCoinBalance.add(order.getAmount());
+                currentCoinOnOrder = currentCoinOnOrder.subtract(order.getAmount());
 
+                logger.info("SELL Order cancelled {}", order);
             }
         }
     }
 
     public void sell(BigDecimal amount, float sellFeeRate) {
-        currentBTCBalance = currentBTCBalance.add(amount.multiply(exchangeData.get(currentIndex).getSellPrice()).multiply(new BigDecimal(1 - sellFeeRate)));
+        currentBTCBalance = currentBTCBalance.add(amount.multiply(chartData.get(currentIndex).getClose()).multiply(new BigDecimal(1 - sellFeeRate)));
         currentCoinBalance = currentCoinBalance.subtract(amount);
+    }
+
+    public List<PoloniexChart> getChartData() {
+        if (currentIndex >= chartData.size())
+            return chartData;
+
+        if (currentIndex < 0)
+            return Collections.EMPTY_LIST;
+
+        return chartData.subList(0, currentIndex + 1);//end index is exclusive
     }
 }

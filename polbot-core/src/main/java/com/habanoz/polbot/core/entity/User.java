@@ -1,10 +1,8 @@
 package com.habanoz.polbot.core.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Created by huseyina on 5/21/2017.
@@ -15,6 +13,7 @@ public class User implements Serializable{
     private String userName;
     private String password;
     private boolean active;
+    private Date lastLogin;
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -48,6 +47,15 @@ public class User implements Serializable{
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(Date lastLogin) {
+        this.lastLogin = lastLogin;
     }
 
     @Override

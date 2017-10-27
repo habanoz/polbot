@@ -25,9 +25,7 @@ public interface PolBot {
 
     void sendNotificationMail(BotUser user, Map<String, PoloniexCompleteBalance> completeBalanceMap, Map<String, List<PoloniexTrade>> recentHistoryMap, List<PoloniexOrderResult> orderResults);
 
-    void cancelOrders(PoloniexTradingApi tradingApi, CurrencyConfig currencyConfig, PolStrategy patienceStrategy, Date now);
+    void cancelOrders(PoloniexTradingApi tradingApi, List<PoloniexOpenOrder> openOrderList, PolStrategy patienceStrategy, Date now);
 
     BigDecimal createOrders(BotUser user, PoloniexTradingApi tradingApi, BigDecimal btcBalance, List<PoloniexOrderResult> orderResults, List<Order> orders);
-
-    PolStrategy getPolStrategy(List<PoloniexOpenOrder> openOrderList, List<PoloniexTrade> tradeList, List<PoloniexTrade> historyList);
 }

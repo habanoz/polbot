@@ -132,6 +132,7 @@
                                             <th>Available</th>
                                             <th>Orders</th>
                                             <th>BTC Value</th>
+                                            <th>Dollar Value</th>
                                             <th>Curr. Price</th>
                                             <th>24H Change</th>
                                             <th>Avg. Price</th>
@@ -148,6 +149,7 @@
                                             <td th:text="${o.value.available}">0.2</td>
                                             <td th:text="${o.value.onOrders}">0.2</td>
                                             <td th:text="${o.value.btcValue}">0.002</td>
+                                            <td th:text="${details[o.key].dollarValue}">0.002</td>
                                             <td th:text="${details[o.key].currentPrice}">0.002</td>
                                             <td th:text="${'% '+details[o.key].change24H}">+2</td>
                                             <td th:text="${details[o.key].averagePrice}">0.002</td>

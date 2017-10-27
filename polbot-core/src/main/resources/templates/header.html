@@ -24,7 +24,8 @@
                 <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/edituserinfo/?show=}">Edit User</a></li>
                 <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/editbotuserinfo/1?show=}">Edit Bot User</a></li>
                 <li><a href="#" th:if="${#authorization?.expression('hasRole(''BOT'')')}" th:href="@{/editbotinfo/1?show=}">Edit Bot Info</a></li>
-                <li><a href="#" th:if="${#authorization?.expression('hasRole(''ANALYSIS'')')}" th:href="@{/tradehistory/BTC_ETC/1w}">Analiz</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''ANALYSIS'')')}" th:href="@{/tradehistory/BTC_ETC/1w}">Gecmis</a></li>
+                <li><a href="#" th:if="${#authorization?.expression('hasRole(''ANALYSIS'')')}" th:href="@{/analyse}">Analiz</a></li>
             </ul>
 
             <ul class="nav navbar-nav navbar-right">

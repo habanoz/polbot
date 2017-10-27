@@ -13,15 +13,18 @@ import javax.sql.DataSource;
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
+    @Autowired
+    private LoginSucessHandler loginSucessHandler;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .antMatchers("/allusers","/collectiveorder/*","/currencyconfig/*","/edituserinfo","/editbotinfo","/editbotuserinfo/*","/mybalances/*","/mycurrencies/*","/orders/*").hasRole("BOT")
-                .antMatchers("/tradehistory/*").hasRole("ANALYSIS")
-                .antMatchers("/", "/home", "/DataTables/**","/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                .antMatchers("/allusers", "/collectiveorder/*", "/currencyconfig/*", "/edituserinfo", "/editbotinfo", "/editbotuserinfo/*", "/mybalances/*", "/mycurrencies/*", "/orders/*").hasRole("BOT")
+                .antMatchers("/tradehistory/*","/analyse").hasRole("ANALYSIS")
+                .antMatchers("/", "/home", "/DataTables/**", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .formLogin().loginPage("/login").defaultSuccessUrl("/")
+                .formLogin().loginPage("/login").defaultSuccessUrl("/").successHandler(loginSucessHandler)
                 .usernameParameter("username").passwordParameter("password")
                 .permitAll()
                 .and()

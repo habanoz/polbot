@@ -2,6 +2,7 @@ package com.habanoz.polbot.core.utils;
 
 import com.habanoz.polbot.core.entity.CurrencyConfig;
 import com.habanoz.polbot.core.model.Order;
+import com.habanoz.polbot.core.model.PoloniexChart;
 import com.habanoz.polbot.core.model.PoloniexOpenOrder;
 import com.habanoz.polbot.core.model.PoloniexTrade;
 import com.habanoz.polbot.core.robot.PatienceStrategy;
@@ -9,6 +10,8 @@ import com.habanoz.polbot.core.robot.PatienceStrategy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -35,21 +38,23 @@ public class ExchangeMediator {
         exchange.init(currencyConfig, calendar.getTime(), 300L);
 
         //initialize strategy
-        PatienceStrategy patienceStrategy = new PatienceStrategy(exchange.getOpenOrders(), exchange.getHistoryData());
+        PatienceStrategy patienceStrategy = new PatienceStrategy(currencyConfig, exchange.getChartData(), 0);
 
         //run exchange loop
         while (exchange.hasMore()) {
             // proceed the exchange
-            ExchangePrice priceData = exchange.proceed();
+            PoloniexChart priceData = exchange.proceed();
+
+            Date date = new Date(priceData.getDate().longValue());
 
             // get next orders from strategy
-            List<Order> orders = patienceStrategy.execute(currencyConfig, priceData, exchange.getCurrentBTCBalance(), exchange.getCurrentCoinBalance(), priceData.getDate());
+            List<Order> orders = patienceStrategy.execute(priceData, exchange.getCurrentBTCBalance(), exchange.getCurrentCoinBalance(), exchange.getOpenOrders(), exchange.getHistoryData(), Collections.emptyList());
 
             // fulfill orders
             exchange.addOrders(orders);
 
             // get orders to cancel
-            List<PoloniexOpenOrder> orders2Cancel = patienceStrategy.getOrdersToCancel(currencyConfig, priceData.getDate());
+            List<PoloniexOpenOrder> orders2Cancel = patienceStrategy.getOrdersToCancel(exchange.getOpenOrders(), date);
 
             // cancel orders
             exchange.cancelOrders(orders2Cancel);

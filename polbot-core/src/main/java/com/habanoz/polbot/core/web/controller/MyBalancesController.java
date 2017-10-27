@@ -65,6 +65,9 @@ public class MyBalancesController {
 
         PublicPoloniexTickerRegistry.TickerPack tickerPack = publicRegistry.getTickerMap();
         PublicCoindeskRegistry.PricePack btcPricePack = coindeskRegistry.getBtcPriceMap();
+        double oneBtcUsd =  Optional.ofNullable(btcPricePack.getBtcPriceMap().get("USD")).map(s -> s.getRate_float()).orElse(0f);
+        double btcUsd = allBtcProperty * oneBtcUsd;
+        double btcTry = allBtcProperty * Optional.ofNullable(btcPricePack.getBtcPriceMap().get("TRY")).map(s -> s.getRate_float()).orElse(0f);
 
         final String prefix = "BTC_";
         for (String currency : completeBalanceMap.keySet()) {
@@ -99,6 +102,7 @@ public class MyBalancesController {
 
             Map<String, Object> detailMap = new HashMap<>();
             detailMap.put("total", totalBalance);
+            detailMap.put("dollarValue",numberFormat.format( balance.getBtcValue() * oneBtcUsd));
             detailMap.put("averagePrice", numberFormat.format(averagePrice));
             detailMap.put("currentPrice", numberFormat.format(currentPrice));
             detailMap.put("differencePricePercent", numberFormat2d.format(differencePricePercent));
@@ -108,8 +112,6 @@ public class MyBalancesController {
             detailsMap.put(currency, detailMap);
         }
 
-        double btcUsd = allBtcProperty * Optional.ofNullable(btcPricePack.getBtcPriceMap().get("USD")).map(s -> s.getRate_float()).orElse(0f);
-        double btcTry = allBtcProperty * Optional.ofNullable(btcPricePack.getBtcPriceMap().get("TRY")).map(s -> s.getRate_float()).orElse(0f);
         model.put("botUser", botUser);
         model.put("balances", completeBalanceMap);
         model.put("details", detailsMap);
