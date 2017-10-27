@@ -60,7 +60,7 @@ public class PoloniexPatienceStrategyBot implements PolBot {
 
     private static final double minAmount = 0.0001;
     private static final long BUY_SELL_SLEEP = 300;
-    private static final String BASE_CURR = "BTC";
+    private static final String[] BASE_CURR_ARRAY = {"BTC", "USDT"};
     private static final String CURR_PAIR_SEPARATOR = "_";
 
 
@@ -108,52 +108,62 @@ public class PoloniexPatienceStrategyBot implements PolBot {
 
         Map<String, List<PoloniexTrade>> recentHistoryMap = new TradeTrackerServiceImpl(tradeHistoryTrackRepository, tradingApi, user).returnTrades(true);
 
-        BigDecimal btcBalance = balanceMap.get(BASE_CURR);
 
         List<PoloniexOrderResult> orderResults = new ArrayList<>();
-        HashMap<String, BigDecimal> tradingBTCMap = getBTCTradingMap(currencyConfigs, btcBalance, openOrderMap);
 
 
-        for (CurrencyConfig currencyConfig : currencyConfigs) {
+        for (String baseCurrency:BASE_CURR_ARRAY) {
+            BigDecimal baseCurrencyBalance = balanceMap.get(baseCurrency);
+            //HashMap<String, BigDecimal> tradingBTCMap = getBTCTradingMap(currencyConfigs, btcBalance, openOrderMap);
 
-            String currPair = currencyConfig.getCurrencyPair();
+            List<CurrencyConfig> currencyConfigsInBaseCurrency=currencyConfigs.stream().filter(r->r.getCurrencyPair().toLowerCase().startsWith(baseCurrency.toLowerCase())).collect(Collectors.toList());
 
-            final int emaTimeFrame = 12;
-            final long periodInSec = 300L;
-            long startTime = System.currentTimeMillis() - (emaTimeFrame * 2) * periodInSec * 1000;
-            List<PoloniexChart> chartData = publicApi.returnChart(currPair, periodInSec, startTime, Long.MAX_VALUE);
+            for (CurrencyConfig currencyConfig : currencyConfigsInBaseCurrency) {
 
-            PolStrategy patienceStrategy = new PatienceStrategy(currencyConfig, chartData, emaTimeFrame);
+                String currPair = currencyConfig.getCurrencyPair();
 
-            String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
+                final int emaTimeFrame = 12;
+                final long periodInSec = 300L;
+                long startTime = System.currentTimeMillis() - (emaTimeFrame * 2) * periodInSec * 1000;
+                List<PoloniexChart> chartData = publicApi.returnChart(currPair, periodInSec, startTime, Long.MAX_VALUE);
 
-            BigDecimal currBalance = balanceMap.get(currName);
+                PolStrategy patienceStrategy = new PatienceStrategy(currencyConfig, chartData, emaTimeFrame);
 
-            // this may indicate invalid currency name
-            if (tickerMap == null)
-                continue;
+                String currName = currPair.split(CURR_PAIR_SEPARATOR)[1];
 
-            PoloniexTicker ticker = tickerMap.get(currPair);
+                BigDecimal currBalance = balanceMap.get(currName);
 
-            // this may indicate invalid currency name
-            if (ticker == null)
-                continue;
+                // this may indicate invalid currency name
+                if (tickerMap == null)
+                    continue;
 
-            //current lowest market price
-            BigDecimal lowestBuyPrice = ticker.getLowestAsk();
-            BigDecimal highestSellPrice = ticker.getHighestBid();
+                PoloniexTicker ticker = tickerMap.get(currPair);
 
-            Date now = new Date();
+                // this may indicate invalid currency name
+                if (ticker == null)
+                    continue;
 
-            List<Order> orders = patienceStrategy.execute(
-                    new PoloniexChart(new BigDecimal(now.getTime()), lowestBuyPrice, lowestBuyPrice, lowestBuyPrice, lowestBuyPrice, ticker.getBaseVolume()),
-                    tradingBTCMap.get(currName), currBalance, openOrderMap.get(currPair), historyMap.get(currPair), recentHistoryMap.get(currPair)
-            );
+                //current lowest market price
+                BigDecimal lowestBuyPrice = ticker.getLowestAsk();
+                BigDecimal highestSellPrice = ticker.getHighestBid();
 
-            btcBalance = createOrders(user, tradingApi, btcBalance, orderResults, orders);
+                Date now = new Date();
 
-            cancelOrders(tradingApi, openOrderMap.get(currPair), patienceStrategy, now);
+                BigDecimal budget = baseCurrencyBalance.multiply(BigDecimal.valueOf(currencyConfig.getUsableBalancePercent()/100));
 
+                // if only one currency config balance is empty, use all remaining balance
+                if (currencyConfigsInBaseCurrency.size()==completeBalanceMap.size()+1 && !completeBalanceMap.containsKey(currName))
+                    budget=baseCurrencyBalance;
+
+                List<Order> orders = patienceStrategy.execute(
+                        new PoloniexChart(new BigDecimal(now.getTime()), lowestBuyPrice, lowestBuyPrice, lowestBuyPrice, lowestBuyPrice, ticker.getBaseVolume()),
+                       budget, currBalance, openOrderMap.get(currPair), historyMap.get(currPair), recentHistoryMap.get(currPair)
+                );
+
+                baseCurrencyBalance = createOrders(user, tradingApi, baseCurrencyBalance, orderResults, orders);
+
+                cancelOrders(tradingApi, openOrderMap.get(currPair), patienceStrategy, now);
+            }
         }
 
         sendNotificationMail(user, completeBalanceMap, recentHistoryMap, orderResults);
