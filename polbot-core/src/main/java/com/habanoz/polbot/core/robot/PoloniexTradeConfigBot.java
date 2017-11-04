@@ -139,9 +139,10 @@ public class PoloniexTradeConfigBot implements PolBot {
                 botTradeConfig.setUpdated(now);
 
                 cancelOpenOrders(tradingApi, openOrderMap, currPair);
-
-                Order order = new Order(currPair, PolBot.SELL_ACTION, lowestBuyPrice.multiply(BigDecimal.valueOf(0.90)), coinBalance);// sell a little lower to ensure it is sold
-                orders.add(order);
+                if (coinBalance.compareTo(BigDecimal.valueOf(0))>0){
+                    Order order = new Order(currPair, PolBot.SELL_ACTION, lowestBuyPrice.multiply(BigDecimal.valueOf(0.90)), coinBalance);// sell a little lower to ensure it is sold
+                    orders.add(order);
+                }
 
                 continue;
             }
