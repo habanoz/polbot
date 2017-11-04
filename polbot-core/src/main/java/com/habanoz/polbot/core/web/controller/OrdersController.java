@@ -70,6 +70,9 @@ public class OrdersController {
         User user = userRepository.findByUserName(principal.getName());
         BotUser botUser = botUserRepository.findByUserAndBuId(user, buid);
 
+        if(botUser==null)
+            throw new RuntimeException("No such user!!!");
+
         Map<String, List<PoloniexOpenOrder>> openOrderMap = getOpenOrdersList(botUser);
 
         model.put("userOpenOrders", openOrderMap);

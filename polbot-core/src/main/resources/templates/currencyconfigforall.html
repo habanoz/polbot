@@ -84,8 +84,8 @@
                             <input id="userId" type="hidden"
                                    th:field="*{botUser}"/>
 
-                            <input id="currencyConfigId" type="hidden"
-                                   th:field="*{currencyConfigId}"/>
+                            <input id="tradeConfigId" type="hidden"
+                                   th:field="*{tradeConfigId}"/>
                             <input id="currencyPair" type="hidden"
                                    th:field="*{currencyPair}"/>
 
@@ -104,10 +104,10 @@
 
                             <div class="form-group">
                                 <label th:for="inputUsableBalancePercent"
-                                       th:text="#{currencyconfig.usableBalancePercent} "/>
+                                       th:text="#{currencyconfig.usableBalance} "/>
 
                                 <input id="inputUsableBalancePercent" type="text" class="form-control"
-                                       th:field="*{usableBalancePercent}"
+                                       th:field="*{usableBalance}"
                                        th:errorclass="fieldError"/><br/>
 
 

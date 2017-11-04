@@ -75,13 +75,13 @@
                     <div class="well">
 
                         <div class="text-left">
-                            <h2 th:text="#{currencyconfig.title}">Leave a Review</h2>
+                            <h2 th:text="#{bottradeconfig.title}">Leave a Review</h2>
                         </div>
 
                         <hr/>
 
 
-                        <form action="#" th:action="@{/currencyconfig}" th:object="${currencyConfig}" method="post">
+                        <form action="#" th:action="@{/bottradeconfig}" th:object="${botTradeConfig}" method="post">
 
                             <input id="botUser" type="hidden"
                                    th:field="*{botUser}"/>
@@ -96,8 +96,7 @@
 
                             </div>
                             <div class="form-group">
-                                <label th:for="inputUsableBalancePercent"
-                                       th:text="#{currencyconfig.usableBalance} "/>
+                                <label th:for="inputUsableBalance" th:text="#{bottradeconfig.usableBalance} "></label>
                                 <input id="inputUsableBalancePercent" type="text"
                                        th:field="*{usableBalance}" class="form-control"
                                        th:errorclass="fieldError"/>
@@ -105,60 +104,86 @@
                             </div>
 
                             <div class="form-group">
-                                <label th:for="inputBuyAtPrice" th:text="#{currencyconfig.buyAtPrice} "/>
+                                <label th:for="inputBuyAtPriceHigh" th:text="#{bottradeconfig.buyAtPriceHigh} "></label>
+                                <input id="inputBuyAtPriceHigh" type="text" th:field="*{buyAtPriceHigh}"
+                                       class="form-control"
+                                       th:errorclass="fieldError"/><br/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="inputBuyAtPrice" th:text="#{bottradeconfig.buyAtPrice} "></label>
                                 <input id="inputBuyAtPrice" type="text" th:field="*{buyAtPrice}" class="form-control"
                                        th:errorclass="fieldError"/><br/>
                             </div>
+
                             <div class="form-group">
-                                <label th:for="inputBuyOnPercent" th:text="#{currencyconfig.buyOnPercent} "/>
-
-
-                                        <input id="inputBuyOnPercent" type="text" th:field="*{buyOnPercent}" class="form-control"
-                                               th:errorclass="fieldError"/><br/>
-
-
+                                <label th:for="inputBuyAtPriceLow" th:text="#{bottradeconfig.buyAtPriceLow} "></label>
+                                <input id="inputBuyAtPriceLow" type="text" th:field="*{buyAtPriceLow}"
+                                       class="form-control" th:errorclass="fieldError"/><br/>
                             </div>
 
                             <div class="form-group">
-                                <label th:for="inputSellAtPrice" th:text="#{currencyconfig.sellAtPrice} "/>
-
-
-                                        <input id="inputSellAtPrice" type="text" th:field="*{sellAtPrice}" class="form-control"
-                                               th:errorclass="fieldError"/><br/>
-
-
-                            </div>
-                            <div class="form-group">
-                                <label th:for="inputSellOnPercent" th:text="#{currencyconfig.sellOnPercent} "/>
-
-
-                                        <input id="inputSellOnPercent" type="text" th:field="*{sellOnPercent}"  class="form-control"
-                                               th:errorclass="fieldError"/><br/>
-
+                                <label th:for="inputBuySplitHalfCount"
+                                       th:text="#{bottradeconfig.buySplitHalfCount} "></label>
+                                <input id="inputBuySplitHalfCount" type="text" th:field="*{buySplitHalfCount}"
+                                       class="form-control" th:errorclass="fieldError"/><br/>
                             </div>
 
                             <div class="form-group">
-                                <label th:for="checkboxBuyable" th:text="#{currencyconfig.buyable} "/>
-
-                                        <input type="checkbox" id="checkboxBuyable" th:field="*{buyable}"  class="form-control"
-                                               th:errorclass="fieldError"/>
-
+                                <label th:for="inputSellAtPriceHigh"
+                                       th:text="#{bottradeconfig.sellAtPriceHigh} "></label>
+                                <input id="inputSellAtPriceHigh" type="text" th:field="*{sellAtPriceHigh}"
+                                       class="form-control"
+                                       th:errorclass="fieldError"/><br/>
                             </div>
 
                             <div class="form-group">
-                                <label th:for="checkboxSellable" th:text="#{currencyconfig.sellable} "/>
-
-
-                                        <input type="checkbox" id="checkboxSellable" th:field="*{sellable}"  class="form-control"
-                                               th:errorclass="fieldError"/>
-
-
+                                <label th:for="inputSellAtPrice" th:text="#{bottradeconfig.sellAtPrice} "></label>
+                                <input id="inputSellAtPrice" type="text" th:field="*{sellAtPrice}" class="form-control"
+                                       th:errorclass="fieldError"/><br/>
                             </div>
+
                             <div class="form-group">
-                                <label th:for="inputBuyOrderCancellationHour" th:text="#{currencyconfig.orderTimeoutInHour} "/>
+                                <label th:for="inputSellAtPriceLow" th:text="#{bottradeconfig.sellAtPriceLow} "></label>
+                                <input id="inputSellAtPriceLow" type="text" th:field="*{sellAtPriceLow}"
+                                       class="form-control" th:errorclass="fieldError"/><br/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="inputSellSplitHalfCount"
+                                       th:text="#{bottradeconfig.sellSplitHalfCount} "></label>
+                                <input id="inputSellSplitHalfCount" type="text" th:field="*{sellSplitHalfCount}"
+                                       class="form-control" th:errorclass="fieldError"/><br/>
+                            </div>
 
 
-                                <input type="text" id="inputBuyOrderCancellationHour" th:field="*{orderTimeoutInHour}"  class="form-control"
+                            <div class="form-group">
+                                <label th:for="inputSellModePrice" th:text="#{bottradeconfig.sellModePrice} "></label>
+                                <input id="inputSellModePrice" type="text" th:field="*{sellModePrice}"
+                                       class="form-control" th:errorclass="fieldError"/><br/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="inputStopLossPrice" th:text="#{bottradeconfig.stopLossPrice} "></label>
+                                <input id="inputStopLossPrice" type="text" th:field="*{stopLossPrice}"
+                                       class="form-control" th:errorclass="fieldError"/><br/>
+                            </div>
+
+                            <input id="created" type="hidden" th:field="*{created}"/>
+
+                            <input id="updated" type="hidden" th:field="*{updated}"/>
+
+                            <input id="sellMode" type="hidden" th:field="*{sellMode}"/>
+
+                            <input id="status" type="hidden" th:field="*{status}"/>
+                            <input id="buyOrderGiven" type="hidden" th:field="*{buyOrderGiven}"/>
+                            <input id="sellOrderGiven" type="hidden" th:field="*{sellOrderGiven}"/>
+
+                            <div class="form-group">
+                                <label th:for="inputBuyOrderCancellationHour"
+                                       th:text="#{bottradeconfig.orderTimeoutInHour} "></label>
+                                <input type="text" id="inputBuyOrderCancellationHour" th:field="*{orderTimeoutInHour}"
+                                       class="form-control"
                                        th:errorclass="fieldError"/>
 
 
@@ -171,6 +196,11 @@
                                             class="btn btn-danger btn-danger-group"
                                             style="float: left"
                                             name="delete" th:text="Sil">Add Seed Starter
+                                    </button>
+
+                                    <button type="submit" class="btn btn-primary btn-primary-group"
+                                            style="float: right"
+                                            name="back" th:text="Back">Add Seed Starter
                                     </button>
                                 </div>
 

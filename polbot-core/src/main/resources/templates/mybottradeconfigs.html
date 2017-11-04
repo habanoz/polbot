@@ -38,6 +38,9 @@
             $('#ctable').dataTable({responsive: true, pageLength: 100});
         });
 
+
+
+
     </script>
 
 </head>
@@ -89,11 +92,9 @@
                     <hr/>
 
                     <div class="row">
-                        <form action="#" th:action="@{/currencyconfig/{buid}(buid=${buid})}" th:object="${currencyConfig}"
+                        <form action="#" th:action="@{/bottradeconfig/{buid}/0 (buid=${buid})}"
+                              th:object="${botTradeConfig}"
                               method="post">
-
-                            <input type="hidden" name="currency"
-                                   th:value="${currencyConfig.currencyPair}" value=""/>
 
                             <div class="submit">
                                 <button type="submit" class="btn btn-default btn-primary-group"
@@ -109,42 +110,53 @@
                             <div class="panel panel-default">
                                 <div class="panel-body">
 
-                                    <table id="ctable" class="table table-responsive table-striped table-bordered" cellspacing="0" width="100%">
+                                    <table id="ctable" class="table table-responsive table-striped table-bordered"
+                                           cellspacing="0" width="100%">
                                         <thead>
                                         <tr>
+                                            <th>Id</th>
                                             <th>Currency Pair</th>
-                                            <th>Usable Percent</th>
-                                            <th>Buy Percent</th>
-                                            <th>Sell Percent</th>
-                                            <th>Buy Price</th>
-                                            <th>Sell Price</th>
-                                            <th>Can Buy</th>
-                                            <th>Can Sell</th>
+                                            <th>Balance</th>
+                                            <th>Sell Mode</th>
+                                            <th>Buy Price Low</th>
+                                            <th>Buy Price High</th>
+                                            <th>Sell Price Low</th>
+                                            <th>Buy Price High</th>
+                                            <th>Stop Loss Price</th>
                                             <th>Cancel Limit</th>
                                             <th>Show</th>
                                         </tr>
                                         </thead>
 
-                                        <tbody>
-                                        <tr th:each="cc : ${currencyConfigs}">
+                                        <tbody th:if="${not #lists.isEmpty(botTradeConfigs)}">
+
+                                        <tr th:each="cc : ${botTradeConfigs}">
+                                            <td th:text="${cc.tradeConfigId}">123</td>
                                             <td th:text="${cc.currencyPair}">BTC_ETH</td>
-                                            <td th:text="${cc.usableBalance}">25</td>
-                                            <td th:text="${cc.buyOnPercent}">5</td>
-                                            <td th:text="${cc.sellOnPercent}">5</td>
-                                            <td th:text="${cc.buyAtPrice}">0.0025</td>
-                                            <td th:text="${cc.sellAtPrice}">0.0025</td>
-                                            <td><input disabled="true" type="checkbox" th:checked="${cc.buyable}"/></td>
-                                            <td><input disabled="true" type="checkbox" th:checked="${cc.sellable}"/>
-                                            <td th:text="${cc.orderTimeoutInHour}">0.0025</td>
-                                            </td>
+                                            <td th:text="${cc.usableBalance}">0.1</td>
+                                            <td th:text="${cc.sellMode}">0</td>
+                                            <td th:text="${cc.buyAtPriceLow}">0.00100</td>
+                                            <td th:text="${cc.buyAtPriceHigh}">0.00200</td>
+                                            <td th:text="${cc.sellAtPriceLow}">0.00300</td>
+                                            <td th:text="${cc.sellAtPriceHigh}">0.00350</td>
+                                            <td th:text="${cc.stopLossPrice}">0.00050</td>
+                                            <td th:text="${cc.orderTimeoutInHour}">5</td>
                                             <td>
                                                 <div class="submit">
-                                                    <a th:href="@{/currencyconfig/{buid}(show='',currency=${cc.currencyPair},buid=${cc.botUser.buId})}"
+                                                    <a th:href="@{/bottradeconfig/{buid}/{tradeConfigId}(show='',tradeConfigId=${cc.tradeConfigId},buid=${cc.botUser.buId})}"
                                                        class="navbar-link">Show</a>
                                                 </div>
                                             </td>
                                         </tr>
+
                                         </tbody>
+                                        <tbody th:if="${#lists.isEmpty(botTradeConfigs)}">
+                                        <tr>
+                                            <td colspan="3">No Data found</td>
+                                        </tr>
+                                        </tbody>
+
+
                                     </table>
 
                                 </div>
