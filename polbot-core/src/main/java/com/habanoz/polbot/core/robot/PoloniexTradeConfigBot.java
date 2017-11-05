@@ -139,7 +139,7 @@ public class PoloniexTradeConfigBot implements PolBot {
                 botTradeConfig.setUpdated(now);
 
                 cancelOpenOrders(tradingApi, openOrderMap, currPair);
-                if (coinBalance.compareTo(BigDecimal.valueOf(0))>0){
+                if (coinBalance.compareTo(BigDecimal.valueOf(0)) > 0) {
                     Order order = new Order(currPair, PolBot.SELL_ACTION, lowestBuyPrice.multiply(BigDecimal.valueOf(0.90)), coinBalance);// sell a little lower to ensure it is sold
                     orders.add(order);
                 }
@@ -177,7 +177,7 @@ public class PoloniexTradeConfigBot implements PolBot {
 
                 cancelOpenOrders(tradingApi, openOrderMap, currPair);
 
-                Order order = new Order(currPair, PolBot.SELL_ACTION, lowestBuyPrice.multiply(botTradeConfig.getBuyAtPriceHigh()), coinBalance);// sell a little lower to ensure it is sold
+                Order order = new Order(currPair, PolBot.SELL_ACTION, botTradeConfig.getBuyAtPriceHigh(), coinBalance);// sell a little lower to ensure it is sold
                 orders.add(order);
 
                 continue;
@@ -351,6 +351,12 @@ public class PoloniexTradeConfigBot implements PolBot {
                 orderResults.add(result);
 
                 logger.debug("SELL Order {} created", order);
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                logger.warn("Error while waiting after order", e);
             }
         }
         return null;

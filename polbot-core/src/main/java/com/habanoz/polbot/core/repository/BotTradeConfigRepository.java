@@ -23,4 +23,8 @@ public interface BotTradeConfigRepository extends JpaRepository<BotTradeConfig, 
     void delete(BotTradeConfig var1);
 
     List<BotTradeConfig> findByBotUserAndCompleted(BotUser user, int i);
+
+    List<BotTradeConfig> findTop10ByBotUserOrderByCreatedDesc(BotUser user);
+
+    List<BotTradeConfig>  findTop10ByBotUserOrderByTradeConfigIdDesc(BotUser botUser);
 }

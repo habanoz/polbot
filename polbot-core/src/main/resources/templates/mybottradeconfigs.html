@@ -35,7 +35,7 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#ctable').dataTable({responsive: true, pageLength: 100});
+            $('#ctable').dataTable({responsive: true, pageLength: 100, aaSorting: []});
         });
 
 
@@ -117,6 +117,8 @@
                                             <th>Id</th>
                                             <th>Currency Pair</th>
                                             <th>Balance</th>
+                                            <th>Updated</th>
+                                            <th>Status</th>
                                             <th>Sell Mode</th>
                                             <th>Buy Price Low</th>
                                             <th>Buy Price High</th>
@@ -134,6 +136,8 @@
                                             <td th:text="${cc.tradeConfigId}">123</td>
                                             <td th:text="${cc.currencyPair}">BTC_ETH</td>
                                             <td th:text="${cc.usableBalance}">0.1</td>
+                                            <td th:text="${cc.updated}">20-04-2017 9:36</td>
+                                            <td th:text="${cc.status}">Created</td>
                                             <td th:text="${cc.sellMode}">0</td>
                                             <td th:text="${cc.buyAtPriceLow}">0.00100</td>
                                             <td th:text="${cc.buyAtPriceHigh}">0.00200</td>

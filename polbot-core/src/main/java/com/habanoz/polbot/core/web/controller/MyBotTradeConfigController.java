@@ -40,7 +40,7 @@ public class MyBotTradeConfigController {
         model.put("botUser", botUser);
         model.put("buid", buid);
         model.put("botTradeConfig", new BotTradeConfig());
-        model.put("botTradeConfigs", this.botTradeConfigRepository.findByBotUserAndCompleted(botUser,0));
+        model.put("botTradeConfigs", this.botTradeConfigRepository.findTop10ByBotUserOrderByTradeConfigIdDesc(botUser));
 
         return "mybottradeconfigs";
     }

@@ -169,24 +169,55 @@
                                        class="form-control" th:errorclass="fieldError"/><br/>
                             </div>
 
-                            <input id="created" type="hidden" th:field="*{created}"/>
-
-                            <input id="updated" type="hidden" th:field="*{updated}"/>
-
-                            <input id="sellMode" type="hidden" th:field="*{sellMode}"/>
-
-                            <input id="status" type="hidden" th:field="*{status}"/>
-                            <input id="buyOrderGiven" type="hidden" th:field="*{buyOrderGiven}"/>
-                            <input id="sellOrderGiven" type="hidden" th:field="*{sellOrderGiven}"/>
-
                             <div class="form-group">
                                 <label th:for="inputBuyOrderCancellationHour"
                                        th:text="#{bottradeconfig.orderTimeoutInHour} "></label>
                                 <input type="text" id="inputBuyOrderCancellationHour" th:field="*{orderTimeoutInHour}"
                                        class="form-control"
                                        th:errorclass="fieldError"/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="created" th:text="#{bottradeconfig.created} "></label>
+                                <input id="created" type="text" th:field="*{created}" readonly="readonly"
+                                       class="form-control"/><br/>
+                            </div>
 
 
+                            <div class="form-group">
+                                <label th:for="updated" th:text="#{bottradeconfig.updated} "></label>
+                                <input id="updated" type="text" th:field="*{updated}" readonly="readonly"
+                                       class="form-control"/><br/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="sellMode" th:text="#{bottradeconfig.sellMode} "></label>
+                                <input id="sellMode" type="text" th:field="*{sellMode}" readonly="readonly"
+                                       class="form-control"/><br/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="buyOrderGiven" th:text="#{bottradeconfig.buyOrderGiven} "></label>
+                                <input id="buyOrderGiven" type="text" th:field="*{buyOrderGiven}" readonly="readonly"
+                                       class="form-control"/><br/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="sellOrderGiven" th:text="#{bottradeconfig.sellOrderGiven} "></label>
+                                <input id="sellOrderGiven" type="text" th:field="*{sellOrderGiven}" readonly="readonly"
+                                       class="form-control"/><br/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="status" th:text="#{bottradeconfig.status} "></label>
+                                <input id="status" type="text" th:field="*{status}" readonly="readonly"
+                                       class="form-control"/><br/>
+                            </div>
+
+                            <div class="form-group">
+                                <label th:for="completed" th:text="#{bottradeconfig.completed} "></label>
+                                <input id="completed" type="text" th:field="*{completed}" readonly="readonly"
+                                       class="form-control"/><br/>
                             </div>
 
                             <div class="row">
